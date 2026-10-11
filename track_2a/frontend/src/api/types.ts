@@ -237,7 +237,8 @@ export type ApiErrorCode =
   | "TOO_MANY_REQUESTS"
   | "LLM_UNAVAILABLE"
   | "VOICE_UNAVAILABLE"
-  | "NETWORK_ERROR"; // frontend only: backend not reachable
+  | "NETWORK_ERROR" // frontend only: backend not reachable
+  | "TIMEOUT"; // frontend only: the backend did not answer in time
 
 export class ApiError extends Error {
   code: ApiErrorCode;
