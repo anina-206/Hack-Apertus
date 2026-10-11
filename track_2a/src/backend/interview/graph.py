@@ -55,6 +55,7 @@ class InterviewState(TypedDict, total=False):
     dialect: Optional[str]  # for language gsw: the dialect the interviewer writes in (zh, be, bs, gr, vs)
     application_summary: Optional[str]  # bullet points from the uploaded application (the text itself is not kept)
     application_asks: list[str]  # points of the application worth asking about, in interview order
+    application_review: Optional[dict]  # feedback on the application letter (letter_review.py), for the report
     application_next: int  # how many of them were already used for a question
     focus: list[str]  # criteria this round should practise (from a previous report)
     mode: str

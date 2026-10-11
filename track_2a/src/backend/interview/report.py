@@ -112,6 +112,8 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
         "improvements": improvements,
         "next_practice": sorted(means, key=lambda k: means[k])[:2],
         "closing": draft.closing,
+        # Feedback on the uploaded application letter (made at the start of the interview), else null
+        "application_feedback": state.get("application_review"),
         # FHGR rule L3: point to a real person when the interview showed distress.
         "support_note": safety.SUPPORT_NOTE[language] if _distress(state) else None,
     }

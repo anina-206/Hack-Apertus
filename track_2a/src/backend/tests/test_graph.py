@@ -34,6 +34,19 @@ APPLICATION_OUTPUT = (
     "→ Was hast du in der Schnupperlehre gemacht?")
 
 
+LETTER_REVIEW_OUTPUT = json.dumps({
+    "criteria": {
+        "motivation": {"score": 4, "comment": "Echter Grund.", "evidence": "Velo repariere ich seit drei Jahren"},
+        "company": {"score": 2, "comment": "Noch allgemein.", "evidence": "Dieser Satz steht nicht im Brief"},
+        "strengths": {"score": 3, "comment": "Gutes Beispiel.", "evidence": ""},
+        "structure": {"score": 3, "comment": "Klar aufgebaut.", "evidence": ""},
+        "language": {"score": 3, "comment": "Verständlich.", "evidence": ""},
+    },
+    "strengths": ["Persönlicher Grund", "Konkretes Beispiel"],
+    "improvements": [{"tip": "Nenne die Firma konkret.", "example_answer": "Mich spricht an, dass [Firma] ..."}],
+}, ensure_ascii=False)
+
+
 class FakeLLM:
     """Stands in for the OpenAI client; answers by prompt type from scripted queues."""
 
@@ -42,6 +55,7 @@ class FakeLLM:
         self.report_outputs = list(report_outputs)
         self.calls = []
         self.application_output = APPLICATION_OUTPUT
+        self.review_output = LETTER_REVIEW_OUTPUT
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
     async def create(self, model, messages, **kwargs):
@@ -59,6 +73,9 @@ class FakeLLM:
             self.calls.append("dialect")
             self.last_dialect_system = system
             content = "Gsw: " + messages[1]["content"]
+        elif "Review the cover letter" in system:
+            self.calls.append("letter_review")
+            content = self.review_output
         elif "career coach" in system:
             self.calls.append("report")
             content = self.report_outputs.pop(0) if self.report_outputs else report_json()

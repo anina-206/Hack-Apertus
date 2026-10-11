@@ -366,6 +366,26 @@ Generated with one LLM call the first time, then cached.
 - The LLM writes `comment`, `evidence`, `strengths`, `improvements` and `closing`, following the FHGR
   feedback rules (`datasets/rubric/feedback_guidelines.json`). `evidence` is only kept if it
   is a real quote from the candidate's answers, otherwise it is `""`.
+- `application_feedback` is the review of the application letter, or `null` without an uploaded letter (or if the review
+  failed). It is made at the start of the interview, in parallel to the summary (one more LLM call there, none in the
+  report), written in the interview language (Mundart: Standard German) and shown in both modes:
+
+  ```json
+  "application_feedback": {
+    "scale": { "min": 1, "max": 4 },
+    "overall_score": 2.8,
+    "criteria": [
+      { "id": "motivation", "label": "Motivation für den Beruf", "score": 3, "comment": "Du nennst einen echten Grund.",
+        "evidence": "Seit der Schnupperlehre weiss ich" }
+    ],
+    "strengths": ["Du nennst ein Erlebnis aus der Schnupperlehre"],
+    "improvements": [{ "tip": "Schreibe, was dich an genau dieser Firma anspricht.", "example_answer": "Mich spricht an, dass [Firma] ..." }]
+  }
+  ```
+
+  Criteria ids: `motivation`, `company`, `strengths`, `structure`, `language`; the scores are 1-4 like in the interview,
+  `overall_score` is their average, and `evidence` is only kept if it is a real quote of the letter. The letter text itself
+  is not stored.
 - If the report can't be generated, the response is `502 LLM_UNAVAILABLE` and nothing is cached,
   so the frontend can simply retry.
 
@@ -589,3 +609,4 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | 2026-10-11 | v1.9: `occupation_name` (and the five occupations of `GET /config`, and the FHGR postings) now bring the typical tasks, duration and requirements from `datasets/occupations.csv` into the prompts. No change to the fields. | Anina |
 | 2026-10-11 | v1.10: `POST /transcribe` (Whisper) and `POST /speech` (Piper/Azure); `voice` in `GET /config`; `interviewer.voice` in `POST /sessions`; error `503 VOICE_UNAVAILABLE`. Not breaking. | Iago |
 | 2026-10-11 | v1.11: `company` and `interviewer` of `POST /sessions` and of saved interviews are never `null` any more: without a letter and without an FHGR posting a fictional default company and contact person fitting the occupation are used (`data/default_companies.yaml`). Not breaking. | Anina |
+| 2026-10-11 | v1.12: `application_feedback` in the report: review of the uploaded application letter (5 criteria, 1-4, strengths, tips). One more LLM call at the start of an interview with a letter. Not breaking. | Anina |
