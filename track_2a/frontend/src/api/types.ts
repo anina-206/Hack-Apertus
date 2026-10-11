@@ -132,6 +132,44 @@ export type Report = {
   next_practice: CriterionId[];
 };
 
+// ---------- Accounts (docs/api.md section 3b) ----------
+
+export type User = { id: string; username: string };
+export type AuthResponse = { token: string; user: User };
+
+/** One row of GET /me/interviews. */
+export type InterviewListItem = {
+  session_id: string;
+  language: LanguageCode;
+  occupation_id: string;
+  interviewer_style: InterviewerStyle;
+  mode: Mode;
+  created_at: string;
+  updated_at: string;
+  done: boolean;
+  overall_score: number | null;
+};
+
+/** GET /me/interviews/{id}: the whole saved conversation. */
+export type SavedInterviewDetail = {
+  session_id: string;
+  language: LanguageCode;
+  occupation_id: string;
+  interviewer_style: InterviewerStyle;
+  mode: Mode;
+  candidate?: Candidate | null;
+  created_at: string;
+  done: boolean;
+  phase: Phase;
+  progress: Progress;
+  current_question_id: string | null;
+  history: (Omit<HistoryEntry, "question_id"> & {
+    question_id: string | null;
+    turn_feedback?: TurnFeedback | null;
+  })[];
+  report: Report | null;
+};
+
 // ---------- Errors ----------
 
 export type ApiErrorCode =
@@ -140,6 +178,11 @@ export type ApiErrorCode =
   | "WRONG_QUESTION"
   | "INTERVIEW_NOT_FINISHED"
   | "INTERVIEW_FINISHED"
+  | "INTERNAL_ERROR"
+  | "USERNAME_TAKEN"
+  | "INVALID_CREDENTIALS"
+  | "UNAUTHORIZED"
+  | "INTERVIEW_NOT_FOUND"
   | "LLM_UNAVAILABLE"
   | "NETWORK_ERROR"; // frontend only: backend not reachable
 

@@ -65,6 +65,29 @@ CLOSING = {
 }
 
 
+# Fixed lines for the candidate_questions phase: the model kept asking normal questions instead.
+INVITATION = {
+    ("de", False): "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+    ("de", True): "Das waren meine Fragen. Haben Sie noch Fragen an mich oder zum Betrieb?",
+    ("fr", False): "Voilà mes questions. As-tu encore des questions pour moi ou sur l'entreprise ?",
+    ("fr", True): "Voilà mes questions. Avez-vous encore des questions pour moi ou sur l'entreprise ?",
+    ("it", False): "Queste erano le mie domande. Hai ancora domande per me o sull'azienda?",
+    ("it", True): "Queste erano le mie domande. Ha ancora domande per me o sull'azienda?",
+    ("gsw", False): "Das sind mini Frage gsi. Hesch du na Frage a mich oder zum Betrieb?",
+    ("gsw", True): "Das sind mini Frage gsi. Händ Sie na Frage a mich oder zum Betrieb?",
+}
+FURTHER = {
+    ("de", False): "Hast du noch weitere Fragen?",
+    ("de", True): "Haben Sie noch weitere Fragen?",
+    ("fr", False): "As-tu d'autres questions ?",
+    ("fr", True): "Avez-vous d'autres questions ?",
+    ("it", False): "Hai altre domande?",
+    ("it", True): "Ha altre domande?",
+    ("gsw", False): "Hesch du na meh Frage?",
+    ("gsw", True): "Händ Sie na meh Frage?",
+}
+
+
 def closing_message(language: str, formal: bool, first_name: Optional[str]) -> str:
     return CLOSING[(language, formal)].format(name=f", {first_name}" if first_name else "")
 
@@ -115,8 +138,9 @@ def _task(mode: str, phase: str, question_number: int) -> str:
         "follow_up": "The last answer was vague or incomplete. Ask ONE follow-up question that digs deeper into it.",
         "next_question": f"Ask ONE new question. Goal: {goal}",
         "new_phase": f"Start a new part of the interview with one short transition sentence, then ask ONE question. Goal: {goal}",
-        "answer_candidate": f"{answer_question} Then ask whether they have any further questions.",
-        "answer_and_close": f"{answer_question} Then thank them for the interview and say goodbye.",
+        "answer_candidate": f"{answer_question} Do not ask any question.",
+        # The goodbye is appended in code (graph.py): the model tended to end with another question.
+        "answer_and_close": f"{answer_question} Do not ask any question and do not say goodbye.",
     }
     return tasks[mode]
 
@@ -143,11 +167,12 @@ def interviewer_messages(occupation: dict, style: dict, language: str, candidate
     return messages
 
 
+# The short, most important parts come first, so a cut-off answer loses the least.
 _REPORT_EXAMPLE = {
-    "criteria": {key: {"comment": "One sentence about this criterion.", "evidence": "Exact quote from the candidate."}
-                 for key in CRITERIA},
     "strengths": ["Strength 1", "Strength 2"],
     "improvements": [{"tip": "Concrete tip.", "example_answer": "A short example of a better answer."}],
+    "criteria": {key: {"comment": "One short sentence about this criterion.", "evidence": "Exact quote from the candidate."}
+                 for key in CRITERIA},
 }
 
 

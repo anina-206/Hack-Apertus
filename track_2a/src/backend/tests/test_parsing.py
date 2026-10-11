@@ -56,6 +56,7 @@ def test_report_draft_is_lenient_about_shape():
     assert draft.improvements[0].tip == "Mehr Beispiele nennen." and draft.improvements[0].example_answer == ""
 
 
-def test_report_draft_needs_strengths_and_improvements():
-    with pytest.raises(JSONParseError, match="strengths"):
-        parse_json(json.dumps({"strengths": [], "improvements": [{"tip": "x"}]}), ReportDraft)
+def test_report_draft_tolerates_missing_lists():
+    # A cut-off answer may lack strengths or improvements: the report then falls back to the per-answer tips
+    draft = parse_json(json.dumps({"criteria": {}}), ReportDraft)
+    assert draft.strengths == [] and draft.improvements == []

@@ -1,37 +1,28 @@
 import { useEffect, useRef, useState } from "react";
-import { api, PHASES, type CreateSessionResponse, type LanguageCode, type Phase } from "../api";
+import { api, PHASES, type Phase } from "../api";
 import CardAccent from "../components/CardAccent";
 import { ArrowRight, Check, ChevronLeft, Mic, Speaker } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
+import type { ChatMessage, SavedInterview } from "../history";
 import { t, type UiTexts } from "../i18n";
 import { canListen, canSpeak, speak, startListening, stopSpeaking } from "../speech";
 
 type Props = {
-  session: CreateSessionResponse;
-  language: LanguageCode;
-  /** Line under the title, e.g. "Schreiner/in EFZ · Deutsch · Training" */
-  summary: string;
+  /** The interview to show: a new one, or a saved one that is continued or only read. */
+  entry: SavedInterview;
   onRestart: () => void;
   /** Called when the interview is over and the candidate wants to see the feedback report. */
   onFinished: () => void;
 };
 
-/** One bubble in the chat. `tip` is the short feedback after an answer (training mode). */
-type ChatMessage = {
-  role: "interviewer" | "candidate";
-  text: string;
-  tip?: string;
-};
-
-export default function InterviewScreen({ session, language, summary, onRestart, onFinished }: Props) {
+export default function InterviewScreen({ entry, onRestart, onFinished }: Props) {
+  const { language, summary } = entry;
   const text = t(language);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "interviewer", text: session.question.text },
-  ]);
-  const [questionId, setQuestionId] = useState<string | null>(session.question.id);
-  const [phase, setPhase] = useState<Phase>(session.phase);
-  const [done, setDone] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(entry.messages);
+  const [questionId, setQuestionId] = useState<string | null>(entry.question_id);
+  const [phase, setPhase] = useState<Phase>(entry.phase);
+  const [done, setDone] = useState(entry.done);
 
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -68,7 +59,7 @@ export default function InterviewScreen({ session, language, summary, onRestart,
     setError(false);
 
     try {
-      const res = await api.sendAnswer(session.session_id, questionId, answer);
+      const res = await api.sendAnswer(entry.session_id, questionId, answer);
 
       setMessages((m) => {
         const updated = [...m];

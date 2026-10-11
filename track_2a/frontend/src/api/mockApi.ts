@@ -6,9 +6,11 @@ import {
   ApiError,
   type AnswerResponse,
   type AppConfig,
+  type AuthResponse,
   type CreateSessionRequest,
   type CriterionId,
   type HistoryEntry,
+  type User,
   type LanguageCode,
   type Phase,
   type Report,
@@ -392,5 +394,30 @@ export const mockApi: InterviewApi = {
       improvements: [{ tip: r.tip, example_answer: r.exampleAnswer }],
       next_practice: ["structure", "motivation"],
     };
+  },
+
+  // Accounts: the mock has no real accounts, any login works and nothing is saved
+  async register(username): Promise<AuthResponse> {
+    await fakeDelay();
+    return { token: "mock-token", user: { id: "mock-user", username } };
+  },
+
+  async login(username): Promise<AuthResponse> {
+    await fakeDelay();
+    return { token: "mock-token", user: { id: "mock-user", username } };
+  },
+
+  async logout() {},
+
+  async me(): Promise<User> {
+    return { id: "mock-user", username: "mock" };
+  },
+
+  async listInterviews() {
+    return [];
+  },
+
+  async getSavedInterview() {
+    throw new ApiError("INTERVIEW_NOT_FOUND", "The mock does not save interviews.");
   },
 };

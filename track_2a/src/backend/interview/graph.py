@@ -23,7 +23,8 @@ from langgraph.graph import END, START, StateGraph
 from backend import config, llm
 from backend.interview.parsing import Analysis, complete_json
 from backend.interview.phases import Position, is_scored, next_step
-from backend.interview.prompts import analysis_messages, closing_message, interviewer_messages
+from backend.interview.prompts import (FURTHER, INVITATION, analysis_messages, closing_message,
+                                       interviewer_messages)
 
 logger = logging.getLogger("interview")
 
@@ -73,6 +74,14 @@ async def analyze(state: InterviewState) -> dict:
     return {"analysis": entry, "analysis_attempts": attempts, "analyses": [entry]}
 
 
+def _drop_trailing_question(text: str) -> str:
+    """Remove a last sentence that is a question (the fixed follow-up line is added instead)."""
+    if not text.endswith("?"):
+        return text
+    cut = max(text.rfind(". "), text.rfind("! "), text.rfind("\n"))
+    return text[:cut + 1].strip() if cut > 0 else text
+
+
 async def interviewer(state: InterviewState) -> dict:
     new_turns = []
     if state.get("answer"):
@@ -85,6 +94,8 @@ async def interviewer(state: InterviewState) -> dict:
     style = config.interviewer_styles()[state["interviewer_style"]]
     if mode == "close":
         text = closing_message(state["language"], style["formal"], (state.get("candidate") or {}).get("first_name"))
+    elif mode == "new_phase" and pos.phase == "candidate_questions":
+        text = INVITATION[(state["language"], style["formal"])]  # fixed line, no LLM call
     else:
         # answer_and_close still answers within the candidate_questions phase.
         phase = "candidate_questions" if mode == "answer_and_close" else pos.phase
@@ -95,6 +106,14 @@ async def interviewer(state: InterviewState) -> dict:
             purpose="interviewer",
             temperature=0.7,
         )).strip()
+        # The model tended to ask a new question or forget the goodbye, so both are added in code.
+        if mode in ("answer_candidate", "answer_and_close"):
+            text = _drop_trailing_question(text)
+        if mode == "answer_candidate":
+            text += "\n\n" + FURTHER[(state["language"], style["formal"])]
+        elif mode == "answer_and_close":
+            first_name = (state.get("candidate") or {}).get("first_name")
+            text += "\n\n" + closing_message(state["language"], style["formal"], first_name)
 
     update = {"phase_index": pos.phase_index, "questions_in_phase": pos.questions_in_phase,
               "follow_ups_in_phase": pos.follow_ups_in_phase}

@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import {
   api,
+  ApiError,
   type AppConfig,
   type CreateSessionRequest,
   type CreateSessionResponse,
   type InterviewerStyle,
+  type InterviewListItem,
   type LanguageCode,
   type Mode,
+  type User,
 } from "../api";
 import CardAccent from "../components/CardAccent";
 import { ArrowRight, Check, ChevronDown } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
+import { fromServer, type SavedInterview } from "../history";
 import { label, languageNames, t } from "../i18n";
 
 type Props = {
@@ -18,14 +22,35 @@ type Props = {
   onLanguageChange: (lang: LanguageCode) => void;
   /** `summary` is the line shown in the chat header, e.g. "Schreiner/in EFZ · Deutsch · Training". */
   onStarted: (session: CreateSessionResponse, request: CreateSessionRequest, summary: string) => void;
+  /** A saved interview was clicked. */
+  onOpenSaved: (entry: SavedInterview) => void;
+  /** Logged-in user, or null for a guest. */
+  user: User | null;
+  onLoginClick: () => void;
+  onLogout: () => void;
 };
 
-export default function SetupScreen({ language, onLanguageChange, onStarted }: Props) {
+export default function SetupScreen({ language, onLanguageChange, onStarted, onOpenSaved, user, onLoginClick, onLogout }: Props) {
   const text = t(language);
 
   // Data from GET /config
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [loadError, setLoadError] = useState(false);
+
+  // Interviews of the logged-in user, saved on the backend
+  const [remote, setRemote] = useState<InterviewListItem[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    api
+      .listInterviews()
+      .then((list) => !cancelled && setRemote(list))
+      .catch(() => !cancelled && setRemote([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Form fields
   const [occupationId, setOccupationId] = useState("");
@@ -57,8 +82,24 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
 
   useEffect(loadConfig, []);
 
+  function summaryOf(occupationId: string, lang: LanguageCode, m: Mode) {
+    const occupation = config?.occupations.find((o) => o.id === occupationId);
+    return [occupation ? label(occupation.label, lang) : occupationId, languageNames[lang], t(lang).modes[m]]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  async function openRemote(item: InterviewListItem) {
+    try {
+      const detail = await api.getSavedInterview(item.session_id);
+      onOpenSaved(fromServer(detail, summaryOf(item.occupation_id, item.language, item.mode)));
+    } catch {
+      setStartError(true);
+    }
+  }
+
   async function handleStart() {
-    if (!config) return;
+    if (!config || !user) return;
     const request: CreateSessionRequest = {
       language,
       occupation_id: occupationId,
@@ -80,7 +121,13 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
     try {
       const session = await api.createSession(request);
       onStarted(session, request, summary);
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "UNAUTHORIZED") {
+        // The login expired: forget it and ask for a new one
+        onLogout();
+        onLoginClick();
+        return;
+      }
       setStartError(true);
       setStarting(false);
     }
@@ -109,6 +156,15 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
       {/* Blue header */}
       <header className="bg-brand px-5 pt-10 pb-14 text-white">
         <div className="mx-auto max-w-lg">
+          <div className="mb-4 flex items-center justify-end gap-3 text-sm">
+            {user && <span className="truncate text-white/90">{user.username}</span>}
+            <button
+              onClick={user ? onLogout : onLoginClick}
+              className="rounded-full border-2 border-white/80 px-4 py-1.5 font-bold hover:bg-white/10"
+            >
+              {user ? text.logout : text.login}
+            </button>
+          </div>
           <h1 className="text-4xl font-bold tracking-tight">
             {text.title}
             <span className="text-logo-yellow">.</span>
@@ -118,6 +174,19 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
       </header>
 
       <main className="mx-auto -mt-7 w-full max-w-lg flex-1 px-4">
+        {!user && (
+          <div className="relative z-10 mb-4 rounded-2xl border-2 border-logo-yellow bg-white p-4 shadow-card">
+            <p className="font-bold">{text.loginRequired}</p>
+            <p className="mt-1 text-sm text-charcoal-soft">{text.loginRequiredWhy}</p>
+            <button
+              onClick={onLoginClick}
+              className="mt-3 rounded-full bg-brand px-5 py-2 text-sm font-bold text-white hover:bg-brand-dark"
+            >
+              {text.login} / {text.register}
+            </button>
+          </div>
+        )}
+
         <div className="relative divide-y divide-line overflow-hidden rounded-3xl bg-white shadow-card">
           <CardAccent />
 
@@ -212,16 +281,45 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
             </div>
           </Step>
         </div>
+
+        {user && remote.length > 0 && (
+          <section className="mt-6 pb-4">
+            <h2 className="mb-3 text-xl font-bold">{text.previousInterviews}</h2>
+            <ul className="space-y-2">
+              {remote.map((item) => (
+                <li key={item.session_id} className="rounded-2xl bg-white shadow-card">
+                  <button onClick={() => openRemote(item)} className="w-full px-4 py-3 text-left">
+                    <p className="truncate font-bold">
+                      {summaryOf(item.occupation_id, item.language, item.mode)}
+                      {item.overall_score !== null && " · Ø " + item.overall_score}
+                    </p>
+                    <p className="text-sm text-charcoal-soft">
+                      {new Date(item.created_at).toLocaleString(language === "gsw" ? "de-CH" : language)}
+                      {!item.done && " · " + text.inProgress}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </main>
 
       {/* Start bar: always visible at the bottom */}
       <footer className="sticky bottom-0 bg-gradient-to-t from-page via-page to-transparent px-4 pt-6 pb-4">
         <div className="mx-auto max-w-lg">
           {startError && <p className="mb-3 rounded-xl bg-danger-lighter px-4 py-3 text-danger">{text.error}</p>}
-          <PrimaryButton onClick={handleStart} disabled={!occupationId || starting} wide>
-            {starting ? text.starting : text.start}
-            {!starting && <ArrowRight />}
-          </PrimaryButton>
+          {user ? (
+            <PrimaryButton onClick={handleStart} disabled={!occupationId || starting} wide>
+              {starting ? text.starting : text.start}
+              {!starting && <ArrowRight />}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton onClick={onLoginClick} wide>
+              {text.loginToStart}
+              <ArrowRight />
+            </PrimaryButton>
+          )}
           <p className="mt-3 text-center text-xs text-charcoal-soft">{text.startHint}</p>
         </div>
       </footer>

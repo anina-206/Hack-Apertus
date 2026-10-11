@@ -99,6 +99,7 @@ All errors use `{"error": {"code": "...", "message": "..."}}`.
 |---|---|
 | `src/backend/main.py` | FastAPI app: endpoints, error format, CORS |
 | `src/backend/llm.py` | Apertus client (OpenAI-compatible) and LLM call counter |
+| `src/backend/accounts.py` | Accounts, login tokens and saved interviews (SQLite) |
 | `src/backend/config.py` | Setup options (languages, occupations, styles, modes) |
 | `src/backend/interview/graph.py` | LangGraph turn: analysis → interviewer |
 | `src/backend/interview/phases.py` | Phase logic and progress |
@@ -131,14 +132,15 @@ Frontend dev server (http://localhost:5173): see `frontend/README.md`.
 
 ## Limitations
 
-- Sessions are kept in memory and are lost when the backend restarts.
+- Running interviews are kept in memory and are lost when the backend restarts. Interviews of logged-in users are also saved in SQLite (Docker volume `storage`), so they stay readable, but an unfinished one cannot be continued after a restart.
+- Accounts are minimal: username and password only, no e-mail, no password reset, no rate limiting.
 - Swiss German (`gsw`) is a beta: the 8B model may mix in Standard German or spell inconsistently.
 - The interviewer knows nothing about a specific company, so it answers candidate questions in general terms.
 
 ## Data
 
-`data/` holds only small YAML configuration files (limit: 100 MB). No personal data is stored. The optional
-candidate details (first name, school level, interests) only live in memory for the running session.
+`data/` holds only small YAML configuration files (limit: 100 MB). Guests leave no data on the server. Only if someone creates an account, the username, a password hash and the
+saved interviews (including the optional candidate details) are stored in `storage/app.db`. Use fake data in demos.
 
 ## Hack Apertus
 

@@ -1,10 +1,14 @@
 import type {
   AnswerResponse,
   AppConfig,
+  AuthResponse,
   CreateSessionRequest,
   CreateSessionResponse,
+  InterviewListItem,
   Report,
+  SavedInterviewDetail,
   SessionState,
+  User,
 } from "./types";
 
 /**
@@ -18,4 +22,11 @@ export interface InterviewApi {
   sendAnswer(sessionId: string, questionId: string, text: string): Promise<AnswerResponse>;
   getSession(sessionId: string): Promise<SessionState>;
   getReport(sessionId: string): Promise<Report>;
+  // Accounts: with a login the interviews are saved on the backend
+  register(username: string, password: string): Promise<AuthResponse>;
+  login(username: string, password: string): Promise<AuthResponse>;
+  logout(): Promise<void>;
+  me(): Promise<User>;
+  listInterviews(): Promise<InterviewListItem[]>;
+  getSavedInterview(sessionId: string): Promise<SavedInterviewDetail>;
 }

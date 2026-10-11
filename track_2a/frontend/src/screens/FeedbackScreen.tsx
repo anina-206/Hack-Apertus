@@ -9,6 +9,10 @@ import { t } from "../i18n";
 type Props = {
   sessionId: string;
   language: LanguageCode;
+  /** Report saved earlier: shown right away, no new request. */
+  savedReport?: Report;
+  /** Called once a freshly loaded report is there, so it can be saved. */
+  onReportLoaded: (report: Report) => void;
   onRestart: () => void;
 };
 
@@ -19,24 +23,30 @@ function scoreColor(score: number) {
   return "var(--color-logo-red)";
 }
 
-export default function FeedbackScreen({ sessionId, language, onRestart }: Props) {
+export default function FeedbackScreen({ sessionId, language, savedReport, onReportLoaded, onRestart }: Props) {
   const text = t(language);
 
-  const [report, setReport] = useState<Report | null>(null);
+  const [report, setReport] = useState<Report | null>(savedReport ?? null);
   const [error, setError] = useState(false);
 
   // Bumping this number loads the report again (retry button)
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    if (report) return;
     let cancelled = false;
     api
       .getReport(sessionId)
-      .then((r) => !cancelled && setReport(r))
+      .then((r) => {
+        if (cancelled) return;
+        setReport(r);
+        onReportLoaded(r);
+      })
       .catch(() => !cancelled && setError(true));
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, attempt]);
 
   function retry() {

@@ -42,9 +42,16 @@ async def build_report(session_id: str, state: dict) -> dict:
         ReportDraft,
         purpose="report",
         temperature=0.4,
+        max_tokens=2500,
     )
     if draft is None:
         raise ReportUnavailable(f"Report could not be generated: {error}")
+
+    # The model sometimes forgets a list: fall back to the tips from the per-answer analyses
+    improvements = [i.model_dump() for i in draft.improvements]
+    if not improvements:
+        tips = list(dict.fromkeys(a["short_tip"] for a in scored if a.get("short_tip")))[:3]
+        improvements = [{"tip": tip, "example_answer": ""} for tip in tips]
 
     labels = CRITERIA_LABELS[state["language"]]
     criteria = []
@@ -64,6 +71,6 @@ async def build_report(session_id: str, state: dict) -> dict:
         "overall_score": round(mean(averages.values()), 1) if averages else None,
         "criteria": criteria,
         "strengths": draft.strengths,
-        "improvements": [i.model_dump() for i in draft.improvements],
+        "improvements": improvements,
         "next_practice": sorted(averages, key=lambda k: averages[k])[:2],
     }

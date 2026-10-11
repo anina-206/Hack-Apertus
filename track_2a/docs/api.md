@@ -21,7 +21,7 @@ If something changes, change it here first, then in the code.
 | Languages | `de`, `fr`, `it`, `gsw` (Swiss German, optional) |
 | Time | ISO 8601 in UTC, e.g. `2026-10-09T14:03:00Z` |
 | Scores | Integer 1-5 (1 = weak, 5 = excellent) |
-| Auth | None (local demo, no personal data stored) |
+| Auth | Optional. Without a token everything works as before (guest). With `Authorization: Bearer <token>` (see section 3b) interviews are saved to the user's account. |
 
 ### Error format (all endpoints)
 
@@ -41,6 +41,10 @@ If something changes, change it here first, then in the code.
 | 409 | `WRONG_QUESTION` | `question_id` is not the current question |
 | 409 | `INTERVIEW_NOT_FINISHED` | Report requested too early |
 | 409 | `INTERVIEW_FINISHED` | Answer sent after the end |
+| 409 | `USERNAME_TAKEN` | Registration with an existing username |
+| 401 | `INVALID_CREDENTIALS` | Wrong username or password |
+| 401 | `UNAUTHORIZED` | Missing, invalid or expired token on an endpoint that needs one |
+| 404 | `INTERVIEW_NOT_FOUND` | Saved interview does not exist or belongs to someone else |
 | 502 | `LLM_UNAVAILABLE` | Apertus did not answer or returned garbage |
 | 500 | `INTERNAL_ERROR` | Unexpected backend bug (should not happen) |
 
@@ -61,6 +65,8 @@ Budget check: about 2 calls per answer + 1 for the report -> well below the limi
 If the model returns unusable JSON, the call is retried (max 3 attempts), and every retry counts as a call:
 an answer costs at most 4 (3 analysis + 1 interviewer). In the `candidate_questions` phase an answer costs 1,
 or 0 if the candidate has no more questions. `meta.llm_calls` always shows the real number.
+
+Account endpoints (v1.1, section 3b): `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /me/interviews`, `GET /me/interviews/{session_id}`. No LLM calls.
 
 `POST /chat` also exists, for checking the Apertus connection only (dev, not used by the frontend).
 
@@ -256,6 +262,96 @@ Generated with one LLM call the first time, then cached.
 
 ---
 
+## 3b. Accounts and saved interviews (v1.1)
+
+Optional. A guest can still use everything. A logged-in user gets every interview saved
+(setup, all messages, tips and scores per answer, final report) and can open it again later.
+
+Rules: `username` 3-30 characters (letters, digits, `_`, `.`, `-`, not case-sensitive), `password` at least 8 characters.
+Passwords are stored hashed (scrypt). The token is random, valid for 30 days, and sent as `Authorization: Bearer <token>`.
+Data lives in a SQLite file in a Docker volume (`storage/`). No e-mail address or real name is asked for.
+
+### POST `/auth/register` and POST `/auth/login`
+
+Request: `{ "username": "lara", "password": "geheim1234" }`
+
+Response `201` (register) / `200` (login):
+
+```json
+{ "token": "x7Qe...", "user": { "id": "5b1c...", "username": "lara" } }
+```
+
+### POST `/auth/logout`
+
+Needs a token. Invalidates it. Response `204`, no body.
+
+### GET `/auth/me`
+
+Needs a token. Response: `{ "id": "5b1c...", "username": "lara" }`
+
+### POST `/sessions` with a token
+
+Same request and response as in section 3. If a valid token is sent, the interview is attached to the user.
+An invalid token returns `401 UNAUTHORIZED` (no silent fallback to guest).
+`/answers` and `/report` save automatically when the session belongs to a user.
+
+### GET `/me/interviews`
+
+Needs a token. Newest first.
+
+```json
+{
+  "interviews": [
+    {
+      "session_id": "3f8a2c1e-...",
+      "language": "de",
+      "occupation_id": "informatiker_efz",
+      "interviewer_style": "friendly",
+      "mode": "training",
+      "created_at": "2026-10-10T10:03:00Z",
+      "updated_at": "2026-10-10T10:12:00Z",
+      "done": true,
+      "overall_score": 3.6
+    }
+  ]
+}
+```
+
+`overall_score` is `null` until the report was created.
+
+### GET `/me/interviews/{session_id}`
+
+Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIEW_NOT_FOUND`.
+
+```json
+{
+  "session_id": "3f8a2c1e-...",
+  "language": "de",
+  "occupation_id": "informatiker_efz",
+  "interviewer_style": "friendly",
+  "mode": "training",
+  "candidate": { "first_name": "Lara" },
+  "created_at": "2026-10-10T10:03:00Z",
+  "done": true,
+  "phase": "closing",
+  "progress": { "current": 8, "total": 8 },
+  "current_question_id": null,
+  "history": [
+    { "role": "interviewer", "question_id": "q1", "text": "Grüezi Lara! ..." },
+    { "role": "candidate", "question_id": "q1", "text": "Ich bin Lara, ...",
+      "turn_feedback": { "short_tip": "...", "scores": { "relevance": 4 } } }
+  ],
+  "report": null
+}
+```
+
+- `turn_feedback` is only on `candidate` entries, only in `training`, and can be `null` (same rules as in section 3).
+- `report` has the shape of `GET /sessions/{id}/report`, or `null` if it was not created yet.
+- This is a read-only copy. An unfinished interview can only be continued while the backend still holds the session in memory
+  (it is lost on restart, see README limitations); after a restart it stays readable here.
+
+---
+
 ## 4. Shared enums
 
 **Phases (in order):** `intro` -> `motivation` -> `strengths_weaknesses` -> `situational` -> `candidate_questions` -> `closing`
@@ -278,7 +374,8 @@ Generated with one LLM call the first time, then cached.
 - Judge benchmark format: handled by a separate adapter (CLI) that calls the same core logic. Defined after the Q&A on 8.10.
 - Streaming answers (SSE) - possible v2 if latency feels too slow.
 - Voice input/output - possible v2 (TTS feature).
-- Accounts and persistence beyond the running container.
+- E-mail, password reset, social login, rate limiting.
+- Continuing an unfinished interview after a backend restart.
 
 ## 6. Change log
 
@@ -286,4 +383,5 @@ Generated with one LLM call the first time, then cached.
 |---|---|---|
 | 2026-10-06 | First draft | Iago |
 | 2026-10-06 | Port 8000 (matches backend skeleton), CORS for frontend dev server | Anina |
+| 2026-10-10 | v1.1: optional accounts (`/auth/*`), saved interviews (`/me/interviews`), new error codes. Guest use unchanged, no breaking change. | Anina |
 | 2026-10-09 | Backend implements v1. Clarified: LLM calls incl. JSON retries, `progress` and question ids, `turn_feedback` in `candidate_questions`, `closing_message`, history after the end, how report numbers and `evidence` are made, report errors, dev-only `POST /chat`, CORS origin for the nginx container, `500 INTERNAL_ERROR`. No breaking changes. | Iago |

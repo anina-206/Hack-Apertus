@@ -7,7 +7,7 @@ import time
 import uuid
 from typing import Literal, Optional
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, model_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend import config, llm
+from backend.accounts import AccountError, Store
 from backend.interview.graph import InterviewEngine, position
 from backend.interview.phases import progress
 from backend.interview.report import ReportUnavailable, build_report
@@ -25,12 +26,13 @@ logger = logging.getLogger("api")
 app = FastAPI(title="Schnupper Interview Coach")
 api = APIRouter(prefix="/api/v1")
 engine = InterviewEngine()
+store = Store()  # SQLite file (DB_PATH, default storage/app.db)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:8080"],  # Vite dev server, nginx container
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -47,6 +49,11 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 
 @app.exception_handler(ApiError)
 async def _api_error(_: Request, exc: ApiError):
+    return _error(exc.status, exc.code, exc.message)
+
+
+@app.exception_handler(AccountError)
+async def _account_error(_: Request, exc: AccountError):
     return _error(exc.status, exc.code, exc.message)
 
 
@@ -67,6 +74,29 @@ async def _http_error(_: Request, exc: StarletteHTTPException):
 async def _unexpected_error(_: Request, exc: Exception):
     logger.exception("Unexpected error")
     return _error(500, "INTERNAL_ERROR", "Unexpected error in the backend.")
+
+
+def _bearer(request: Request) -> Optional[str]:
+    header = request.headers.get("Authorization", "")
+    return header[7:].strip() if header.startswith("Bearer ") else None
+
+
+def _require_user(request: Request) -> dict:
+    token = _bearer(request)
+    user = store.user_for_token(token) if token else None
+    if user is None:
+        raise ApiError(401, "UNAUTHORIZED", "Missing, invalid or expired token.")
+    return user
+
+
+def _save(session_id: str, state: dict, turn_feedback: Optional[dict] = None, question_id: Optional[str] = None):
+    """Saves the conversation if the session belongs to a user. A failing save must not break the interview."""
+    user_id = store.owner(session_id)
+    if user_id:
+        try:
+            store.save_interview(session_id, user_id, state, turn_feedback, question_id)
+        except Exception:
+            logger.exception("Could not save interview %s", session_id)
 
 
 async def _llm(coro):
@@ -115,6 +145,11 @@ class AnswerRequest(BaseModel):
     text: str = Field(min_length=1, max_length=4000)
 
 
+class Credentials(BaseModel):
+    username: str = Field(max_length=100)
+    password: str = Field(max_length=200)
+
+
 class ChatRequest(BaseModel):
     message: str = "Hallo! Stell dich bitte kurz vor."
 
@@ -132,7 +167,8 @@ async def get_config() -> dict:
 
 
 @api.post("/sessions", status_code=201)
-async def create_session(req: SessionRequest) -> dict:
+async def create_session(req: SessionRequest, request: Request) -> dict:
+    user = _require_user(request) if _bearer(request) else None  # a bad token is an error, not a silent guest
     llm.start_request()
     session_id = str(uuid.uuid4())
     setup = req.model_dump()
@@ -140,6 +176,8 @@ async def create_session(req: SessionRequest) -> dict:
         setup["candidate"] = {k: v for k, v in setup["candidate"].items() if v}
     state = await _llm(engine.start(session_id, setup))
     question = state["current_question"]
+    if user:
+        store.save_interview(session_id, user["id"], state)
     return {
         "session_id": session_id,
         "phase": position(state).phase,
@@ -168,6 +206,8 @@ async def answer(session_id: str, req: AnswerRequest) -> dict:
     turn_feedback = None
     if state["mode"] == "training" and analysis:
         turn_feedback = {"short_tip": analysis["short_tip"], "scores": analysis["scores"]}
+
+    _save(session_id, state, turn_feedback, req.question_id)
 
     pos = position(state)
     if state.get("done"):
@@ -208,8 +248,48 @@ async def get_report(session_id: str) -> dict:
     except ReportUnavailable as exc:
         raise ApiError(502, "LLM_UNAVAILABLE", str(exc))
     await engine.save_report(session_id, report)
+    _save(session_id, {**state, "report": report})
     logger.info(json.dumps({"event": "report", "session_id": session_id, "llm_calls": llm.calls_in_request()}))
     return report
+
+
+# --- Accounts (docs/api.md section 3b) ---------------------------------------------------------
+
+@api.post("/auth/register", status_code=201)
+async def register(req: Credentials) -> dict:
+    token, user = store.register(req.username, req.password)
+    return {"token": token, "user": user}
+
+
+@api.post("/auth/login")
+async def login(req: Credentials) -> dict:
+    token, user = store.login(req.username, req.password)
+    return {"token": token, "user": user}
+
+
+@api.post("/auth/logout", status_code=204)
+async def logout(request: Request) -> Response:
+    _require_user(request)
+    store.logout(_bearer(request))
+    return Response(status_code=204)
+
+
+@api.get("/auth/me")
+async def me(request: Request) -> dict:
+    return _require_user(request)
+
+
+@api.get("/me/interviews")
+async def my_interviews(request: Request) -> dict:
+    return {"interviews": store.list_interviews(_require_user(request)["id"])}
+
+
+@api.get("/me/interviews/{session_id}")
+async def my_interview(session_id: str, request: Request) -> dict:
+    interview = store.get_interview(_require_user(request)["id"], session_id)
+    if interview is None:
+        raise ApiError(404, "INTERVIEW_NOT_FOUND", "No saved interview with this id.")
+    return interview
 
 
 @api.post("/chat")

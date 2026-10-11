@@ -76,8 +76,8 @@ class ReportDraft(BaseModel):
     """Output of the final report call (texts only; numbers are computed in code)."""
 
     criteria: dict[str, CriterionNote] = {}
-    strengths: list[str]
-    improvements: list[Improvement]
+    strengths: list[str] = []
+    improvements: list[Improvement] = []
 
     @field_validator("criteria", mode="before")
     @classmethod
@@ -90,13 +90,6 @@ class ReportDraft(BaseModel):
     @classmethod
     def _tips_as_objects(cls, raw):
         return [{"tip": item} if isinstance(item, str) else item for item in raw or []]
-
-    @field_validator("strengths", "improvements")
-    @classmethod
-    def _not_empty(cls, value):
-        if not value:
-            raise ValueError("must not be empty")
-        return value
 
 
 def _to_score(value) -> int:
@@ -175,7 +168,7 @@ def parse_analysis(text: str) -> Analysis:
 
 
 async def complete_json(messages: list[dict], model: type[M], purpose: str,
-                        temperature: float = 0.2) -> tuple[M | None, int, str | None]:
+                        temperature: float = 0.2, max_tokens: int | None = None) -> tuple[M | None, int, str | None]:
     """Call the LLM until its output parses as `model`, at most MAX_JSON_ATTEMPTS calls.
 
     Returns (result or None, attempts used, last error).
@@ -194,6 +187,7 @@ async def complete_json(messages: list[dict], model: type[M], purpose: str,
             prompt,
             purpose=purpose if attempt == 1 else f"{purpose}_retry",
             temperature=temperature if attempt == 1 else 0.0,
+            **({"max_tokens": max_tokens} if max_tokens else {}),
         )
         try:
             return parse_json(raw, model), attempt, None
