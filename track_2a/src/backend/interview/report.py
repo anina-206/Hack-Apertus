@@ -67,12 +67,14 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
 
     draft: Optional[ReportDraft]
     draft, _, error = await complete_json(
-        report_messages(occupation or config.occupation_for(state.get("occupation_id"), state.get("posting_id")),
+        report_messages(occupation or config.occupation_for(state.get("occupation_id"), state.get("posting_id"),
+                                                           state.get("occupation_name")),
                         state["language"], scores,
-                        analyses, transcript, config.postings().get(state.get("posting_id") or "")),
+                        analyses, transcript, config.posting_for(state)),
         ReportDraft,
         purpose="report",
         temperature=0.4,
+        max_tokens=2500,
     )
     if draft is None:
         raise ReportUnavailable(f"Report could not be generated: {error}")
@@ -82,6 +84,12 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
         logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing}))
 
     language = state["language"]
+    # The model sometimes forgets a list: fall back to the tips from the per-answer analyses
+    improvements = [i.model_dump() for i in draft.improvements]
+    if not improvements:
+        tips = list(dict.fromkeys(a["short_tip"] for a in analyses if a.get("short_tip")))[:3]
+        improvements = [{"tip": tip, "example_answer": ""} for tip in tips]
+
     criteria = []
     for key in CRITERIA:  # all 11 in rubric order; not observed ones have score None
         note = draft.criteria.get(key) if key in scores else None
@@ -101,7 +109,7 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
         "overall_score": round(mean(scores.values()), 1) if scores else None,
         "criteria": criteria,
         "strengths": draft.strengths,
-        "improvements": [i.model_dump() for i in draft.improvements],
+        "improvements": improvements,
         "next_practice": sorted(means, key=lambda k: means[k])[:2],
         "closing": draft.closing,
         # FHGR rule L3: point to a real person when the interview showed distress.

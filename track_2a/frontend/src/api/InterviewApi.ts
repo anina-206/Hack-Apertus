@@ -1,13 +1,18 @@
 import type {
   AnswerResponse,
+  ApplicationExtract,
   AppConfig,
+  AuthResponse,
   CreateSessionRequest,
   CreateSessionResponse,
+  InterviewListItem,
   Report,
+  SavedInterviewDetail,
   SessionState,
   TranscribeResponse,
   Voice,
   LanguageCode,
+  User,
 } from "./types";
 
 /**
@@ -17,6 +22,8 @@ import type {
  */
 export interface InterviewApi {
   getConfig(): Promise<AppConfig>;
+  /** Reads an uploaded application (PDF, Word or text) and returns its text. Nothing is stored. */
+  extractApplication(file: File): Promise<ApplicationExtract>;
   createSession(req: CreateSessionRequest): Promise<CreateSessionResponse>;
   sendAnswer(sessionId: string, questionId: string, text: string): Promise<AnswerResponse>;
   getSession(sessionId: string): Promise<SessionState>;
@@ -25,4 +32,15 @@ export interface InterviewApi {
   transcribe(audio: Blob, language: LanguageCode): Promise<TranscribeResponse>;
   /** Text to speech: the audio for one interviewer line. Only when config.voice.tts is set. */
   speech(text: string, language: LanguageCode, voice: Voice): Promise<Blob>;
+  // Accounts: with a login the interviews are saved on the backend
+  register(username: string, password: string): Promise<AuthResponse>;
+  login(username: string, password: string): Promise<AuthResponse>;
+  logout(): Promise<void>;
+  me(): Promise<User>;
+  /** Deletes the account with all saved interviews. Needs the password again. */
+  deleteAccount(password: string): Promise<void>;
+  listInterviews(): Promise<InterviewListItem[]>;
+  getSavedInterview(sessionId: string): Promise<SavedInterviewDetail>;
+  /** Deletes one saved interview of the logged-in user. */
+  deleteInterview(sessionId: string): Promise<void>;
 }

@@ -137,6 +137,7 @@ curl -s -X POST localhost:8000/threads/$T/runs/wait -H 'Content-Type: applicatio
 | `src/backend/agent.py` | Graph `agent` for the Agent Protocol (chat in, chat out) |
 | `src/backend/main.py` | FastAPI app: endpoints, error format, CORS |
 | `src/backend/llm.py` | Apertus client (OpenAI-compatible) and LLM call counter |
+| `src/backend/accounts.py` | Accounts, login tokens and saved interviews (SQLite) |
 | `src/backend/config.py` | Setup options (languages, occupations, styles, modes) |
 | `src/backend/interview/graph.py` | LangGraph turn: analysis → interviewer |
 | `src/backend/interview/phases.py` | Phase logic and progress |
@@ -214,16 +215,24 @@ the FHGR feedback rules. Without `JUDGE_NAME` the judge is skipped. The coach it
 ## Limitations
 
 - Sessions are stored in SQLite (`data/sessions/sessions.db`, set by `SESSIONS_DB` in docker-compose) and survive a restart. Without `SESSIONS_DB` (tests, local dev) they are kept in memory.
+- Interviews of logged-in users are also saved as readable copies in SQLite (Docker volume `storage`, `/me/interviews`).
+- Accounts are minimal: username and password only, no e-mail, no password reset. Failed logins are rate limited per IP (in memory; behind a proxy all users share one IP). Users can delete their account. No HTTPS in the demo setup: put a TLS proxy in front for real use.
 - Swiss German (`gsw`) is a beta: the 8B model may mix in Standard German or spell inconsistently.
 - Speech-to-text runs at about real time on a laptop CPU: a 10-second answer takes a few seconds to transcribe.
   `STT_MODEL=small` is faster for French/Italian, at lower accuracy.
 - Mundart is read aloud with a German voice (Piper and Azure have no Swiss German dialect voice).
+- The interviewer only knows the facts of the chosen posting (fictional FHGR companies); it cannot know a real company.
 
 ## Data
 
 `data/` holds only small YAML configuration files (limit: 100 MB). `datasets/` and `fhgr/` are the FHGR
-challenge material (synthetic, fictional persons and companies). No real personal data is stored; the optional
-candidate details (first name, school level, interests) are kept with the session (SQLite / Postgres).
+challenge material (synthetic, fictional persons and companies). Without an account nothing personal is kept
+beyond the running session. If someone creates an account, the username, a password hash and the saved interviews
+(including the optional candidate details: first name, school level, interests) are stored in `storage/app.db`.
+Use fake data in demos.
+
+An uploaded application (PDF, .docx, .txt) is read in memory and summarised with one LLM call at the start of the
+interview; the full text is not stored, only the short summary (without contact data) stays in the session.
 
 ## Hack Apertus
 

@@ -4,6 +4,7 @@
 **/__pycache__
 docs/
 frontend/
+storage/
 fhgr/
 data/models/
 data/sessions/

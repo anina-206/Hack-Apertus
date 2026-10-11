@@ -6,13 +6,6 @@ same things in the same place.
 
 ## Select your track
 
-This repository holds one example project per track:
-
-- `track_1a/`
-- `track_1b/`
-- `track_2a/`
-- `track_2b/`
-
 Keep the directory for the track you are competing in **exactly as it is** —
 don't rename it or move its files — and delete the other track directories.
 That directory is your project root. Keep the files and directories as shown

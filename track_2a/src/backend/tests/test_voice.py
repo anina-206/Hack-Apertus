@@ -96,3 +96,12 @@ def test_config_and_interviewer_voice(api, fake, monkeypatch):
 def test_every_posting_has_a_voice():
     voices = config._interviewer_voices()
     assert sorted(voices["female"] + voices["male"]) == sorted(config.postings())
+
+
+def test_voice_of_a_contact_person_from_the_letter():
+    assert config.contact_voice("Frau Keller", "") == "female"
+    assert config.contact_voice("Herr Brunner", "Berufsbildner") == "male"
+    assert config.contact_voice("Madame Roux", "") == "female"
+    assert config.contact_voice("Luca Rossi", "formatore") == "male"  # from the role
+    assert config.contact_voice("Andrea Meier", "Berufsbildnerin, Logistik") == "female"
+    assert config.contact_voice("Sam Keller", "") == "female"  # nothing to go by: the default

@@ -6,6 +6,7 @@ pyyaml==6.0.3
 langgraph-checkpoint-sqlite==3.1.1
 aegra-cli==0.10.7
 python-multipart==0.0.32
+pypdf==6.20.0
 # Voice (backend/voice): Whisper speech-to-text and Piper text-to-speech, both on the CPU
 faster-whisper==1.2.1
 # faster-whisper 1.2.1 passes an argument that PyAV 19 removed; 15.1 works

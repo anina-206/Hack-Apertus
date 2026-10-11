@@ -2,8 +2,9 @@
 
 For each answer, our analysis call (the same code as in the interview) scores the answer;
 we compare its 1-4 scores with the annotation's criteria_scores, its follow_up flag with
-coach_action == "probe", and its average with the holistic quality_level. `--variant baseline`
-runs a naive one-line prompt instead, to show what our prompt design adds.
+coach_action == "probe", and its average with the holistic quality_level. The default (`pipeline`, same as `fixed`) shows the same expert-scored examples every time. `--variant similar`
+and `--variant mixed` pick examples that fit the question, `--variant no-examples` shows none and `--variant baseline`
+runs a naive one-line prompt. The tested question itself is never used as an example.
 
 Inside the backend container:
     docker compose exec backend python -m eval.bench_answers --sample 120
@@ -18,10 +19,11 @@ from collections import defaultdict
 from statistics import mean
 from typing import Optional
 
+from backend.interview.examples import HELD_OUT_IDS
 from backend.interview.graph import run_analysis
 from backend.interview.parsing import Analysis, complete_json
 from backend.interview.prompts import CRITERIA
-from backend.interview.safety import PROBLEM_FLAGS
+from backend.interview.safety import PROBLEM_FLAGS, REDIRECT_FLAGS, SUPPORT_FLAGS
 from eval import fhgr
 
 
@@ -43,7 +45,12 @@ async def analyse(item: dict, variant: str) -> dict:
         entry = result.model_dump() if result else {"parse_failed": True}
     else:
         entry, attempts = await run_analysis(fhgr.occupation(answer.get("occupation")), answer["lang"], phase,
-                                             question, answer["text"])
+                                             question, answer["text"],
+                                             examples={"pipeline": "fixed", "fixed": "fixed", "basic": "basic", "similar": "similar",
+                                                       "mixed": "mixed"}.get(variant, "none"),
+                                             # the tested question (and answer) is not used as an example
+                                             exclude_questions=frozenset([answer["question_id"]]),
+                                             exclude_answers=frozenset([answer["id"]]))
     record = {"answer_id": answer["id"], "lang": answer["lang"], "answer_class": answer["answer_class"],
               "quality_level": answer["quality_level"], "phase": phase, "attempts": attempts,
               "gold_scores": gold["criteria_scores"], "gold_probe": gold["coach_action"] == "probe",
@@ -99,13 +106,25 @@ def _flag_detection(records: list[dict]) -> dict:
                 "recall": round(tp / (tp + fn), 2) if tp + fn else None}
 
     result = {"any": counts(lambda r: bool(set(r["problem_flags"]) & set(PROBLEM_FLAGS)), lambda r: bool(r.get("flags")))}
-    for flag in ("distress_signal", "manipulation_attempt"):
+    # The flags the interview acts on (support or redirect): this is what matters for the guardrails
+    acting = SUPPORT_FLAGS | REDIRECT_FLAGS
+    result["acting"] = counts(lambda r: bool(set(r["problem_flags"]) & acting), lambda r: bool(set(r.get("flags", [])) & acting))
+    for flag in ("distress_signal", "manipulation_attempt", "off_topic", "inappropriate_tone", "discriminatory"):
         result[flag] = counts(lambda r, f=flag: f in r["problem_flags"], lambda r, f=flag: f in r.get("flags", []))
     return result
 
 
-async def run(sample: Optional[int], variant: str, concurrency: int, log=print) -> dict:
-    items = fhgr.sample(fhgr.answers(), sample, key=lambda a: (a["lang"], a["answer_class"]))
+async def run(sample: Optional[int], variant: str, concurrency: int, log=print, focus: str = "") -> dict:
+    # The answers used as calibration examples in the prompt are left out, otherwise the bench would test on them
+    pool = [a for a in fhgr.answers() if a["id"] not in HELD_OUT_IDS]
+    if focus == "flags":
+        # Every answer the experts flagged for the guardrails, plus `sample` ordinary ones (to see false alarms)
+        acting = SUPPORT_FLAGS | REDIRECT_FLAGS
+        flagged = [a for a in pool if set(fhgr.annotations()[a["id"]]["problem_flags"]) & acting]
+        ordinary = [a for a in pool if a not in flagged]
+        items = flagged + fhgr.sample(ordinary, sample, key=lambda a: (a["lang"], a["answer_class"]))
+    else:
+        items = fhgr.sample(pool, sample, key=lambda a: (a["lang"], a["answer_class"]))
     semaphore = asyncio.Semaphore(concurrency)
     done = 0
 
@@ -125,11 +144,13 @@ async def run(sample: Optional[int], variant: str, concurrency: int, log=print) 
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--sample", type=int, default=120, help="answers to use, spread over language x class (0 = all 706)")
-    parser.add_argument("--variant", default="pipeline", choices=["pipeline", "baseline"])
+    parser.add_argument("--variant", default="pipeline", choices=["pipeline", "fixed", "basic", "similar", "mixed", "no-examples", "baseline"])
     parser.add_argument("--concurrency", type=int, default=4)
+    parser.add_argument("--focus", default="", choices=["", "flags"],
+                        help="flags: all answers the experts flagged for the guardrails plus --sample ordinary ones")
     args = parser.parse_args(argv)
 
-    result = asyncio.run(run(args.sample or None, args.variant, args.concurrency))
+    result = asyncio.run(run(args.sample or None, args.variant, args.concurrency, focus=args.focus))
     out = fhgr.save(f"answers-{args.variant}", result)
     s = result["summary"]
     print(json.dumps({k: s[k] for k in ("answers", "parse_failed", "avg_calls", "scores", "holistic_spearman",

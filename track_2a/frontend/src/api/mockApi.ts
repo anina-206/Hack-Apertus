@@ -7,10 +7,13 @@ import {
   ApiError,
   CRITERIA,
   type AnswerResponse,
+  type ApplicationExtract,
   type AppConfig,
+  type AuthResponse,
   type CreateSessionRequest,
   type CriterionId,
   type HistoryEntry,
+  type User,
   type LanguageCode,
   type Phase,
   type Report,
@@ -34,6 +37,13 @@ const config: AppConfig = {
   interviewer_styles: [
     { id: "friendly", label: { de: "Freundlich", fr: "Bienveillant", it: "Cordiale" } },
     { id: "strict", label: { de: "Streng", fr: "Exigeant", it: "Esigente" } },
+  ],
+  dialects: [
+    { code: "zh", label: { de: "Zürich", fr: "Zurich", it: "Zurigo" } },
+    { code: "be", label: { de: "Bern", fr: "Berne", it: "Berna" } },
+    { code: "bs", label: { de: "Basel", fr: "Bâle", it: "Basilea" } },
+    { code: "gr", label: { de: "Graubünden", fr: "Grisons", it: "Grigioni" } },
+    { code: "vs", label: { de: "Wallis", fr: "Valais", it: "Vallese" } },
   ],
   modes: [
     { id: "training", description: "Short feedback after every answer" },
@@ -268,8 +278,8 @@ export const mockApi: InterviewApi = {
 
   async createSession(req) {
     await fakeDelay();
-    if (!req.language || !req.occupation_id) {
-      throw new ApiError("INVALID_REQUEST", "language and occupation_id are required.");
+    if (!req.language || !(req.occupation_id || req.occupation_name)) {
+      throw new ApiError("INVALID_REQUEST", "language and an occupation are required.");
     }
     const session: MockSession = { request: req, step: 0, done: false, history: [] };
     const sessionId = crypto.randomUUID();
@@ -278,7 +288,15 @@ export const mockApi: InterviewApi = {
     const question = questionAt(session, 0);
     session.history.push({ role: "interviewer", question_id: question.id, text: question.text });
 
-    return { session_id: sessionId, phase: script[0].phase, progress: progress(0), question };
+    return {
+      session_id: sessionId,
+      phase: script[0].phase,
+      progress: progress(0),
+      question,
+      company: null,
+      interviewer: null,
+      application_summary: req.application_text ? "- (Mock) Hobby: Velo fahren" : null,
+    };
   },
 
   async sendAnswer(sessionId, questionId, text): Promise<AnswerResponse> {
@@ -343,7 +361,8 @@ export const mockApi: InterviewApi = {
     return {
       session_id: sessionId,
       language: session.request.language,
-      occupation_id: session.request.occupation_id,
+      occupation_id: session.request.occupation_id ?? "",
+      occupation_name: session.request.occupation_name,
       mode: session.request.mode,
       done: session.done,
       phase: session.done ? "closing" : script[session.step].phase,
@@ -382,5 +401,39 @@ export const mockApi: InterviewApi = {
       closing: r.closing,
       support_note: null,
     };
+  },
+
+  // Accounts: the mock has no real accounts, any login works and nothing is saved
+  async register(username): Promise<AuthResponse> {
+    await fakeDelay();
+    return { token: "mock-token", user: { id: "mock-user", username } };
+  },
+
+  async login(username): Promise<AuthResponse> {
+    await fakeDelay();
+    return { token: "mock-token", user: { id: "mock-user", username } };
+  },
+
+  async extractApplication(file): Promise<ApplicationExtract> {
+    await fakeDelay();
+    return { filename: file.name, text: "Ich heisse Lara und fahre gern Velo.", chars: 36, truncated: false };
+  },
+
+  async logout() {},
+
+  async deleteAccount() {},
+
+  async deleteInterview() {},
+
+  async me(): Promise<User> {
+    return { id: "mock-user", username: "mock" };
+  },
+
+  async listInterviews() {
+    return [];
+  },
+
+  async getSavedInterview() {
+    throw new ApiError("INTERVIEW_NOT_FOUND", "The mock does not save interviews.");
   },
 };
