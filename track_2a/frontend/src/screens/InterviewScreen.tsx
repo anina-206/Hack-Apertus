@@ -4,7 +4,8 @@ import CardAccent from "../components/CardAccent";
 import { ArrowRight, Check, ChevronLeft, Headphones, Mic, Speaker, Stop } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
 import { t, type UiTexts } from "../i18n";
-import { canListen, canSpeak, speak, startListening, stopSpeaking, type ListenError } from "../speech";
+import { canListen, canSpeak } from "../speech";
+import { useVoice } from "../useVoice";
 
 type Props = {
   session: CreateSessionResponse;
@@ -42,19 +43,14 @@ export default function InterviewScreen({ session, language, summary, onRestart,
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [micError, setMicError] = useState<ListenError>(null);
-  const stopListeningRef = useRef<(() => void) | null>(null);
-  const draftRef = useRef(draft);
-  draftRef.current = draft;
 
-  // Voice mode: every new question is read aloud, then the microphone starts by itself.
-  const [voiceMode, setVoiceMode] = useState(() => canSpeak && loadVoiceMode());
-  // Index of the message that is being read aloud right now, or null
-  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
-  // Counts readings. Stopping speech also calls its "finished" callback, so the callback only
-  // acts if its reading is still the current one.
-  const readingRef = useRef(0);
+  const voice = useVoice({
+    language,
+    draft,
+    setDraft,
+    onSend: (answer) => send(answer),
+    onRepeat: () => voice.say(lastInterviewerIndex, messages[lastInterviewerIndex].text, true),
+  });
 
   // Always scroll to the newest message
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -62,30 +58,27 @@ export default function InterviewScreen({ session, language, summary, onRestart,
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  // Stop voice features when leaving the screen
-  useEffect(
-    () => () => {
-      readingRef.current++;
-      stopListeningRef.current?.();
-      stopSpeaking();
-    },
-    [],
-  );
-
-  // In voice mode, read each new interviewer message aloud (also the first question).
+  // Hands-free: read each new interviewer message aloud (in training mode with the tip first),
+  // then listen for the answer.
   const lastInterviewerIndex = messages.findLastIndex((m) => m.role === "interviewer");
   useEffect(() => {
-    if (voiceMode && lastInterviewerIndex >= 0) readAloud(lastInterviewerIndex, !done);
-    // Only when a new question arrives, not when voice mode is switched on
+    if (voice.handsFree && lastInterviewerIndex >= 0) voice.say(lastInterviewerIndex, spokenText(), !done);
+    // Only when a new message arrives, not on every render
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastInterviewerIndex]);
 
-  async function send() {
-    const answer = draft.trim();
+  /** The newest interviewer message as it is read aloud: the tip of the last answer, then the question. */
+  function spokenText() {
+    const question = messages[lastInterviewerIndex].text;
+    const tip = messages[lastInterviewerIndex - 1]?.tip;
+    return tip ? `${text.tip}: ${withFullStop(tip)} ${question}` : question;
+  }
+
+  async function send(answerText = draft) {
+    const answer = answerText.trim();
     if (!answer || !questionId || sending) return;
 
-    stopListeningRef.current?.();
-    stopReading();
+    voice.stopAll();
 
     // Show the answer immediately, then wait for the interviewer
     setMessages((m) => [...m, { role: "candidate", text: answer }]);
@@ -120,62 +113,13 @@ export default function InterviewScreen({ session, language, summary, onRestart,
     }
   }
 
-  function startMic() {
-    if (!canListen || stopListeningRef.current) return;
-    stopReading();
-    // Dictated text is added to what is already in the input field
-    const base = draftRef.current.trim();
-    setListening(true);
-    setMicError(null);
-    stopListeningRef.current = startListening(
-      language,
-      (spoken) => setDraft(base ? `${base} ${spoken}` : spoken),
-      (problem) => {
-        setListening(false);
-        setMicError(problem);
-        stopListeningRef.current = null;
-      },
-    );
-  }
-
-  function toggleMic() {
-    if (listening) stopListeningRef.current?.();
-    else startMic();
-  }
-
-  /** Reads message `index` aloud. With `thenListen`, the microphone starts when reading is done. */
-  function readAloud(index: number, thenListen = false) {
-    stopListeningRef.current?.();
-    const reading = ++readingRef.current;
-    setSpeakingIndex(index);
-    speak(messages[index]?.text ?? "", language, () => {
-      if (readingRef.current !== reading) return; // stopped or replaced by a newer reading
-      setSpeakingIndex(null);
-      if (thenListen) startMic();
-    });
-  }
-
-  function stopReading() {
-    readingRef.current++;
-    setSpeakingIndex(null);
-    stopSpeaking();
-  }
-
-  function toggleVoiceMode() {
-    const on = !voiceMode;
-    setVoiceMode(on);
-    saveVoiceMode(on);
-    if (on && lastInterviewerIndex >= 0 && !done) readAloud(lastInterviewerIndex, true);
-    if (!on) {
-      stopReading();
-      stopListeningRef.current?.();
-    }
+  function toggleHandsFree() {
+    if (voice.toggleHandsFree() && !done) voice.say(lastInterviewerIndex, spokenText(), true);
   }
 
   function handleEnd() {
     if (window.confirm(text.endConfirm)) {
-      stopListeningRef.current?.();
-      stopReading();
+      voice.stopAll();
       onRestart();
     }
   }
@@ -202,12 +146,12 @@ export default function InterviewScreen({ session, language, summary, onRestart,
           </h1>
           {canSpeak && (
             <button
-              onClick={toggleVoiceMode}
-              aria-pressed={voiceMode}
+              onClick={toggleHandsFree}
+              aria-pressed={voice.handsFree}
               aria-label={text.voiceMode}
               title={text.voiceMode}
               className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
-                voiceMode ? "border-logo-yellow bg-logo-yellow text-charcoal" : "border-white/80 hover:bg-white/10"
+                voice.handsFree ? "border-logo-yellow bg-logo-yellow text-charcoal" : "border-white/80 hover:bg-white/10"
               }`}
             >
               <Headphones />
@@ -261,8 +205,8 @@ export default function InterviewScreen({ session, language, summary, onRestart,
             interviewer={interviewer}
             showName={i === 0}
             showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
-            speaking={speakingIndex === i}
-            onReadAloud={() => (speakingIndex === i ? stopReading() : readAloud(i))}
+            speaking={voice.speakingKey === i}
+            onReadAloud={() => (voice.speakingKey === i ? voice.stopReading() : voice.say(i, msg.text))}
           />
         ))}
 
@@ -291,10 +235,22 @@ export default function InterviewScreen({ session, language, summary, onRestart,
       {!done && (
         <footer className="border-t border-line bg-white px-4 pt-3 pb-3">
           {error && <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">{text.error}</p>}
-          {micError && (
+          {voice.micError && (
             <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">
-              {micError === "not-allowed" ? text.micDenied : text.micError}
+              {voice.micError === "not-allowed" ? text.micDenied : text.micError}
             </p>
+          )}
+          {voice.handsFree && !sending && (
+            <HandsFreeBar
+              text={text}
+              speaker={interviewer.name}
+              speaking={voice.speakingKey !== null}
+              listening={voice.listening}
+              countdown={voice.countdown}
+              paused={voice.paused}
+              onSkip={voice.skipReading}
+              onHold={voice.hold}
+            />
           )}
           <form
             onSubmit={(e) => {
@@ -306,6 +262,8 @@ export default function InterviewScreen({ session, language, summary, onRestart,
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              // Typing in hands-free mode stops listening and auto-sending
+              onFocus={voice.hold}
               onKeyDown={(e) => {
                 // Enter sends, Shift+Enter makes a new line
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -320,11 +278,11 @@ export default function InterviewScreen({ session, language, summary, onRestart,
             {canListen && (
               <button
                 type="button"
-                onClick={toggleMic}
+                onClick={voice.toggleMic}
                 aria-label={text.voiceInput}
-                aria-pressed={listening}
+                aria-pressed={voice.listening}
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                  listening ? "animate-pulse border-logo-red bg-logo-red text-white" : "border-line bg-white text-charcoal"
+                  voice.listening ? "animate-pulse border-logo-red bg-logo-red text-white" : "border-line bg-white text-charcoal"
                 }`}
               >
                 <Mic />
@@ -340,7 +298,13 @@ export default function InterviewScreen({ session, language, summary, onRestart,
             </button>
           </form>
           <p className="mt-2 text-center text-xs text-charcoal-soft">
-            {listening ? (language === "gsw" ? text.mundartListening : text.listeningHint) : voiceMode ? text.voiceModeHint : text.inputHint}
+            {voice.listening && language === "gsw"
+              ? text.mundartListening
+              : voice.handsFree
+                ? text.voiceModeHint
+                : voice.listening
+                  ? text.listeningHint
+                  : text.inputHint}
           </p>
         </footer>
       )}
@@ -442,21 +406,76 @@ function Message({
   );
 }
 
-// The voice-mode switch is remembered in this browser. Storage can be blocked, so both are guarded.
-const VOICE_MODE_KEY = "coach.voiceMode";
 
-function loadVoiceMode() {
-  try {
-    return localStorage.getItem(VOICE_MODE_KEY) === "on";
-  } catch {
-    return false;
-  }
+/** "Gut gemacht" -> "Gut gemacht." so that reading aloud pauses before the question. */
+function withFullStop(sentence: string) {
+  return /[.!?…]$/.test(sentence.trim()) ? sentence.trim() : `${sentence.trim()}.`;
 }
 
-function saveVoiceMode(on: boolean) {
-  try {
-    localStorage.setItem(VOICE_MODE_KEY, on ? "on" : "off");
-  } catch {
-    // not saved, the switch still works for this interview
+/** Hands-free status above the input: who speaks, listening, or the countdown before sending. */
+function HandsFreeBar({
+  text,
+  speaker,
+  speaking,
+  listening,
+  countdown,
+  paused,
+  onSkip,
+  onHold,
+}: {
+  text: UiTexts;
+  speaker: string;
+  speaking: boolean;
+  listening: boolean;
+  countdown: number | null;
+  paused: boolean;
+  onSkip: () => void;
+  onHold: () => void;
+}) {
+  const box = "mb-2 flex items-center gap-3 rounded-xl px-3 py-2 text-sm";
+  const action = "shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold";
+
+  if (speaking) {
+    return (
+      <div className={`${box} bg-brand-lighter text-brand`} role="status">
+        <Speaker className="h-4 w-4 shrink-0" />
+        <span className="flex-1">
+          {speaker} {text.speakingNow}
+        </span>
+        <button type="button" onClick={onSkip} className={`${action} border-brand`}>
+          {text.skip}
+        </button>
+      </div>
+    );
   }
+  if (listening && countdown !== null) {
+    return (
+      <div className={`${box} relative overflow-hidden bg-mint-lighter text-mint-dark`} role="status">
+        {/* Fills up during the pause; when full, the answer is sent */}
+        <div className="absolute inset-y-0 left-0 bg-logo-teal/25" style={{ width: `${Math.round(countdown * 100)}%` }} />
+        <ArrowRight className="relative h-4 w-4 shrink-0" />
+        <span className="relative flex-1">{text.sendingSoon}</span>
+        <button type="button" onClick={onHold} className={`${action} relative border-mint-dark`}>
+          {text.wait}
+        </button>
+      </div>
+    );
+  }
+  if (listening) {
+    return (
+      <div className={`${box} bg-danger-lighter text-logo-red`} role="status">
+        <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-logo-red" />
+        <span className="flex-1 text-charcoal">{text.listenNow}</span>
+      </div>
+    );
+  }
+  if (paused) {
+    return (
+      <div className={`${box} bg-page text-charcoal-soft`} role="status">
+        <Mic className="h-4 w-4 shrink-0" />
+        <span className="flex-1">{text.handsFreePaused}</span>
+      </div>
+    );
+  }
+  return null;
 }

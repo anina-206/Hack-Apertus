@@ -46,23 +46,11 @@ export type LocalizedLabel = Partial<Record<LanguageCode, string>>;
 
 // ---------- GET /config ----------
 
-/** One of the 30 FHGR apprenticeship postings: an occupation at a company. */
-export type Posting = {
-  id: string;
-  /** Language the posting is written in (any posting works in any interview language) */
-  lang: LanguageCode;
-  occupation: string;
-  occupation_label: LocalizedLabel;
-  company: string;
-  place: string;
-};
-
 export type AppConfig = {
   languages: { code: LanguageCode; label: string }[];
   occupations: { id: string; label: LocalizedLabel }[];
   interviewer_styles: { id: InterviewerStyle; label: LocalizedLabel }[];
   modes: { id: Mode; description: string }[];
-  postings?: Posting[];
 };
 
 // ---------- POST /sessions ----------
@@ -75,8 +63,7 @@ export type Candidate = {
 
 export type CreateSessionRequest = {
   language: LanguageCode;
-  /** Needed unless posting_id is given (then the posting's occupation is used) */
-  occupation_id?: string;
+  occupation_id: string;
   interviewer_style: InterviewerStyle;
   mode: Mode;
   candidate?: Candidate;

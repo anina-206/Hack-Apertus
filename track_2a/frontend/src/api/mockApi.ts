@@ -39,13 +39,6 @@ const config: AppConfig = {
     { id: "training", description: "Short feedback after every answer" },
     { id: "rehearsal", description: "Realistic, feedback only at the end" },
   ],
-  // A few of the 30 FHGR postings
-  postings: [
-    { id: "P-11", lang: "de", occupation: "Informatiker/in EFZ", occupation_label: { de: "Informatiker/in EFZ", fr: "informaticien/ne CFC", it: "informatico/a AFC" }, company: "Limmatcode GmbH", place: "Zürich" },
-    { id: "P-22", lang: "de", occupation: "Schreiner/in EFZ", occupation_label: { de: "Schreiner/in EFZ", fr: "ébéniste CFC / menuisier/ère CFC", it: "falegname AFC" }, company: "Schreinerei Casanova & Derungs", place: "Ilanz" },
-    { id: "P-04", lang: "fr", occupation: "Kaufmann/-frau EFZ", occupation_label: { de: "Kaufmann/-frau EFZ", fr: "employé/e de commerce CFC", it: "impiegato/a di commercio AFC" }, company: "Léman Horizons Voyages SA", place: "Lausanne" },
-    { id: "P-13", lang: "it", occupation: "Koch/Köchin EFZ", occupation_label: { de: "Koch/Köchin EFZ", fr: "cuisinier/ère CFC", it: "cuoco/a AFC" }, company: "Hotel Ristorante Lago Verbano SA", place: "Locarno" },
-  ],
 };
 
 // 8 questions per language, in interview order. "{name}" is replaced by the first name.
@@ -275,10 +268,9 @@ export const mockApi: InterviewApi = {
 
   async createSession(req) {
     await fakeDelay();
-    if (!req.language || !(req.occupation_id || req.posting_id)) {
-      throw new ApiError("INVALID_REQUEST", "language and occupation_id or posting_id are required.");
+    if (!req.language || !req.occupation_id) {
+      throw new ApiError("INVALID_REQUEST", "language and occupation_id are required.");
     }
-    const posting = config.postings?.find((p) => p.id === req.posting_id);
     const session: MockSession = { request: req, step: 0, done: false, history: [] };
     const sessionId = crypto.randomUUID();
     sessions.set(sessionId, session);
@@ -286,14 +278,7 @@ export const mockApi: InterviewApi = {
     const question = questionAt(session, 0);
     session.history.push({ role: "interviewer", question_id: question.id, text: question.text });
 
-    return {
-      session_id: sessionId,
-      phase: script[0].phase,
-      progress: progress(0),
-      question,
-      company: posting ? { name: posting.company, place: posting.place } : null,
-      interviewer: null,
-    };
+    return { session_id: sessionId, phase: script[0].phase, progress: progress(0), question };
   },
 
   async sendAnswer(sessionId, questionId, text): Promise<AnswerResponse> {
@@ -349,7 +334,7 @@ export const mockApi: InterviewApi = {
     return {
       session_id: sessionId,
       language: session.request.language,
-      occupation_id: session.request.occupation_id ?? session.request.posting_id ?? "",
+      occupation_id: session.request.occupation_id,
       mode: session.request.mode,
       done: session.done,
       phase: session.done ? "closing" : script[session.step].phase,

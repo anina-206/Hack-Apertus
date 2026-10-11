@@ -395,8 +395,7 @@ def test_explicit_posting_and_unknown_posting(fake, api):
     assert start(api, posting_id="P-22")["company"]["name"] == "Schreinerei Casanova & Derungs"
     resp = api.post("/api/v1/sessions", json={**SETUP, "posting_id": "P-99"})
     assert resp.status_code == 400 and "posting_id" in resp.json()["error"]["message"]
-    p11 = next(p for p in api.get("/api/v1/config").json()["postings"] if p["id"] == "P-11")
-    assert p11["occupation_label"] == {"de": "Informatiker/in EFZ", "fr": "informaticien/ne CFC", "it": "informatico/a AFC"}
+    assert any(p["id"] == "P-11" for p in api.get("/api/v1/config").json()["postings"])
 
 
 def test_company_facts_in_analysis_and_candidate_answers(fake, api):

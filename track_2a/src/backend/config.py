@@ -67,6 +67,5 @@ def public_config() -> dict:
         "interviewer_styles": [{"id": s["id"], "label": s["label"]} for s in interviewer_styles().values()],
         "modes": MODES,
         "postings": [{"id": p["id"], "lang": p["lang"], "occupation": p["occupation"]["name_de"],
-                      "occupation_label": {k: p["occupation"].get(f"name_{k}") for k in ("de", "fr", "it")},
                       "company": p["company"]["name"], "place": p["company"]["place"]} for p in postings().values()],
     }
