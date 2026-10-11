@@ -28,6 +28,11 @@ export default function App() {
   // Settings of the interview that was just started, for "practise this" (not known for opened old ones)
   const [lastRequest, setLastRequest] = useState<CreateSessionRequest | null>(null);
 
+  // Screen readers pronounce the page in this language (Mundart: Swiss German)
+  useEffect(() => {
+    document.documentElement.lang = language === "gsw" ? "de-CH" : language;
+  }, [language]);
+
   // A stored login can be expired: ask the backend once and forget it if it says no
   useEffect(() => {
     if (!user) return;

@@ -98,8 +98,8 @@ const RecognitionClass: (new () => Recognition) | undefined =
 
 export const canListen = RecognitionClass !== undefined;
 
-/** Why dictation stopped: normally (null), no microphone permission, or another problem. */
-export type ListenError = "not-allowed" | "other" | null;
+/** Why dictation stopped: normally (null), no microphone permission, nothing understood, or another problem. */
+export type ListenError = "not-allowed" | "nothing" | "other" | null;
 
 /**
  * Starts dictation. `onText` gets everything spoken so far, `onEnd` is called when it stops.

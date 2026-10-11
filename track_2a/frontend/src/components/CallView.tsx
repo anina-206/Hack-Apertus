@@ -31,6 +31,8 @@ type Props = {
   onHold: () => void;
   onResume: () => void;
   onShowChat: () => void;
+  /** A microphone problem to show (permission, nothing understood, …) */
+  error?: string | null;
 };
 
 const reducedMotion = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -54,6 +56,11 @@ export default function CallView(props: Props) {
         </p>
       )}
       <p className="mt-4 max-w-sm text-xl leading-snug font-medium">{question}</p>
+      {props.error && (
+        <p role="alert" className="mt-4 max-w-sm rounded-xl bg-danger-lighter px-4 py-2 text-sm text-danger">
+          {props.error}
+        </p>
+      )}
 
       {/* The candidate's side */}
       <div className="mt-auto flex w-full max-w-sm flex-col items-center pt-8">
@@ -223,9 +230,14 @@ function CountdownRing({ value, label }: { value: number; label: string }) {
 
 function ThinkingDots({ label }: { label: string }) {
   return (
-    <div className="mb-2 flex items-center gap-1.5" aria-label={label}>
+    <div className="mb-2 flex items-center gap-1.5" role="status">
+      <span className="sr-only">{label}</span>
       {["bg-logo-red", "bg-logo-yellow", "bg-logo-blue"].map((color, i) => (
-        <span key={color} className={`h-2.5 w-2.5 animate-bounce rounded-full ${color}`} style={{ animationDelay: `${i * 150}ms` }} />
+        <span
+          key={color}
+          className={`h-2.5 w-2.5 animate-dot rounded-full motion-reduce:animate-none ${color}`}
+          style={{ animationDelay: `${i * 150}ms` }}
+        />
       ))}
     </div>
   );

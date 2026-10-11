@@ -14,7 +14,7 @@ type Props = {
 };
 
 const inputClass =
-  "w-full rounded-full border-2 border-line bg-white px-5 py-3.5 text-base text-charcoal placeholder:text-charcoal/40 focus:border-brand focus:outline-none";
+  "w-full rounded-full border-2 border-line bg-white px-5 py-3.5 text-base text-charcoal placeholder:text-charcoal/40 focus:border-brand focus:ring-4 focus:ring-brand/20 focus:outline-none";
 
 export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
   const text = t(language);
@@ -60,7 +60,7 @@ export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
           <button
             onClick={onCancel}
             aria-label={text.back}
-            className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10"
+            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10"
           >
             <ChevronLeft />
           </button>
@@ -113,7 +113,7 @@ export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
               setCreating(!creating);
               setError(null);
             }}
-            className="block w-full text-center text-sm font-bold text-brand"
+            className="block min-h-11 w-full text-center text-sm font-bold text-brand-dark"
           >
             {creating ? text.haveAccount : text.noAccountYet}
           </button>
