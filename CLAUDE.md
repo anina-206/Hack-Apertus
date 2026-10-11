@@ -26,6 +26,8 @@ Zur Laufzeit wird nur Apertus 1.5 8B verwendet. Claude wird nur für die Entwick
 
 Interview-Phasen: Einstieg → Motivation → Stärken/Schwächen → Situationsfragen → Kandidatenfragen → Abschluss (`closing`) → Feedback-Report
 
+Die Original-Challenge (Bewertungskriterien, Deliverables, Gate) steht in **`track_2a/docs/challenge.md`**.
+
 ## Daten-Vertrag
 Single source of truth: **`track_2a/docs/api.md`** (von Iago, Backend). Bei Änderungen zuerst dort anpassen.
 Die TS-Typen dazu stehen in `track_2a/frontend/src/api/types.ts` (Keys in snake_case wie im Backend).

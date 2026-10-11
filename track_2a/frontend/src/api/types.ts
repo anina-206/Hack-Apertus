@@ -39,6 +39,8 @@ export const CRITERIA = [
 export type CriterionId = (typeof CRITERIA)[number];
 
 export type Mode = "training" | "rehearsal";
+/** Dialect of the interviewer for language "gsw": Zürich, Bern, Basel, Graubünden, Wallis */
+export type Dialect = "zh" | "be" | "bs" | "gr" | "vs";
 export type InterviewerStyle = "friendly" | "strict";
 
 /** A text in several languages, e.g. { de: "Freundlich", fr: "Bienveillant" } */
@@ -51,6 +53,7 @@ export type AppConfig = {
   occupations: { id: string; label: LocalizedLabel }[];
   interviewer_styles: { id: InterviewerStyle; label: LocalizedLabel }[];
   modes: { id: Mode; description: string }[];
+  dialects?: { code: Dialect; label: LocalizedLabel }[];
 };
 
 // ---------- POST /sessions ----------
@@ -63,14 +66,24 @@ export type Candidate = {
 
 export type CreateSessionRequest = {
   language: LanguageCode;
-  occupation_id: string;
+  /** One of GET /config. Either this or `occupation_name` is set. */
+  occupation_id?: string;
+  /** Any other apprenticeship by name, e.g. "Koch/Köchin EFZ" (no company) */
+  occupation_name?: string;
+  /** Only for language "gsw": the dialect the interviewer writes in (default zh) */
+  dialect?: Dialect;
   interviewer_style: InterviewerStyle;
   mode: Mode;
   candidate?: Candidate;
+  /** Text of the application letter (uploaded, from POST /application/extract, or pasted) */
+  application_text?: string;
   posting_id?: string;
   /** Criteria the new round should practise, e.g. the last report's next_practice */
   focus?: CriterionId[];
 };
+
+/** POST /application/extract */
+export type ApplicationExtract = { filename: string; text: string; chars: number; truncated: boolean };
 
 export type Progress = { current: number; total: number };
 
@@ -90,6 +103,8 @@ export type CreateSessionResponse = {
   /** The FHGR posting's company and interviewer (null in the mock) */
   company?: { name: string; place: string } | null;
   interviewer?: { name: string; role: string } | null;
+  /** Bullet points from the uploaded application (null if none, or if it could not be read) */
+  application_summary?: string | null;
 };
 
 // ---------- POST /sessions/{id}/answers ----------
@@ -125,6 +140,7 @@ export type SessionState = {
   session_id: string;
   language: LanguageCode;
   occupation_id: string;
+  occupation_name?: string | null;
   mode: Mode;
   done: boolean;
   phase: Phase;
@@ -155,6 +171,48 @@ export type Report = {
   support_note?: string | null; // where to get help, only if the interview showed distress
 };
 
+// ---------- Accounts (docs/api.md section 3b) ----------
+
+export type User = { id: string; username: string };
+export type AuthResponse = { token: string; user: User };
+
+/** One row of GET /me/interviews. */
+export type InterviewListItem = {
+  session_id: string;
+  language: LanguageCode;
+  occupation_id: string;
+  occupation_name?: string | null;
+  interviewer_style: InterviewerStyle;
+  mode: Mode;
+  created_at: string;
+  updated_at: string;
+  done: boolean;
+  overall_score: number | null;
+};
+
+/** GET /me/interviews/{id}: the whole saved conversation. */
+export type SavedInterviewDetail = {
+  session_id: string;
+  language: LanguageCode;
+  occupation_id: string;
+  occupation_name?: string | null;
+  interviewer_style: InterviewerStyle;
+  mode: Mode;
+  candidate?: Candidate | null;
+  created_at: string;
+  done: boolean;
+  phase: Phase;
+  progress: Progress;
+  current_question_id: string | null;
+  company?: { name: string; place: string } | null;
+  interviewer?: { name: string; role: string } | null;
+  history: (Omit<HistoryEntry, "question_id"> & {
+    question_id: string | null;
+    turn_feedback?: TurnFeedback | null;
+  })[];
+  report: Report | null;
+};
+
 // ---------- Errors ----------
 
 export type ApiErrorCode =
@@ -163,6 +221,12 @@ export type ApiErrorCode =
   | "WRONG_QUESTION"
   | "INTERVIEW_NOT_FINISHED"
   | "INTERVIEW_FINISHED"
+  | "INTERNAL_ERROR"
+  | "USERNAME_TAKEN"
+  | "INVALID_CREDENTIALS"
+  | "UNAUTHORIZED"
+  | "INTERVIEW_NOT_FOUND"
+  | "TOO_MANY_REQUESTS"
   | "LLM_UNAVAILABLE"
   | "NETWORK_ERROR"; // frontend only: backend not reachable
 

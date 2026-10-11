@@ -1,42 +1,33 @@
 import { useEffect, useRef, useState } from "react";
-import { api, PHASES, type CreateSessionResponse, type LanguageCode, type Phase } from "../api";
+import { api, PHASES, type Phase } from "../api";
 import CardAccent from "../components/CardAccent";
 import { ArrowRight, Check, ChevronLeft, Mic, Speaker } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
+import type { ChatMessage, SavedInterview } from "../history";
 import { t, type UiTexts } from "../i18n";
 import { canListen, canSpeak, speak, startListening, stopSpeaking } from "../speech";
 
 type Props = {
-  session: CreateSessionResponse;
-  language: LanguageCode;
-  /** Line under the title, e.g. "Schreiner/in EFZ · Deutsch · Training" */
-  summary: string;
+  /** The interview to show: a new one, or a saved one that is continued or only read. */
+  entry: SavedInterview;
   onRestart: () => void;
   /** Called when the interview is over and the candidate wants to see the feedback report. */
   onFinished: () => void;
 };
 
-/** One bubble in the chat. `tip` is the short feedback after an answer (training mode). */
-type ChatMessage = {
-  role: "interviewer" | "candidate";
-  text: string;
-  tip?: string;
-};
-
-export default function InterviewScreen({ session, language, summary, onRestart, onFinished }: Props) {
+export default function InterviewScreen({ entry, onRestart, onFinished }: Props) {
+  const { language, summary } = entry;
   const text = t(language);
 
   // The posting's interviewer (real backend) or the default persona from the UI texts (mock)
-  const interviewer: Interviewer = session.interviewer
-    ? { ...session.interviewer, initials: initialsOf(session.interviewer.name) }
+  const interviewer: Interviewer = entry.interviewer
+    ? { ...entry.interviewer, initials: initialsOf(entry.interviewer.name) }
     : { name: text.interviewerName, role: text.interviewerRole, initials: text.interviewerInitials };
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "interviewer", text: session.question.text },
-  ]);
-  const [questionId, setQuestionId] = useState<string | null>(session.question.id);
-  const [phase, setPhase] = useState<Phase>(session.phase);
-  const [done, setDone] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(entry.messages);
+  const [questionId, setQuestionId] = useState<string | null>(entry.question_id);
+  const [phase, setPhase] = useState<Phase>(entry.phase);
+  const [done, setDone] = useState(entry.done);
 
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -73,7 +64,7 @@ export default function InterviewScreen({ session, language, summary, onRestart,
     setError(false);
 
     try {
-      const res = await api.sendAnswer(session.session_id, questionId, answer);
+      const res = await api.sendAnswer(entry.session_id, questionId, answer);
 
       setMessages((m) => {
         const updated = [...m];
@@ -150,7 +141,7 @@ export default function InterviewScreen({ session, language, summary, onRestart,
           </button>
         </div>
         <p className="mt-2 text-base text-white/90">
-          {session.company ? `${summary} · ${session.company.name}` : summary}
+          {entry.company ? `${summary} · ${entry.company.name}` : summary}
         </p>
       </header>
 
@@ -180,13 +171,22 @@ export default function InterviewScreen({ session, language, summary, onRestart,
 
       {/* Messages */}
       <main className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
+        {entry.application_summary && (
+          <details className="rounded-2xl bg-white px-4 py-3 text-sm shadow-card">
+            <summary className="cursor-pointer font-bold text-brand">{text.applicationCardTitle}</summary>
+            <p className="mt-2 whitespace-pre-wrap text-charcoal-soft">{entry.application_summary}</p>
+          </details>
+        )}
+        {entry.application_failed && (
+          <p className="rounded-xl bg-danger-lighter px-4 py-3 text-sm text-danger">{text.applicationFailed}</p>
+        )}
+
         {messages.map((msg, i) => (
           <Message
             key={i}
             message={msg}
             text={text}
             interviewer={interviewer}
-            showName={i === 0}
             showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
             onReadAloud={() => speak(msg.text, language)}
           />
@@ -299,14 +299,12 @@ function Message({
   message,
   text,
   interviewer,
-  showName,
   showReadAloud,
   onReadAloud,
 }: {
   message: ChatMessage;
   text: UiTexts;
   interviewer: Interviewer;
-  showName: boolean;
   showReadAloud: boolean;
   onReadAloud: () => void;
 }) {
@@ -337,11 +335,10 @@ function Message({
     <div className="flex items-start gap-3">
       <Avatar initials={interviewer.initials} />
       <div className="min-w-0 max-w-[78%]">
-        {showName && (
-          <p className="mb-1 text-xs text-charcoal-soft">
-            {interviewer.name} · {interviewer.role}
-          </p>
-        )}
+        <p className="mb-1 text-xs text-charcoal-soft">
+          {interviewer.name}
+          {interviewer.role && ` · ${interviewer.role}`}
+        </p>
         <div className="rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3 text-lg leading-snug whitespace-pre-wrap shadow-sm">
           {message.text}
         </div>

@@ -5,3 +5,5 @@ langgraph==1.2.14
 pyyaml==6.0.3
 langgraph-checkpoint-sqlite==3.1.1
 aegra-cli==0.10.7
+pypdf==6.20.0
+python-multipart==0.0.32

@@ -4,6 +4,7 @@ Runs standalone (uvicorn backend.main:app) or as the custom app inside Aegra (ae
 which then adds the Agent Protocol routes (/threads, /runs, ...) for the graph `agent` (agent.py).
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -13,7 +14,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal, Optional
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request, Response, UploadFile
 from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +23,8 @@ from pydantic import BaseModel, Field, model_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend import config, llm
+from backend.accounts import AccountError, Limits, Store
+from backend.interview import application, dialect
 from backend.interview.graph import InterviewEngine, position
 from backend.interview.phases import progress
 from backend.interview.prompts import CRITERIA
@@ -52,14 +55,16 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Schnupper Interview Coach", lifespan=lifespan)
 api = APIRouter(prefix="/api/v1")
+store = Store()  # SQLite file (DB_PATH, default storage/app.db)
+limits = Limits()  # rate limits for login and registration
 
 # Inside Aegra (AEGRA_CONFIG is set) Aegra adds CORS itself, from aegra.json "http.cors".
 if not os.environ.get("AEGRA_CONFIG"):
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173", "http://localhost:8080"],  # Vite dev server, nginx container
-        allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_methods=["GET", "POST", "DELETE"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
 
@@ -82,6 +87,14 @@ async def _api_error(_: Request, exc: ApiError):
 def _ours(request: Request) -> bool:
     """Our error format only for our API; Aegra's routes keep FastAPI's default format."""
     return request.url.path.startswith("/api/v1")
+
+
+@app.exception_handler(AccountError)
+async def _account_error(_: Request, exc: AccountError):
+    response = _error(exc.status, exc.code, exc.message)
+    if exc.retry_after:
+        response.headers["Retry-After"] = str(exc.retry_after)
+    return response
 
 
 @app.exception_handler(RequestValidationError)
@@ -107,6 +120,29 @@ async def _unexpected_error(request: Request, exc: Exception):
     if not _ours(request):
         return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
     return _error(500, "INTERNAL_ERROR", "Unexpected error in the backend.")
+
+
+def _bearer(request: Request) -> Optional[str]:
+    header = request.headers.get("Authorization", "")
+    return header[7:].strip() if header.startswith("Bearer ") else None
+
+
+def _require_user(request: Request) -> dict:
+    token = _bearer(request)
+    user = store.user_for_token(token) if token else None
+    if user is None:
+        raise ApiError(401, "UNAUTHORIZED", "Missing, invalid or expired token.")
+    return user
+
+
+def _save(session_id: str, state: dict, turn_feedback: Optional[dict] = None, question_id: Optional[str] = None):
+    """Saves the conversation if the session belongs to a user. A failing save must not break the interview."""
+    user_id = store.owner(session_id)
+    if user_id:
+        try:
+            store.save_interview(session_id, user_id, state, turn_feedback, question_id)
+        except Exception:
+            logger.exception("Could not save interview %s", session_id)
 
 
 async def _llm(coro):
@@ -136,19 +172,24 @@ class Candidate(BaseModel):
 
 class SessionRequest(BaseModel):
     language: Literal["de", "fr", "it", "gsw"]
-    occupation_id: Optional[str] = None  # one of data/occupations.yaml; optional if posting_id is given
+    occupation_id: Optional[str] = None  # one of data/occupations.yaml; optional if posting_id or occupation_name is given
+    occupation_name: Optional[str] = Field(default=None, max_length=100)  # any other apprenticeship, free text
     interviewer_style: str = "friendly"
     mode: Literal["training", "rehearsal"] = "training"
+    dialect: Optional[str] = None  # only for language "gsw": zh, be, bs, gr or vs (default zh)
     candidate: Optional[Candidate] = None
+    application_text: Optional[str] = Field(default=None, max_length=application.MAX_TEXT_CHARS)  # from /application/extract
     posting_id: Optional[str] = None  # FHGR posting (company); default per occupation and language
     focus: list[str] = Field(default=[], max_length=3)  # criteria to practise (e.g. the report's next_practice)
 
     @model_validator(mode="after")
     def _known_ids(self):
-        if not self.occupation_id and not self.posting_id:
-            raise ValueError("occupation_id or posting_id is required")
+        if not (self.occupation_id or self.posting_id or (self.occupation_name or "").strip()):
+            raise ValueError("occupation_id, posting_id or occupation_name is required")
         if self.occupation_id and self.occupation_id not in config.occupations():
             raise ValueError(f"unknown occupation_id '{self.occupation_id}'")
+        if self.dialect and self.dialect not in dialect.DIALECTS:
+            raise ValueError(f"unknown dialect '{self.dialect}'")
         if self.interviewer_style not in config.interviewer_styles():
             raise ValueError(f"unknown interviewer_style '{self.interviewer_style}'")
         if self.posting_id and self.posting_id not in config.postings():
@@ -162,6 +203,15 @@ class SessionRequest(BaseModel):
 class AnswerRequest(BaseModel):
     question_id: str
     text: str = Field(min_length=1, max_length=4000)
+
+
+class Credentials(BaseModel):
+    username: str = Field(max_length=100)
+    password: str = Field(max_length=200)
+
+
+class PasswordConfirm(BaseModel):
+    password: str = Field(max_length=200)
 
 
 class ChatRequest(BaseModel):
@@ -180,24 +230,65 @@ async def get_config() -> dict:
     return config.public_config()
 
 
+@api.post("/application/extract")
+async def extract_application(file: UploadFile) -> dict:
+    """Plain text of an uploaded application (PDF, .docx or text). Nothing is stored."""
+    data = await file.read(application.MAX_UPLOAD_BYTES + 1)
+    if len(data) > application.MAX_UPLOAD_BYTES:
+        raise ApiError(400, "INVALID_REQUEST", "The file is too large (max. 5 MB).")
+    try:
+        text = await asyncio.to_thread(application.extract_text, file.filename or "", data)
+    except ValueError as exc:
+        raise ApiError(400, "INVALID_REQUEST", str(exc))
+    return {"filename": file.filename, "text": text[:application.MAX_TEXT_CHARS], "chars": min(len(text), application.MAX_TEXT_CHARS),
+            "truncated": len(text) > application.MAX_TEXT_CHARS}
+
+
 @api.post("/sessions", status_code=201)
-async def create_session(req: SessionRequest) -> dict:
+async def create_session(req: SessionRequest, request: Request) -> dict:
+    user = _require_user(request) if _bearer(request) else None  # a bad token is an error, not a silent guest
     llm.start_request()
     session_id = str(uuid.uuid4())
     setup = req.model_dump()
+    setup.pop("application_text")  # the text itself is never kept, only its summary
+    setup["dialect"] = (req.dialect or dialect.DEFAULT_DIALECT) if req.language == "gsw" else None
     if setup["candidate"]:
         setup["candidate"] = {k: v for k, v in setup["candidate"].items() if v}
-    setup["posting_id"] = req.posting_id or config.default_posting_id(req.occupation_id, req.language)
+    name = (req.occupation_name or "").strip() or None
+    if name and not req.occupation_id and not req.posting_id:
+        # An apprenticeship outside data/occupations.yaml: generic entry, no company
+        setup["occupation_id"], setup["occupation_name"] = config.GENERIC_OCCUPATION, name
+    else:
+        setup["occupation_name"] = None  # only used when no known occupation or posting is given
+    # The application letter names the company and the contact person: the interviewer speaks as them
+    application_summary, application_asks, company = None, [], {}
+    if (req.application_text or "").strip():
+        try:
+            application_summary, application_asks, company = await application.summarize(
+                req.application_text, req.language)
+            application_summary = application_summary or None
+        except Exception:
+            logger.exception("Application summary failed")  # the interview works without it
+    setup["company"] = company or None
+    # Without a company in the letter the default FHGR posting of the occupation is used (an explicit posting_id wins)
+    setup["posting_id"] = req.posting_id or (
+        config.default_posting_id(setup["occupation_id"], req.language)
+        if setup["occupation_id"] and not company else None)
+    setup["application_summary"] = application_summary
+    setup["application_asks"] = application_asks  # points the interviewer asks about, one per question
     state = await _llm(engine.start(session_id, setup))
     question = state["current_question"]
-    posting = config.postings().get(setup["posting_id"] or "")
+    posting = config.posting_for(state)
+    if user:
+        store.save_interview(session_id, user["id"], state)
     return {
         "session_id": session_id,
         "phase": position(state).phase,
         "progress": progress(position(state)),
         "question": {"id": question["id"], "text": question["text"]},
-        "company": {"name": posting["company"]["name"], "place": posting["company"]["place"]} if posting else None,
-        "interviewer": {"name": posting["interviewer"]["name"], "role": posting["interviewer"]["role"]} if posting else None,
+        "company": config.company_of(posting),
+        "interviewer": config.interviewer_of(posting),
+        "application_summary": application_summary,
     }
 
 
@@ -223,6 +314,8 @@ async def answer(session_id: str, req: AnswerRequest) -> dict:
         turn_feedback = {"short_tip": analysis["short_tip"], "scores": analysis["scores"],
                          "problem_flags": analysis.get("problem_flags", [])}
 
+    _save(session_id, state, turn_feedback, req.question_id)
+
     pos = position(state)
     if state.get("done"):
         return {"done": True, "phase": pos.phase, "progress": progress(pos), "question": None,
@@ -239,6 +332,7 @@ async def get_session(session_id: str) -> dict:
         "session_id": session_id,
         "language": state["language"],
         "occupation_id": state["occupation_id"],
+        "occupation_name": state.get("occupation_name"),
         "mode": state["mode"],
         "done": state.get("done", False),
         "phase": pos.phase,
@@ -262,8 +356,87 @@ async def get_report(session_id: str) -> dict:
     except ReportUnavailable as exc:
         raise ApiError(502, "LLM_UNAVAILABLE", str(exc))
     await engine.save_report(session_id, report)
+    _save(session_id, {**state, "report": report})
     logger.info(json.dumps({"event": "report", "session_id": session_id, "llm_calls": llm.calls_in_request()}))
     return report
+
+
+# --- Accounts (docs/api.md section 3b) ---------------------------------------------------------
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def _check_password_attempt(ip: str, username: str, action):
+    """Runs `action` (a password check) under the login limits and returns its result. Only failed attempts count."""
+    key = f"{ip}|{username.strip().lower()}"
+    limits.login_user.check(key)
+    limits.login_ip.check(ip)
+    try:
+        result = action()
+    except AccountError as exc:
+        if exc.code == "INVALID_CREDENTIALS":
+            limits.login_user.count(key)
+            limits.login_ip.count(ip)
+        raise
+    limits.login_user.reset(key)
+    return result
+
+
+@api.post("/auth/register", status_code=201)
+async def register(req: Credentials, request: Request) -> dict:
+    ip = _client_ip(request)
+    limits.register.check(ip)
+    limits.register.count(ip)
+    token, user = store.register(req.username, req.password)
+    return {"token": token, "user": user}
+
+
+@api.post("/auth/login")
+async def login(req: Credentials, request: Request) -> dict:
+    token, user = _check_password_attempt(_client_ip(request), req.username,
+                                          lambda: store.login(req.username, req.password))
+    return {"token": token, "user": user}
+
+
+@api.post("/auth/logout", status_code=204)
+async def logout(request: Request) -> Response:
+    _require_user(request)
+    store.logout(_bearer(request))
+    return Response(status_code=204)
+
+
+@api.get("/auth/me")
+async def me(request: Request) -> dict:
+    return _require_user(request)
+
+
+@api.delete("/auth/me", status_code=204)
+async def delete_account(req: PasswordConfirm, request: Request) -> Response:
+    user = _require_user(request)
+    _check_password_attempt(_client_ip(request), user["username"], lambda: store.delete_account(user["id"], req.password))
+    return Response(status_code=204)
+
+
+@api.get("/me/interviews")
+async def my_interviews(request: Request) -> dict:
+    return {"interviews": store.list_interviews(_require_user(request)["id"])}
+
+
+@api.delete("/me/interviews/{session_id}", status_code=204)
+async def delete_my_interview(session_id: str, request: Request) -> Response:
+    if not store.delete_interview(_require_user(request)["id"], session_id):
+        raise ApiError(404, "INTERVIEW_NOT_FOUND", "No saved interview with this id.")
+    await engine.delete(session_id)
+    return Response(status_code=204)
+
+
+@api.get("/me/interviews/{session_id}")
+async def my_interview(session_id: str, request: Request) -> dict:
+    interview = store.get_interview(_require_user(request)["id"], session_id)
+    if interview is None:
+        raise ApiError(404, "INTERVIEW_NOT_FOUND", "No saved interview with this id.")
+    return interview
 
 
 @api.post("/chat")
