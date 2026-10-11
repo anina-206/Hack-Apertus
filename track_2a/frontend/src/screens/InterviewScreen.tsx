@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, PHASES, type Phase } from "../api";
 import CallView, { type CallStatus } from "../components/CallView";
 import CardAccent from "../components/CardAccent";
+import Face from "../components/Face";
 import { ArrowRight, Headphones, Lightbulb, Mic, Speaker, Stop } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
 import type { ChatMessage, SavedInterview } from "../history";
@@ -444,19 +445,16 @@ function Dot({ color, delay }: { color: string; delay: string }) {
   );
 }
 
-/** The interviewer's avatar: a small tilted red square with initials (large bold text, so white on red is readable). */
-function Avatar({ initials }: { initials: string }) {
+/** The interviewer's avatar: the same face as in the call view, on a small tilted red square. */
+function Avatar({ interviewer }: { interviewer: Interviewer }) {
   return (
-    <div
-      className="flex h-10 w-10 shrink-0 -rotate-6 items-center justify-center rounded-lg bg-logo-red text-lg font-bold text-white"
-      aria-hidden="true"
-    >
-      {initials}
+    <div className="h-10 w-10 shrink-0 -rotate-6 overflow-hidden rounded-lg bg-logo-red" aria-hidden="true">
+      <Face seed={interviewer.name} voice={interviewer.voice} className="h-full w-full" />
     </div>
   );
 }
 
-type Interviewer = { name: string; role: string; initials: string };
+type Interviewer = { name: string; role: string; initials: string; voice?: "female" | "male" };
 
 /** "Stefan Keller" -> "SK" */
 function initialsOf(name: string) {
@@ -506,7 +504,7 @@ function Message({
 
   return (
     <div className="flex items-start gap-3">
-      <Avatar initials={interviewer.initials} />
+      <Avatar interviewer={interviewer} />
       <div className="min-w-0 max-w-[78%]">
         <p className="mb-1 text-xs text-charcoal-soft">
           {interviewer.name}

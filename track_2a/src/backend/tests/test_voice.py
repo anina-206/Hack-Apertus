@@ -105,3 +105,12 @@ def test_voice_of_a_contact_person_from_the_letter():
     assert config.contact_voice("Luca Rossi", "formatore") == "male"  # from the role
     assert config.contact_voice("Andrea Meier", "Berufsbildnerin, Logistik") == "female"
     assert config.contact_voice("Sam Keller", "") == "female"  # nothing to go by: the default
+
+
+def test_spoken_text_is_cleaned_up():
+    assert tts.spoken_text("**Super!** 😀 Wie war z.B. der Tag als Berufsbildner:in?", "de") == \
+        "Super! Wie war zum Beispiel der Tag als Berufsbildner?"
+    assert tts.spoken_text("Die Lehre als Informatiker EFZ, d.h. 4 Jahre.", "gsw") == \
+        "Die Lehre als Informatiker E F Z, das heisst 4 Jahre."
+    assert tts.spoken_text("Un CFC, p. ex. en informatique.", "fr") == "Un C F C, par exemple en informatique."
+    assert tts.spoken_text("Mehr unter https://example.ch und/oder bei uns.", "de") == "Mehr unter und/oder bei uns."

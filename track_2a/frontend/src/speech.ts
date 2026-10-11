@@ -49,6 +49,20 @@ export function sentences(text: string): string[] {
   return (text.match(/[^.!?…]+[.!?…]*["»«]*\s*/g) ?? [text]).map((s) => s.trim()).filter(Boolean);
 }
 
+/**
+ * Splits a text into pieces of whole sentences for the server voice, so the first piece can play
+ * while the next one is made. Very short sentences ("Super!") are joined with the next one.
+ */
+export function speechChunks(text: string, minLength = 40): string[] {
+  const chunks: string[] = [];
+  for (const sentence of sentences(text)) {
+    const last = chunks.length - 1;
+    if (last >= 0 && chunks[last].length < minLength) chunks[last] += ` ${sentence}`;
+    else chunks.push(sentence);
+  }
+  return chunks;
+}
+
 /** Reads a text aloud. `onEnd` is called when it is finished or stopped. */
 export function speak(text: string, language: LanguageCode, onEnd?: () => void) {
   if (!canSpeak) {
