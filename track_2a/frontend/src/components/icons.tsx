@@ -111,3 +111,12 @@ export function Play({ className = "h-5 w-5" }: IconProps) {
     </svg>
   );
 }
+
+/** Three bars of different height: "your scores" */
+export function Chart({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M5 20V12M12 20V5M19 20v-9" />
+    </svg>
+  );
+}

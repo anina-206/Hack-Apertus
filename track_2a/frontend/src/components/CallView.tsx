@@ -8,6 +8,7 @@
 import { useEffect, useRef } from "react";
 import { meter } from "../audio";
 import type { UiTexts } from "../i18n";
+import Alert from "./Alert";
 import Face, { type FaceParts } from "./Face";
 import { ChatBubble, Mic, Pause, Play } from "./icons";
 
@@ -44,7 +45,9 @@ export default function CallView(props: Props) {
   const listening = status === "listening";
 
   return (
-    <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-8 pb-4 text-center">
+    // Phones held sideways have little height: the interviewer goes left, question and buttons right
+    <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-8 pb-safe-4 text-center short:flex-row short:items-center short:gap-6 short:pt-3">
+      <div className="flex flex-col items-center short:w-36 short:shrink-0">
       <SpeakerAvatar
         name={interviewer.name}
         voice={interviewer.voice}
@@ -52,25 +55,28 @@ export default function CallView(props: Props) {
         writing={status === "transcribing"}
         real={props.realSpeaker}
       />
-      <p className="mt-6 text-lg font-bold">{interviewer.name}</p>
+      <p className="mt-6 text-lg font-bold short:mt-0">{interviewer.name}</p>
       <p className="text-sm text-charcoal-soft" role="status" aria-live="polite">
         {statusText(text, status, interviewer.name)}
       </p>
+      </div>
+
+      <div className="flex w-full flex-1 flex-col items-center short:self-stretch short:justify-center">
 
       {tip && (
-        <p className="mt-5 max-w-sm rounded-xl bg-mint-lighter px-4 py-2 text-sm text-mint-dark">
+        <p className="mt-5 max-w-sm rounded-xl bg-mint-lighter px-4 py-2 text-sm text-mint-dark short:mt-0">
           <span className="font-bold">{text.tip}:</span> {tip}
         </p>
       )}
-      <p className="mt-4 max-w-sm text-xl leading-snug font-medium">{question}</p>
+      <p className="mt-4 max-w-sm text-xl leading-snug font-medium short:mt-2 short:text-lg">{question}</p>
       {props.error && (
-        <p role="alert" className="mt-4 max-w-sm rounded-xl bg-danger-lighter px-4 py-2 text-sm text-danger">
+        <Alert className="mt-4 max-w-sm">
           {props.error}
-        </p>
+        </Alert>
       )}
 
       {/* The candidate's side */}
-      <div className="mt-auto flex w-full max-w-sm flex-col items-center pt-8">
+      <div className="mt-auto flex w-full max-w-sm flex-col items-center pt-8 short:mt-0 short:pt-3">
         {(status === "countdown" || status === "transcribing") && answer && (
           <p className="mb-4 w-full rounded-2xl rounded-br-md bg-brand px-4 py-3 text-left text-base text-white">{answer}</p>
         )}
@@ -81,7 +87,7 @@ export default function CallView(props: Props) {
         {status === "countdown" && countdown !== null && <CountdownRing value={countdown} label={text.sendingSoon} />}
       </div>
 
-      <div className="mt-6 flex w-full max-w-sm gap-3">
+      <div className="mt-6 flex w-full max-w-sm gap-3 short:mt-3">
         <RoundButton onClick={props.onShowChat} label={text.showChat}>
           <ChatBubble />
         </RoundButton>
@@ -98,6 +104,7 @@ export default function CallView(props: Props) {
             <Pause />
           </RoundButton>
         )}
+      </div>
       </div>
     </div>
   );
@@ -230,7 +237,7 @@ function SpeakerAvatar({
   }, [active, writing, real]);
 
   return (
-    <div className="relative flex h-40 w-40 items-center justify-center" aria-hidden="true">
+    <div className="relative flex h-40 w-40 shrink-0 items-center justify-center short:-my-6 short:scale-[0.6]" aria-hidden="true">
       {Array.from({ length: WAVES }, (_, i) => (
         <span
           key={i}

@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { api, ApiError, type LanguageCode, type User } from "../api";
 import { saveLogin } from "../auth";
+import { errorText } from "../errors";
+import Alert from "../components/Alert";
 import CardAccent from "../components/CardAccent";
 import { ChevronLeft } from "../components/icons";
+import { inputClass } from "../components/fieldStyles";
 import PrimaryButton from "../components/PrimaryButton";
 import { t } from "../i18n";
 
@@ -11,15 +14,15 @@ type Props = {
   onLoggedIn: (user: User) => void;
   /** Back to the start screen. */
   onCancel: () => void;
+  /** Open on "create account" instead of "log in" (e.g. from the guest hint after the feedback) */
+  startCreating?: boolean;
 };
 
-const inputClass =
-  "w-full rounded-full border-2 border-line bg-white px-5 py-3.5 text-base text-charcoal placeholder:text-charcoal/40 focus:border-brand focus:ring-4 focus:ring-brand/20 focus:outline-none";
 
-export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
+export default function AuthScreen({ language, onLoggedIn, onCancel, startCreating = false }: Props) {
   const text = t(language);
 
-  const [creating, setCreating] = useState(false); // false = log in, true = create account
+  const [creating, setCreating] = useState(startCreating); // false = log in, true = create account
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -47,20 +50,21 @@ export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
               ? text.tooManyRequests
               : code === "INVALID_REQUEST"
                 ? text.invalidInput
-                : text.error,
+                : errorText(err, text),
       );
       setBusy(false);
     }
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col bg-page">
-      <header className="bg-brand px-4 pt-5 pb-14 text-white">
+    <div className="flex min-h-dvh flex-col bg-page">
+      <header className="bg-brand px-4 pt-safe-5 pb-14 text-white">
+        <div className="mx-auto max-w-lg">
         <div className="flex items-center gap-2">
           <button
             onClick={onCancel}
             aria-label={text.back}
-            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10"
+            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full hover:bg-brand-dark"
           >
             <ChevronLeft />
           </button>
@@ -69,10 +73,11 @@ export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
             <span className="text-logo-yellow">.</span>
           </h1>
         </div>
-        <p className="mt-3 text-base text-white/90">{text.loginIntro}</p>
+        <p className="mt-3 text-base text-white">{text.loginIntro}</p>
+        </div>
       </header>
 
-      <main className="-mt-7 flex-1 px-4">
+      <main className="mx-auto -mt-7 w-full max-w-lg flex-1 px-4 pb-safe-6">
         <form onSubmit={submit} className="relative space-y-5 overflow-hidden rounded-3xl bg-white p-5 shadow-card">
           <CardAccent />
 
@@ -101,7 +106,7 @@ export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
             {creating && <span className="mt-2 block text-sm text-charcoal-soft">{text.passwordHint}</span>}
           </label>
 
-          {error && <p className="rounded-xl bg-danger-lighter px-4 py-3 text-danger">{error}</p>}
+          {error && <Alert>{error}</Alert>}
 
           <PrimaryButton type="submit" disabled={busy || !username.trim() || !password} wide>
             {busy ? text.pleaseWait : creating ? text.register : text.login}
