@@ -58,7 +58,7 @@ only external service is the CSCS endpoint for Apertus.
 | Apertus 1.5 8B as the model | The only LLM at runtime (`LLM_NAME`, `LLM_BASE_URL`, `LLM_API_KEY`) |
 | < 32 GB VRAM, consumer hardware, on-premise | Apertus 8B fits in < 32 GB; our container needs no GPU (Whisper and Piper run on the CPU) |
 | < 5 LLM calls per answer (average) | About 2 per answer (3 in Mundart), logged per answer (see [call budget](#llm-call-budget-gate-average--5-per-answer)) |
-| Docker container, `make run`, source, docs, visual overview | `make run` in this folder; this README, [technical_report.md](technical_report.md) and [docs/api.md](docs/api.md); architecture diagram under [How it works](#how-it-works) |
+| Docker container, `make run`, source, docs, visual overview | `make run` in this folder; this README, [technical_report.md](technical_report.md) and [docs/api.md](docs/api.md); diagrams in [docs/architecture.md](docs/architecture.md) |
 | DE, FR, IT; Swiss dialects a plus | All three, plus Mundart in five dialects (beta) |
 | Voice-ready (real-time TTS later) | Already spoken: Piper/Azure TTS and Whisper STT with a hands-free mode |
 
@@ -186,7 +186,7 @@ curl -s -X POST localhost:8000/threads/$T/runs/wait -H 'Content-Type: applicatio
 | `datasets/`, `fhgr/` | FHGR challenge data, slides and project template (copied unchanged) |
 | `frontend/` | React web app (see `frontend/README.md`) |
 | `data/` | Occupations, interviewer styles and voices (YAML); `data/models/` holds the downloaded voice models (not in git) |
-| `docs/` | API contract, diagrams |
+| `docs/` | API contract (`api.md`), architecture diagrams (`architecture.md`), challenge text |
 | `technical_report.md` | Architecture, use of Apertus, evaluation, limitations |
 
 ## Development
