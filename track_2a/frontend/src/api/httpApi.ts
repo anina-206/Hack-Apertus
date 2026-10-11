@@ -39,4 +39,35 @@ export const httpApi: InterviewApi = {
   getSession: (sessionId) => request(`/sessions/${sessionId}`),
 
   getReport: (sessionId) => request(`/sessions/${sessionId}/report`),
+
+  async transcribe(audio, language) {
+    // multipart/form-data: the browser sets the Content-Type (with the boundary) itself
+    const form = new FormData();
+    form.append("audio", audio, `answer.${audio.type.includes("mp4") ? "mp4" : "webm"}`);
+    form.append("language", language);
+    return checked(await send("/transcribe", { method: "POST", body: form })).json();
+  },
+
+  async speech(text, language, voice) {
+    const response = await send("/speech", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, language, voice }),
+    });
+    return checked(response).blob();
+  },
 };
+
+/** fetch without the JSON defaults of request(), for audio uploads and downloads. */
+async function send(path: string, options: RequestInit): Promise<Response> {
+  try {
+    return await fetch(BASE_URL + path, options);
+  } catch {
+    throw new ApiError("NETWORK_ERROR", "Backend not reachable.");
+  }
+}
+
+function checked(response: Response): Response {
+  if (!response.ok) throw new ApiError(response.status === 503 ? "VOICE_UNAVAILABLE" : "INVALID_REQUEST", `HTTP ${response.status}`);
+  return response;
+}

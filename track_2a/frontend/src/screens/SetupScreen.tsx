@@ -11,6 +11,7 @@ import {
 import CardAccent from "../components/CardAccent";
 import { ArrowRight, Check, ChevronDown } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
+import { unlockAudio } from "../audio";
 import { label, languageNames, t } from "../i18n";
 
 type Props = {
@@ -59,6 +60,7 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
 
   async function handleStart() {
     if (!config) return;
+    unlockAudio(); // a tap: lets the interviewer's voice play on phones later
     const request: CreateSessionRequest = {
       language,
       occupation_id: occupationId,

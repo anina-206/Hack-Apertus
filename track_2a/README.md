@@ -78,6 +78,14 @@ Judge / Agent Chat UI ──Agent Protocol──┘    analysis call (11 criteri
   analysed for `initiative`.
 - **Robust JSON.** The model's output is repaired in code where possible (code fences, extra text,
   trailing commas, scores like `"3/4"`, …). Only unusable output is retried, up to 3 attempts.
+- **Voice, without an LLM call.** `POST /transcribe` turns a spoken answer into text with Whisper
+  (faster-whisper on the CPU; for German and Mundart a Swiss German fine-tune of large-v3-turbo that writes
+  Standard German). `POST /speech` reads the interviewer's lines with Piper (local) or, with
+  `TTS_ENGINE=azure`, Azure's Swiss voices. The interviewer's voice (female/male) comes from the posting
+  (`data/interviewer_voices.yaml`). Models (about 2.5 GB) are downloaded into `data/models` on the first start.
+  In the frontend's hands-free mode the question is read aloud, the answer is recorded until a pause,
+  transcribed, shown for 2 seconds and sent; the call view animates the real loudness of both voices.
+  Without server voice (mock, `STT_ENABLED=false`, `TTS_ENGINE=off`) the browser's speech features are used.
 - **The report** is generated with one LLM call when first requested, then cached. Scores and the overall
   score are averages computed in code. The LLM writes the comments, strengths and improvement tips.
   Quotes used as evidence are kept only if the candidate really said them.
@@ -207,7 +215,9 @@ the FHGR feedback rules. Without `JUDGE_NAME` the judge is skipped. The coach it
 
 - Sessions are stored in SQLite (`data/sessions/sessions.db`, set by `SESSIONS_DB` in docker-compose) and survive a restart. Without `SESSIONS_DB` (tests, local dev) they are kept in memory.
 - Swiss German (`gsw`) is a beta: the 8B model may mix in Standard German or spell inconsistently.
-- The interviewer knows nothing about a specific company, so it answers candidate questions in general terms.
+- Speech-to-text runs at about real time on a laptop CPU: a 10-second answer takes a few seconds to transcribe.
+  `STT_MODEL=small` is faster for French/Italian, at lower accuracy.
+- Mundart is read aloud with a German voice (Piper and Azure have no Swiss German dialect voice).
 
 ## Data
 

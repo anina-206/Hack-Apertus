@@ -5,6 +5,9 @@ import type {
   CreateSessionResponse,
   Report,
   SessionState,
+  TranscribeResponse,
+  Voice,
+  LanguageCode,
 } from "./types";
 
 /**
@@ -18,4 +21,8 @@ export interface InterviewApi {
   sendAnswer(sessionId: string, questionId: string, text: string): Promise<AnswerResponse>;
   getSession(sessionId: string): Promise<SessionState>;
   getReport(sessionId: string): Promise<Report>;
+  /** Speech to text (Whisper). Only when config.voice.stt is true. */
+  transcribe(audio: Blob, language: LanguageCode): Promise<TranscribeResponse>;
+  /** Text to speech: the audio for one interviewer line. Only when config.voice.tts is set. */
+  speech(text: string, language: LanguageCode, voice: Voice): Promise<Blob>;
 }

@@ -4,6 +4,7 @@ Runs standalone (uvicorn backend.main:app) or as the custom app inside Aegra (ae
 which then adds the Agent Protocol routes (/threads, /runs, ...) for the graph `agent` (agent.py).
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -13,11 +14,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal, Optional
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI, File, Form, Request, UploadFile
 from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, model_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -26,6 +27,7 @@ from backend.interview.graph import InterviewEngine, position
 from backend.interview.phases import progress
 from backend.interview.prompts import CRITERIA
 from backend.interview.report import ReportUnavailable, build_report
+from backend.voice import VoiceUnavailable, flag, stt, tts
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("api")
@@ -33,10 +35,20 @@ logger = logging.getLogger("api")
 engine = InterviewEngine()  # in memory; replaced by a SQLite-backed engine at startup if SESSIONS_DB is set
 
 
+def _preload_voice() -> None:
+    """Load Whisper and Piper in the background (VOICE_PRELOAD=false skips it, e.g. in tests)."""
+    if not flag("VOICE_PRELOAD", True):
+        return
+    if stt.enabled():
+        asyncio.get_running_loop().run_in_executor(None, stt.preload)
+    asyncio.get_running_loop().run_in_executor(None, tts.preload)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """With SESSIONS_DB=/path/sessions.db, sessions survive a backend restart (LangGraph SQLite checkpointer)."""
     global engine
+    _preload_voice()
     db = os.environ.get("SESSIONS_DB", "").strip()
     if not db:
         yield
@@ -197,7 +209,8 @@ async def create_session(req: SessionRequest) -> dict:
         "progress": progress(position(state)),
         "question": {"id": question["id"], "text": question["text"]},
         "company": {"name": posting["company"]["name"], "place": posting["company"]["place"]} if posting else None,
-        "interviewer": {"name": posting["interviewer"]["name"], "role": posting["interviewer"]["role"]} if posting else None,
+        "interviewer": {"name": posting["interviewer"]["name"], "role": posting["interviewer"]["role"],
+                        "voice": config.interviewer_voice(posting["id"])} if posting else None,
     }
 
 
@@ -272,6 +285,42 @@ async def chat(req: ChatRequest) -> dict:
     request_id = llm.start_request()
     text = await _llm(llm.chat_completion([{"role": "user", "content": req.message}], purpose="chat_test"))
     return {"answer": text, "request_id": request_id, "llm_calls": llm.calls_in_request()}
+
+
+# --- Voice (docs/api.md: POST /transcribe, POST /speech) -----------------------------------------
+
+MAX_AUDIO_BYTES = 5 * 1024 * 1024
+VoiceLanguage = Literal["de", "fr", "it", "gsw"]
+
+
+@api.post("/transcribe")
+async def transcribe(audio: UploadFile = File(...), language: VoiceLanguage = Form(...)) -> dict:
+    data = await audio.read(MAX_AUDIO_BYTES + 1)
+    if not data:
+        raise ApiError(400, "INVALID_REQUEST", "audio: empty file")
+    if len(data) > MAX_AUDIO_BYTES:
+        raise ApiError(400, "INVALID_REQUEST", "audio: larger than 5 MB")
+    try:
+        return await asyncio.to_thread(stt.transcribe, data, language)
+    except ValueError as exc:
+        raise ApiError(400, "INVALID_REQUEST", f"audio: {exc}")
+    except VoiceUnavailable as exc:
+        raise ApiError(503, "VOICE_UNAVAILABLE", str(exc))
+
+
+class SpeechRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=tts.MAX_CHARS)
+    language: VoiceLanguage
+    voice: Literal["female", "male"] = "female"
+
+
+@api.post("/speech")
+async def speech(req: SpeechRequest) -> Response:
+    try:
+        audio, media_type, engine_name = await asyncio.to_thread(tts.speech, req.text.strip(), req.language, req.voice)
+    except VoiceUnavailable as exc:
+        raise ApiError(503, "VOICE_UNAVAILABLE", str(exc))
+    return Response(audio, media_type=media_type, headers={"X-TTS-Engine": engine_name})
 
 
 app.include_router(api)

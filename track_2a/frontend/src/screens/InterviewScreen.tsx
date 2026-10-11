@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api, PHASES, type CreateSessionResponse, type LanguageCode, type Phase } from "../api";
+import CallView, { type CallStatus } from "../components/CallView";
 import CardAccent from "../components/CardAccent";
 import { ArrowRight, Check, ChevronLeft, Headphones, Mic, Speaker, Stop } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
@@ -46,6 +47,7 @@ export default function InterviewScreen({ session, language, summary, onRestart,
 
   const voice = useVoice({
     language,
+    voice: session.interviewer?.voice ?? "female",
     draft,
     setDraft,
     onSend: (answer) => send(answer),
@@ -113,9 +115,29 @@ export default function InterviewScreen({ session, language, summary, onRestart,
     }
   }
 
+  // In hands-free mode the call view is shown; "Chat" switches back to the messages.
+  const [showCall, setShowCall] = useState(true);
+  const callOpen = voice.handsFree && showCall && !done;
+
   function toggleHandsFree() {
+    setShowCall(true);
     if (voice.toggleHandsFree() && !done) voice.say(lastInterviewerIndex, spokenText(), true);
   }
+
+  const callStatus: CallStatus =
+    voice.speakingKey !== null
+      ? "speaking"
+      : sending
+        ? "thinking"
+        : voice.countdown !== null
+          ? "countdown"
+          : voice.transcribing
+            ? "transcribing"
+            : voice.listening
+              ? "listening"
+              : voice.paused
+                ? "paused"
+                : "idle";
 
   function handleEnd() {
     if (window.confirm(text.endConfirm)) {
@@ -195,44 +217,70 @@ export default function InterviewScreen({ session, language, summary, onRestart,
         </div>
       </div>
 
-      {/* Messages */}
-      <main className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
-        {messages.map((msg, i) => (
-          <Message
-            key={i}
-            message={msg}
-            text={text}
-            interviewer={interviewer}
-            showName={i === 0}
-            showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
-            speaking={voice.speakingKey === i}
-            onReadAloud={() => (voice.speakingKey === i ? voice.stopReading() : voice.say(i, msg.text))}
-          />
-        ))}
-
-        {sending && (
-          <div className="ml-12 flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-3 shadow-card" aria-label={text.thinking}>
-            <Dot color="bg-logo-red" delay="0ms" />
-            <Dot color="bg-logo-yellow" delay="150ms" />
-            <Dot color="bg-logo-blue" delay="300ms" />
-          </div>
-        )}
-
-        {done && (
-          <div className="rounded-2xl bg-white p-6 text-center shadow-card">
-            <p className="mb-4 text-xl font-bold">{text.finished}</p>
-            <PrimaryButton onClick={onFinished}>{text.showFeedback}</PrimaryButton>
-            <button onClick={onRestart} className="mt-4 block w-full text-sm font-bold text-brand">
-              {text.newInterview}
+      {callOpen ? (
+        <CallView
+          text={text}
+          interviewer={interviewer}
+          status={callStatus}
+          question={messages[lastInterviewerIndex]?.text ?? ""}
+          tip={messages[lastInterviewerIndex - 1]?.tip}
+          answer={draft}
+          countdown={voice.countdown}
+          realSpeaker={voice.server.tts}
+          realMic={voice.server.stt}
+          onSkip={voice.skipReading}
+          onHold={voice.hold}
+          onResume={voice.resume}
+          onShowChat={() => setShowCall(false)}
+        />
+      ) : (
+        <main className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
+          {voice.handsFree && !done && (
+            <button
+              onClick={() => setShowCall(true)}
+              className="mx-auto flex items-center gap-2 rounded-full bg-brand-lighter px-4 py-2 text-sm font-bold text-brand"
+            >
+              <Headphones className="h-4 w-4" />
+              {text.showCall}
             </button>
-          </div>
-        )}
+          )}
+          {messages.map((msg, i) => (
+            <Message
+              key={i}
+              message={msg}
+              text={text}
+              interviewer={interviewer}
+              showName={i === 0}
+              showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
+              speaking={voice.speakingKey === i}
+              onReadAloud={() => (voice.speakingKey === i ? voice.stopReading() : voice.say(i, msg.text))}
+            />
+          ))}
 
-        <div ref={bottomRef} />
-      </main>
+          {sending && (
+            <div className="ml-12 flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-3 shadow-card" aria-label={text.thinking}>
+              <Dot color="bg-logo-red" delay="0ms" />
+              <Dot color="bg-logo-yellow" delay="150ms" />
+              <Dot color="bg-logo-blue" delay="300ms" />
+            </div>
+          )}
 
-      {/* Input */}
-      {!done && (
+          {done && (
+            <div className="rounded-2xl bg-white p-6 text-center shadow-card">
+              <p className="mb-4 text-xl font-bold">{text.finished}</p>
+              <PrimaryButton onClick={onFinished}>{text.showFeedback}</PrimaryButton>
+              <button onClick={onRestart} className="mt-4 block w-full text-sm font-bold text-brand">
+                {text.newInterview}
+              </button>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </main>
+      )}
+
+      {/* Input (in the call view the candidate speaks; "Chat" shows the input again) */}
+      {!done && !callOpen && (
         <footer className="border-t border-line bg-white px-4 pt-3 pb-3">
           {error && <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">{text.error}</p>}
           {voice.micError && (
@@ -246,6 +294,7 @@ export default function InterviewScreen({ session, language, summary, onRestart,
               speaker={interviewer.name}
               speaking={voice.speakingKey !== null}
               listening={voice.listening}
+              transcribing={voice.transcribing}
               countdown={voice.countdown}
               paused={voice.paused}
               onSkip={voice.skipReading}
@@ -418,6 +467,7 @@ function HandsFreeBar({
   speaker,
   speaking,
   listening,
+  transcribing,
   countdown,
   paused,
   onSkip,
@@ -427,6 +477,7 @@ function HandsFreeBar({
   speaker: string;
   speaking: boolean;
   listening: boolean;
+  transcribing: boolean;
   countdown: number | null;
   paused: boolean;
   onSkip: () => void;
@@ -448,7 +499,7 @@ function HandsFreeBar({
       </div>
     );
   }
-  if (listening && countdown !== null) {
+  if (countdown !== null) {
     return (
       <div className={`${box} relative overflow-hidden bg-mint-lighter text-mint-dark`} role="status">
         {/* Fills up during the pause; when full, the answer is sent */}
@@ -466,6 +517,14 @@ function HandsFreeBar({
       <div className={`${box} bg-danger-lighter text-logo-red`} role="status">
         <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-logo-red" />
         <span className="flex-1 text-charcoal">{text.listenNow}</span>
+      </div>
+    );
+  }
+  if (transcribing) {
+    return (
+      <div className={`${box} bg-brand-lighter text-brand`} role="status">
+        <span className="h-2.5 w-2.5 shrink-0 animate-bounce rounded-full bg-brand" />
+        <span className="flex-1">{text.transcribing}</span>
       </div>
     );
   }

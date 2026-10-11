@@ -1,18 +1,29 @@
 // Voice for the interview screen: reading aloud, dictation and the hands-free mode.
 //
-// Hands-free mode is a small loop:
-//   read the question aloud -> listen -> pause in speech -> send the answer -> next question ...
-// - After the last spoken word, a short countdown runs (SILENCE_MS). New words restart it.
-// - When the browser stops the microphone by itself (pause, time limit), it is started again.
+// Two engines, chosen by what the backend offers (GET /config -> voice):
+// - server: the interviewer speaks with Piper/Azure (POST /speech), answers are recorded and
+//   transcribed by Whisper (POST /transcribe). Both give real loudness for the animation (audio.ts).
+// - browser: speechSynthesis and SpeechRecognition (speech.ts), used when the server has no voice,
+//   in the mock, or when a server voice call fails.
+//
+// Hands-free mode is a loop:
+//   read the question aloud -> listen -> pause in speech -> (transcribe) -> short countdown -> send
+// - New words (browser) or "Warten" stop the countdown. Tapping the input field pauses everything.
 // - Saying "nochmal" / "répète" / "ripeti" instead of an answer reads the question again.
 
 import { useEffect, useRef, useState } from "react";
-import type { LanguageCode } from "./api";
+import { api, type AppConfig, type LanguageCode, type Voice } from "./api";
+import { canRecord, play, record, unlockAudio, type Playback, type Recording } from "./audio";
 import { canListen, canSpeak, speak, startListening, stopSpeaking, type ListenError } from "./speech";
 
-/** Pause after the last spoken word before hands-free mode sends the answer. */
+/** Browser engine: pause after the last recognised word before the answer is sent. */
 export const SILENCE_MS = 3000;
-/** Microphone restarts in a row without hearing anything before hands-free mode waits for a tap. */
+/** Server engine: pause that ends the recording, then the countdown before sending. */
+const RECORD_PAUSE_MS = { handsFree: 1500, manual: 2500 };
+const CONFIRM_MS = 2000;
+/** Server engine: stop recording if nothing is said for this long. */
+const IDLE_MS = 12000;
+/** Browser engine: microphone restarts in a row without hearing anything before hands-free waits for a tap. */
 const MAX_QUIET_RESTARTS = 3;
 
 /** An answer that only asks to hear the question again. */
@@ -23,8 +34,21 @@ export function isRepeatRequest(answer: string) {
   return REPEAT.test(answer.trim());
 }
 
+// What the backend offers, asked once (GET /config is small and already loaded by the setup screen)
+type ServerVoice = NonNullable<AppConfig["voice"]>;
+let serverVoice: Promise<ServerVoice> | null = null;
+function loadServerVoice(): Promise<ServerVoice> {
+  serverVoice ??= api
+    .getConfig()
+    .then((c) => c.voice ?? { stt: false, tts: null })
+    .catch(() => ({ stt: false, tts: null }));
+  return serverVoice;
+}
+
 type Options = {
   language: LanguageCode;
+  /** The interviewer's voice for POST /speech */
+  voice: Voice;
   draft: string;
   setDraft: (text: string) => void;
   /** Hands-free mode sends the answer itself after a pause */
@@ -33,31 +57,42 @@ type Options = {
   onRepeat: () => void;
 };
 
-export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Options) {
+export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }: Options) {
   const [handsFree, setHandsFree] = useState(() => canSpeak && loadHandsFree());
   /** Key of the text that is being read aloud (the message index), or null */
   const [speakingKey, setSpeakingKey] = useState<number | null>(null);
   const [listening, setListening] = useState(false);
+  /** Server engine: Whisper is working on the recording */
+  const [transcribing, setTranscribing] = useState(false);
   const [micError, setMicError] = useState<ListenError>(null);
   /** Hands-free mode stopped listening and waits for a tap on the microphone */
   const [paused, setPaused] = useState(false);
-  /** Hands-free countdown after the last word: 0 … 1, null when it does not run */
+  /** Hands-free countdown before sending: 0 … 1, null when it does not run */
   const [countdown, setCountdown] = useState<number | null>(null);
+  /** Which engines are in use (the call view animates real loudness only for the server ones) */
+  const [server, setServer] = useState<{ stt: boolean; tts: boolean }>({ stt: false, tts: false });
 
   // The speech callbacks run later, so they read the current values from here
-  const latest = useRef({ language, draft, handsFree, onSend, onRepeat });
-  latest.current = { language, draft, handsFree, onSend, onRepeat };
+  const latest = useRef({ language, voice, draft, handsFree, onSend, onRepeat });
+  latest.current = { language, voice, draft, handsFree, onSend, onRepeat };
 
-  const stopRecognition = useRef<(() => void) | null>(null);
+  const stopRecognition = useRef<(() => void) | null>(null); // browser engine
+  const recording = useRef<Recording | null>(null); // server engine
+  const playback = useRef<Playback | null>(null);
   const stoppedByUs = useRef(false);
   const quietRestarts = useRef(0);
   const lastWordAt = useRef(0);
   const timer = useRef<number | null>(null);
-  // Counts readings. Stopping speech also calls its "finished" callback, so the callback only
-  // acts if its reading is still the current one.
+  // Counters for readings and recordings. Stopping also triggers their "finished" callbacks,
+  // so a callback only acts if its reading / recording is still the current one.
   const reading = useRef(0);
+  const listenRound = useRef(0);
 
-  // ---------- countdown ----------
+  useEffect(() => {
+    loadServerVoice().then((v) => setServer({ stt: v.stt && canRecord, tts: !!v.tts }));
+  }, []);
+
+  // ---------- countdown before sending ----------
 
   function stopCountdown() {
     if (timer.current !== null) window.clearInterval(timer.current);
@@ -65,14 +100,15 @@ export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Option
     setCountdown(null);
   }
 
-  function restartCountdown() {
+  /** Runs the countdown; `durationMs` after the last call (new words restart it), the answer is sent. */
+  function restartCountdown(durationMs: number) {
     lastWordAt.current = Date.now();
     if (timer.current !== null) return;
     timer.current = window.setInterval(() => {
-      const elapsed = (Date.now() - lastWordAt.current) / SILENCE_MS;
+      const elapsed = (Date.now() - lastWordAt.current) / durationMs;
       if (elapsed < 1) setCountdown(elapsed);
       else finishAnswer();
-    }, 100);
+    }, 50);
   }
 
   function finishAnswer() {
@@ -89,12 +125,74 @@ export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Option
 
   // ---------- microphone ----------
 
-  function startMic() {
-    if (!canListen || stopRecognition.current) return;
+  async function startMic() {
+    if (stopRecognition.current || recording.current) return;
     stopReading();
     stoppedByUs.current = false;
     setPaused(false);
     setMicError(null);
+    const { stt } = await loadServerVoice();
+    if (stt && canRecord) await startRecording();
+    else startBrowserListening();
+  }
+
+  /** Server engine: record until a pause, then let Whisper write it down. */
+  async function startRecording() {
+    const round = ++listenRound.current;
+    const pause = latest.current.handsFree ? RECORD_PAUSE_MS.handsFree : RECORD_PAUSE_MS.manual;
+    setListening(true);
+    try {
+      const rec = await record(pause, IDLE_MS, {
+        onSilence: () => finishRecording(round),
+        onIdle: () => {
+          recording.current?.cancel();
+          recording.current = null;
+          setListening(false);
+          if (latest.current.handsFree) setPaused(true);
+        },
+      });
+      if (round !== listenRound.current) return rec.cancel(); // stopped while the microphone was starting
+      recording.current = rec;
+    } catch (error) {
+      setListening(false);
+      setMicError(error instanceof DOMException && error.name === "NotAllowedError" ? "not-allowed" : "other");
+    }
+  }
+
+  async function finishRecording(round = listenRound.current) {
+    const rec = recording.current;
+    if (!rec || round !== listenRound.current) return;
+    recording.current = null;
+    setListening(false);
+    const audio = await rec.stop();
+    if (!audio) {
+      if (latest.current.handsFree) setPaused(true);
+      return;
+    }
+    setTranscribing(true);
+    try {
+      const { text } = await api.transcribe(audio, latest.current.language);
+      if (round !== listenRound.current) return; // stopped in the meantime
+      const base = latest.current.draft.trim();
+      if (!text.trim()) {
+        if (latest.current.handsFree) setPaused(true);
+        return;
+      }
+      setDraft(base ? `${base} ${text.trim()}` : text.trim());
+      if (latest.current.handsFree) restartCountdown(CONFIRM_MS);
+    } catch {
+      setMicError("other");
+      // Whisper is not available: use the browser's recognition from now on
+      setServer((s) => ({ ...s, stt: false }));
+      serverVoice = loadServerVoice().then((v) => ({ ...v, stt: false }));
+    } finally {
+      setTranscribing(false);
+    }
+  }
+
+  /** Browser engine: live recognition, the countdown starts after the last word. */
+  function startBrowserListening() {
+    if (!canListen) return;
     setListening(true);
     // Dictated text is added to what is already in the input field
     const base = latest.current.draft.trim();
@@ -103,7 +201,7 @@ export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Option
       (spoken) => {
         setDraft(base ? `${base} ${spoken}` : spoken);
         quietRestarts.current = 0;
-        if (latest.current.handsFree) restartCountdown();
+        if (latest.current.handsFree) restartCountdown(SILENCE_MS);
       },
       (problem) => {
         stopRecognition.current = null;
@@ -124,25 +222,33 @@ export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Option
           setPaused(true);
           return;
         }
-        startMic();
+        startBrowserListening();
       },
     );
   }
 
   function stopMic() {
     stoppedByUs.current = true;
+    listenRound.current++;
     stopCountdown();
     stopRecognition.current?.();
+    recording.current?.cancel();
+    recording.current = null;
+    setListening(false);
+    setTranscribing(false);
   }
 
   function toggleMic() {
-    if (listening) stopMic();
+    unlockAudio();
+    if (recording.current) finishRecording();
+    else if (listening) stopMic();
     else startMic();
   }
 
-  /** Hands-free: stop reading, listening and auto-sending, e.g. because the candidate wants to type. */
+  /** Hands-free: stop reading, listening and sending, e.g. because the candidate wants to type. */
   function hold() {
-    if (!latest.current.handsFree || (!stopRecognition.current && speakingKey === null)) return;
+    const busy = stopRecognition.current || recording.current || transcribing || speakingKey !== null || countdown !== null;
+    if (!latest.current.handsFree || !busy) return;
     stopReading();
     stopMic();
     setPaused(true);
@@ -151,19 +257,36 @@ export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Option
   // ---------- reading aloud ----------
 
   /** Reads a text aloud. With `thenListen`, the microphone starts when reading is done. */
-  function say(key: number, text: string, thenListen = false) {
+  async function say(key: number, text: string, thenListen = false) {
     stopMic();
     const current = ++reading.current;
     setSpeakingKey(key);
-    speak(text, latest.current.language, () => {
-      if (reading.current !== current) return; // stopped or replaced by a newer reading
-      setSpeakingKey(null);
-      if (thenListen) startMic();
-    });
+    const { tts } = await loadServerVoice();
+    let spoken = false;
+    if (tts) {
+      try {
+        const audio = await api.speech(text, latest.current.language, latest.current.voice);
+        if (reading.current !== current) return;
+        playback.current = await play(audio);
+        await playback.current.done;
+        spoken = true;
+      } catch {
+        // server voice failed: the browser reads it instead
+      }
+    }
+    if (!spoken && reading.current === current) {
+      await new Promise<void>((resolve) => speak(text, latest.current.language, resolve));
+    }
+    if (reading.current !== current) return; // stopped or replaced by a newer reading
+    playback.current = null;
+    setSpeakingKey(null);
+    if (thenListen) startMic();
   }
 
   function stopReading() {
     reading.current++;
+    playback.current?.stop();
+    playback.current = null;
     setSpeakingKey(null);
     stopSpeaking();
   }
@@ -176,14 +299,22 @@ export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Option
 
   // ---------- hands-free switch ----------
 
-  /** Switches hands-free mode and returns the new state. */
+  /** Switches hands-free mode and returns the new state. Call it from a click (unlocks audio on phones). */
   function toggleHandsFree() {
+    unlockAudio();
     const on = !handsFree;
     setHandsFree(on);
     latest.current.handsFree = on;
     saveHandsFree(on);
     if (!on) stopAll();
     return on;
+  }
+
+  /** Hands-free: continue after a pause. */
+  function resume() {
+    unlockAudio();
+    setPaused(false);
+    startMic();
   }
 
   function stopAll() {
@@ -222,14 +353,18 @@ export function useVoice({ language, draft, setDraft, onSend, onRepeat }: Option
     stopReading,
     skipReading,
     listening,
+    transcribing,
     toggleMic,
     startMic,
     stopMic,
     hold,
+    resume,
     paused,
     countdown,
     micError,
     stopAll,
+    /** True when the server engines are used (real loudness in audio.ts meter) */
+    server,
   };
 }
 

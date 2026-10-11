@@ -328,6 +328,15 @@ export const mockApi: InterviewApi = {
     };
   },
 
+  // The mock has no server voice (config.voice is missing), so the browser's speech features are used.
+  async transcribe() {
+    throw new ApiError("VOICE_UNAVAILABLE", "The mock has no speech-to-text.");
+  },
+
+  async speech() {
+    throw new ApiError("VOICE_UNAVAILABLE", "The mock has no text-to-speech.");
+  },
+
   async getSession(sessionId): Promise<SessionState> {
     await fakeDelay();
     const session = getOrThrow(sessionId);

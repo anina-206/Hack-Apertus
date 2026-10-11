@@ -79,3 +79,27 @@ export function Headphones({ className = "h-5 w-5" }: IconProps) {
     </svg>
   );
 }
+
+export function ChatBubble({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1h-8l-4 3v-3H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
+    </svg>
+  );
+}
+
+export function Pause({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M9 6v12M15 6v12" />
+    </svg>
+  );
+}
+
+export function Play({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M8 5.5v13l10-6.5-10-6.5z" fill="currentColor" />
+    </svg>
+  );
+}

@@ -45,6 +45,21 @@ def postings() -> dict[str, dict]:
         return {p["id"]: p for p in (json.loads(line) for line in f if line.strip())}
 
 
+@lru_cache
+def _interviewer_voices() -> dict:
+    with open(DATA_DIR / "interviewer_voices.yaml", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def interviewer_voice(posting_id: Optional[str]) -> str:
+    """ "female" or "male": the voice for POST /speech, from data/interviewer_voices.yaml."""
+    voices = _interviewer_voices()
+    for voice in ("female", "male"):
+        if posting_id in voices.get(voice, []):
+            return voice
+    return voices["default"]
+
+
 def default_posting_id(occupation_id: str, language: str) -> Optional[str]:
     by_language = occupations()[occupation_id].get("postings") or {}
     return by_language.get("de" if language == "gsw" else language) or by_language.get("de")
@@ -60,12 +75,19 @@ def occupation_for(occupation_id: Optional[str], posting_id: Optional[str]) -> d
     return {"label": {"de": o["name_de"], "fr": o.get("name_fr"), "it": o.get("name_it")}, "description": intro[:400]}
 
 
+def voice_config() -> dict:
+    from backend.voice import stt, tts
+
+    return {"stt": stt.enabled(), "tts": tts.engine()}
+
+
 def public_config() -> dict:
     return {
         "languages": LANGUAGES,
         "occupations": [{"id": o["id"], "label": o["label"]} for o in occupations().values() if not o.get("hidden")],
         "interviewer_styles": [{"id": s["id"], "label": s["label"]} for s in interviewer_styles().values()],
         "modes": MODES,
+        "voice": voice_config(),
         "postings": [{"id": p["id"], "lang": p["lang"], "occupation": p["occupation"]["name_de"],
                       "company": p["company"]["name"], "place": p["company"]["place"]} for p in postings().values()],
     }
