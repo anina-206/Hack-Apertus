@@ -3,21 +3,29 @@
 **Hack Apertus · Track 2A · FHGR: AI-Powered Job Interview Coach**
 
 A practice job interview for school students (about 14-16) applying for an apprenticeship in Switzerland.
-The candidate picks an occupation, a language and an interviewer style, answers questions in a chat,
+The candidate picks an occupation, a language and an interviewer style, answers questions in a chat or by voice,
 gets a short tip after every answer, and receives a feedback report at the end.
-All runtime inference uses **Apertus v1.5 8B**.
+All runtime LLM inference uses **Apertus v1.5 8B**.
 
-- **Languages:** German, French, Italian, and Swiss German (`gsw`, beta)
-- **Occupations:** e.g. Informatiker/in EFZ, Kaufmann/-frau EFZ, Fachmann/-frau Gesundheit EFZ (from `data/occupations.yaml`)
+- **Languages:** German, French, Italian, and Swiss German (Mundart: Zürich, Bern, Basel, Graubünden, Valais; beta)
+- **Occupations:** a searchable list of Swiss apprenticeships in DE/FR/IT; each interview plays at a fictional
+  FHGR company with its own trainer, or at the company from the candidate's uploaded application letter
 - **Modes:** *training* (tip and scores after every answer) or *rehearsal* (feedback only at the end)
-- **Interviewer styles:** friendly (du/tu) or strict (Sie/vous/Lei)
+- **Interviewer styles:** friendly (du/tu) or strict (Sie/vous/Lei); the coach's feedback always uses du/tu
+- **Voice:** hands-free mode: the interviewer speaks (Piper, local), the candidate answers by voice
+  (Whisper with a Swiss German fine-tune, local), shown in an animated call view
+- **Accounts (optional):** log in to keep interviews and reports; guests can use everything
 
 Team: Iago (backend), Anina (frontend)
 
 ## Run it
 
-Requirements: Docker with Compose v2 and an Apertus API key from CSCS. No GPU and no local model weights are needed.
+Requirements: Docker with Compose v2 and an Apertus API key from CSCS. No GPU is needed.
 Apertus is called through the [CSCS LLM inference API](https://docs.cscs.ch/services/inference/api/#llm-inference-api-service).
+The voice models (Whisper and Piper, about 2.5 GB, CPU only, about 3 GB RAM) are downloaded into `data/models`
+on the first start and preloaded in the background; until then, or with `STT_ENABLED=false` / `TTS_ENGINE=off`,
+the web app uses the browser's own speech features. The microphone works on `http://localhost`; from another
+device the web app needs HTTPS (browsers only allow the microphone on secure pages).
 
 ```bash
 cp .env.example .env      # fill in LLM_NAME, LLM_BASE_URL, LLM_API_KEY
@@ -39,6 +47,20 @@ LLM_API_KEY=<your CSCS key>
 
 Without `.env` the services still start and `/api/v1/health` works, but every endpoint that needs Apertus
 returns `502 LLM_UNAVAILABLE`.
+
+Nothing has to be hosted: as the challenge asks, everything runs locally with `make run` (Docker), and the
+only external service is the CSCS endpoint for Apertus.
+
+### Challenge requirements
+
+| Requirement (FHGR) | How we meet it |
+|---|---|
+| Apertus 1.5 8B as the model | The only LLM at runtime (`LLM_NAME`, `LLM_BASE_URL`, `LLM_API_KEY`) |
+| < 32 GB VRAM, consumer hardware, on-premise | Apertus 8B fits in < 32 GB; our container needs no GPU (Whisper and Piper run on the CPU) |
+| < 5 LLM calls per answer (average) | About 2 per answer (3 in Mundart), logged per answer (see [call budget](#llm-call-budget-gate-average--5-per-answer)) |
+| Docker container, `make run`, source, docs, visual overview | `make run` in this folder; this README, [technical_report.md](technical_report.md) and [docs/api.md](docs/api.md); architecture diagram under [How it works](#how-it-works) |
+| DE, FR, IT; Swiss dialects a plus | All three, plus Mundart in five dialects (beta) |
+| Voice-ready (real-time TTS later) | Already spoken: Piper/Azure TTS and Whisper STT with a hands-free mode |
 
 Quick check without the web app:
 
@@ -73,7 +95,12 @@ Judge / Agent Chat UI ──Agent Protocol──┘    analysis call (11 criteri
   That makes 12 main questions (FHGR: 10-15). Each phase allows at most one follow-up when an answer is vague.
 - **A real company.** Each session uses an FHGR posting (fictional company, real occupation): the interviewer
   plays the posting's trainer, answers the candidate's questions as the company, and the analysis knows
-  what a well-prepared candidate could know about it (`preparation`).
+  what a well-prepared candidate could know about it (`preparation`). If the candidate uploads an application
+  letter (PDF, .docx, .txt), the company and contact person from the letter replace the posting, and the
+  interviewer asks about points from the letter.
+- **Mundart.** The interviewer writes Standard German, a second call turns it into the chosen dialect, with
+  parallel examples from the FHGR question bank (`interview/dialect.py`): more reliable than asking the 8B model
+  to interview in dialect directly.
   In the candidate-questions phase the candidate asks and the interviewer answers; the question is
   analysed for `initiative`.
 - **Robust JSON.** The model's output is repaired in code where possible (code fences, extra text,
@@ -97,9 +124,12 @@ Judge / Agent Chat UI ──Agent Protocol──┘    analysis call (11 criteri
 | Answer in a scored phase | 2 (max 4 with JSON retries) |
 | Answer in the candidate-questions phase | 1 (0 if the candidate has no more questions) |
 | Opening question | 1 |
+| Mundart: each interviewer text | +1 (translation into the dialect) |
+| Uploaded application letter | 1 per session (summary) |
 | Final report | 1 (max 3 with JSON retries), once per session |
+| Voice (`/transcribe`, `/speech`) | 0 (Whisper and Piper, no LLM) |
 
-A full interview without retries is about 2 calls per answer. Every LLM call is logged as one JSON line
+A full interview without retries is about 2 calls per answer, 3 in Mundart. Every LLM call is logged as one JSON line
 (`"event": "llm_call"`), and every answer logs its `calls_per_answer`:
 
 ```bash
@@ -146,12 +176,16 @@ curl -s -X POST localhost:8000/threads/$T/runs/wait -H 'Content-Type: applicatio
 | `src/backend/interview/report.py` | Final report |
 | `src/backend/interview/rubric.py` | FHGR rubric (11 criteria, 1-4) from `datasets/rubric/` |
 | `src/backend/interview/safety.py` | Guardrails: crisis, distress, redirect |
+| `src/backend/interview/dialect.py` | Mundart: Standard German → dialect with examples from the question bank |
+| `src/backend/interview/application.py` | Uploaded application letter: text, summary, company and contact |
+| `src/backend/interview/examples.py` | Expert examples from the FHGR annotations for the analysis prompt |
+| `src/backend/voice/` | Whisper speech-to-text (`stt.py`) and Piper/Azure text-to-speech (`tts.py`) |
 | `src/backend/tests/` | Tests (fake LLM, no network) |
 | `src/eval/run_interview.py` | Interview runner: plays a full interview against the API |
 | `src/eval/bench_*.py` | Benchmarks on the FHGR data (see below) |
 | `datasets/`, `fhgr/` | FHGR challenge data, slides and project template (copied unchanged) |
 | `frontend/` | React web app (see `frontend/README.md`) |
-| `data/` | Occupations and interviewer styles (YAML) |
+| `data/` | Occupations, interviewer styles and voices (YAML); `data/models/` holds the downloaded voice models (not in git) |
 | `docs/` | API contract, diagrams |
 | `technical_report.md` | Architecture, use of Apertus, evaluation, limitations |
 
@@ -225,7 +259,9 @@ the FHGR feedback rules. Without `JUDGE_NAME` the judge is skipped. The coach it
 
 ## Data
 
-`data/` holds only small YAML configuration files (limit: 100 MB). `datasets/` and `fhgr/` are the FHGR
+`data/` holds only small YAML configuration files in git (limit: 100 MB); the voice models in `data/models/`
+are downloaded at runtime and git-ignored. Spoken answers are transcribed in memory and not stored; only the
+text goes into the interview like a typed answer. `datasets/` and `fhgr/` are the FHGR
 challenge material (synthetic, fictional persons and companies). Without an account nothing personal is kept
 beyond the running session. If someone creates an account, the username, a password hash and the saved interviews
 (including the optional candidate details: first name, school level, interests) are stored in `storage/app.db`.
@@ -240,3 +276,4 @@ interview; the full text is not stored, only the short summary (without contact 
 - Submission: http://hackapertus.ch/online-hack/submissions (not on Devpost)
 - Licence: all Hack Apertus projects are open source, see [Terms & Conditions](https://hackapertus.ch/terms-and-conditions) (6. What you build is open source)
 - Questions: Discord or hello@hackapertus.ch
+- Development was assisted by Claude Code; all runtime inference uses Apertus v1.5 8B.
