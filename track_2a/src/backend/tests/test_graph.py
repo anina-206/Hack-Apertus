@@ -349,14 +349,43 @@ def test_interviewer_may_only_say_goodbye_when_closing():
 
 # --- Any apprenticeship by name (occupation_name) ----------------------------------------------------
 
-def test_occupation_name_starts_an_interview_without_company(fake, api):
+def test_occupation_name_gets_a_fictional_default_company(fake, api):
     fake()
     resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Koch/Köchin EFZ"})
     assert resp.status_code == 201, resp.text
     body = resp.json()
-    assert body["company"] is None and body["interviewer"] is None
+    # no letter, no FHGR posting: the default company of the field "Gastgewerbe, Hotellerie" and a named person
+    assert body["company"] == {"name": "Hotel Alpenblick", "place": "Chur"}
+    assert body["interviewer"]["name"] in ("Frau Keller", "Herr Meier") and body["interviewer"]["voice"] in ("female", "male")
     state = api.get(f"/api/v1/sessions/{body['session_id']}").json()
     assert state["occupation_name"] == "Koch/Köchin EFZ"
+
+
+def test_the_default_company_fits_the_occupation_and_the_language(fake, api):
+    from backend import config
+    assert config.default_company("de", "Koch/Köchin EFZ")["name"] == "Hotel Alpenblick"
+    assert config.default_company("de", "Gärtner/in EFZ")["name"] == "Gärtnerei Sonnenhof"
+    assert config.default_company("de", "Automobil-Fachmann/-frau EFZ")["name"] == "Garage Bergblick AG"
+    french = config.default_company("fr", "Koch/Köchin EFZ")
+    assert french["place"] == "Lausanne" and french["contact_role"] in ("formatrice", "formateur")
+    assert config.default_company("it", "Koch/Köchin EFZ")["place"] == "Bellinzona"
+    assert config.default_company("gsw", "Koch/Köchin EFZ")["place"] == "Chur"  # gsw uses the German names
+    # the same occupation always gets the same company and person
+    assert config.default_company("de", "Koch/Köchin EFZ") == config.default_company("de", "Koch/Köchin EFZ")
+    # an occupation that is not in the data gets the general fallback
+    assert config.default_company("de", "Erfundener Beruf EFZ")["name"] == "Muster AG"
+    assert config.default_company("de", None)["name"] == "Muster AG"
+
+
+def test_the_default_company_has_no_facts_and_is_not_marked_as_from_the_letter(fake, api):
+    from backend import config
+    from backend.interview.prompts import interviewer_messages
+    posting = config.posting_for({"language": "de", "occupation_name": "Koch/Köchin EFZ"})
+    assert posting["user_provided"] is False and posting["insider_facts"] == [] and posting["company"]["description"] == ""
+    system = interviewer_messages({"label": {"de": "Koch"}, "description": "x"}, {"prompt": "Be friendly.", "formal": False},
+                                  "de", None, "motivation", "next_question", 1, [], posting)[0]["content"]
+    assert "Hotel Alpenblick" in system and "taken from the candidate's application letter" not in system
+    assert config.posting_for({"language": "de"}) is None  # nothing known about the occupation at all
 
 
 def test_occupation_name_is_ignored_when_a_known_occupation_is_given(fake, api):
@@ -400,14 +429,27 @@ def test_letter_without_company_keeps_the_default_posting(fake, api):
     assert body["company"] == {"name": "Limmatcode GmbH", "place": "Zürich"} and body["interviewer"]["name"] == "Stefan Keller"
 
 
-def test_company_without_contact_person_and_for_any_occupation(fake, api):
+def test_letter_with_company_but_without_contact_person_gets_the_default_person(fake, api):
     client = fake()
-    client.application_output = "COMPANY: Hotel Alpina\nPLACE: none\nCONTACT: none\nROLE: none\n- Hobby: Kochen"
+    client.application_output = "COMPANY: Hotel Alina\nPLACE: none\nCONTACT: none\nROLE: none\n- Hobby: Kochen"
     resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Koch/Köchin EFZ",
                                               "application_text": "Bewerbung als Koch"})
     assert resp.status_code == 201, resp.text
     body = resp.json()
-    assert body["company"] == {"name": "Hotel Alpina", "place": ""} and body["interviewer"] is None
+    assert body["company"] == {"name": "Hotel Alina", "place": ""}  # the letter's company, not the default one
+    assert body["interviewer"]["name"] in ("Frau Keller", "Herr Meier")
+
+
+def test_letter_with_only_a_contact_person_keeps_the_person_and_uses_the_default_company(fake, api):
+    client = fake()
+    client.application_output = "COMPANY: none\nPLACE: none\nCONTACT: Frau Meyer\nROLE: Leiterin\n- Hobby: Kochen"
+    body = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Koch/Köchin EFZ",
+                                              "application_text": "Sehr geehrte Frau Meyer"}).json()
+    assert body["company"]["name"] == "Hotel Alpenblick"
+    assert body["interviewer"] == {"name": "Frau Meyer", "role": "Leiterin", "voice": "female"}
+    # An occupation with an FHGR company keeps it: a contact person alone does not replace the posting
+    other = api.post("/api/v1/sessions", json={**SETUP, "application_text": "Sehr geehrte Frau Meyer"}).json()
+    assert other["company"]["name"] == "Limmatcode GmbH"
 
 
 def test_the_request_no_longer_takes_a_company(fake, api):

@@ -1,0 +1,70 @@
+# Fictional default companies and interviewers, for interviews where neither the candidate's application
+# letter nor an FHGR posting (datasets/profiles/postings.jsonl) names a company or a contact person.
+#
+# Only a name, a place and a person: no facts about the company, so nobody can be misled by invented details
+# (when the candidate asks about the company, the interviewer says it will find out). All names are made up.
+#
+# The company comes from the first entry whose `fields` contains the occupation's field (the first field of
+# "Berufsfelder" in datasets/occupations.csv); the last entry is the fallback. The interviewer is picked from
+# `interviewers` by the occupation name, so the same occupation always gets the same person.
+
+companies:
+  - fields: [Bau]
+    name: Brunner Bau AG
+  - fields: [Metall, Maschinen, Uhren]
+    name: Alpina Technik AG
+  - fields: [Gestaltung, Kunsthandwerk, Kultur, Medien]
+    name: Atelier Lichtblick GmbH
+  - fields: [Fahrzeuge]
+    name: Garage Bergblick AG
+  - fields: [Gebäudetechnik]
+    name: Haustechnik Lindenhof AG
+  - fields: [Natur]
+    name: Gärtnerei Sonnenhof
+  - fields: [Nahrung]
+    name: Bäckerei Dorfmühle AG
+  - fields: [Gastgewerbe, Hotellerie]
+    name: Hotel Alpenblick
+  - fields: [Gesundheit, Bildung, Soziales]
+    name: Gesundheitszentrum Rheintal
+  - fields: [Verkehr, Logistik, Sicherheit]
+    name: Swiss Logistik AG
+  - fields: [Chemie, Physik]
+    name: Labor Rheintal AG
+  - fields: [Druck]
+    name: Druckerei Neumann AG
+  - fields: [Holz, Innenausbau]
+    name: Schreinerei Holzwerk AG
+  - fields: [Informatik]
+    name: Datenwerk GmbH
+  - fields: [Elektrotechnik]
+    name: Elektro Berger AG
+  - fields: [Verkauf, Einkauf]
+    name: Handelshaus Seeblick AG
+  - fields: [Wirtschaft, Verwaltung, Tourismus]
+    name: Treuhand Alpina AG
+  - fields: [Textilien, Mode]
+    name: Textilatelier Wolke GmbH
+  - fields: [Schönheit, Sport]
+    name: Salon Charme
+  - fields: [Planung, Konstruktion]
+    name: Planungsbüro Kern AG
+  - fields: []
+    name: Muster AG
+
+# The place depends on the interview language (de and gsw use `de`).
+places:
+  de: Chur
+  fr: Lausanne
+  it: Bellinzona
+
+interviewers:
+  de:
+    - {name: Frau Keller, role: Berufsbildnerin}
+    - {name: Herr Meier, role: Berufsbildner}
+  fr:
+    - {name: Mme Rochat, role: formatrice}
+    - {name: M. Dubois, role: formateur}
+  it:
+    - {name: Laura Bernasconi, role: formatrice}
+    - {name: Marco Rossi, role: formatore}

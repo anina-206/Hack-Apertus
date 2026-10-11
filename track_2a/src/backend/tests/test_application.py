@@ -202,8 +202,8 @@ def test_split_summary_reads_the_company_lines():
     assert facts == "- Hobby: Velo" and asks == ["Warum Velomech?"]  # the company lines are not facts
 
 
-def test_split_summary_ignores_empty_company_values_and_a_contact_without_company():
+def test_split_summary_ignores_empty_company_values_but_keeps_a_contact_without_company():
     _, _, company = application.split_summary("COMPANY: none\nPLACE: Chur\nCONTACT: Frau Keller\n- Hobby: Velo")
-    assert company == {}
+    assert company == {"place": "Chur", "contact_name": "Frau Keller"}  # main.py decides what to do with it
     _, _, company = application.split_summary("Company: <Muster AG>\nPlace: -\n- Hobby: Velo")
     assert company == {"name": "Muster AG"}

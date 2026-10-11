@@ -86,8 +86,6 @@ def split_summary(raw: str) -> tuple[str, list[str], dict]:
             asks.append(stripped[len(arrow):].strip())
         elif stripped.lstrip("- ").strip():
             facts.append(stripped.lstrip("- ").strip())
-    if not company.get("name"):
-        company = {}  # a contact person without a company is of no use
     return ("\n".join(f"- {f}" for f in facts)[:MAX_SUMMARY_CHARS], [a[:200] for a in (asks or facts)[:MAX_ASKS]],
             company)
 

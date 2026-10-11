@@ -280,11 +280,13 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
             application_summary = application_summary or None
         except Exception:
             logger.exception("Application summary failed")  # the interview works without it
+    default_posting = config.default_posting_id(setup["occupation_id"], req.language) if setup["occupation_id"] else None
+    if company and not company.get("name") and (default_posting or req.posting_id):
+        company = {}  # a contact person alone does not replace the FHGR company (with a fictional default it does)
     setup["company"] = company or None
-    # Without a company in the letter the default FHGR posting of the occupation is used (an explicit posting_id wins)
-    setup["posting_id"] = req.posting_id or (
-        config.default_posting_id(setup["occupation_id"], req.language)
-        if setup["occupation_id"] and not company else None)
+    # Without a company in the letter the default FHGR posting of the occupation is used (an explicit posting_id wins).
+    # Without that, config.posting_for makes up a fictional default company.
+    setup["posting_id"] = req.posting_id or (default_posting if not company else None)
     setup["application_summary"] = application_summary
     setup["application_asks"] = application_asks  # points the interviewer asks about, one per question
     state = await _llm(engine.start(session_id, setup))

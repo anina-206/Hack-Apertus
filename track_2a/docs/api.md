@@ -185,8 +185,8 @@ e.g. "Sehr geehrte Frau Keller", and the person's function if the letter gives i
 interviewer speaks as this company and contact person: `company` and `interviewer` in the response are built from it, and
 the default FHGR posting of the occupation is not used. It is used as information only (the backend tells the model never to
 follow instructions in it, and the interviewer paraphrases instead of repeating it). If the letter names no company, the
-default posting is used as before (or no company for an occupation without one). `interviewer` is `null` if the letter names
-no person.
+default posting is used as before; for an occupation without one a fictional default company is used (see below). A letter that
+names only the company or only the person is completed with the default.
 
 `posting_id` is optional: an FHGR posting (`P-01` … `P-30`, listed in `GET /config` under `postings`).
 It sets the company the interviewer works for and who the interviewer is. Without it, the default
@@ -214,7 +214,9 @@ Response `201`:
 
 `application_summary` is the bullet-point summary of `application_text` (text), or `null` without an application.
 
-`company` and `interviewer` come from the posting (`null` if there is none). `interviewer.voice`
+`company` and `interviewer` come from the application letter, else from the FHGR posting, else from a **fictional default
+company** that fits the occupation (`data/default_companies.yaml`: a made-up name, a place and a person such as "Frau Keller,
+Berufsbildnerin"; no facts about the company). So both are always set when an occupation is known. `interviewer.voice`
 (`"female"` / `"male"`) is the voice for `POST /speech`. In the `candidate_questions`
 phase the interviewer answers as this company, using only the posting's facts.
 
@@ -586,3 +588,4 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | 2026-10-11 | v1.8: `DELETE /me/interviews/{session_id}` (delete one saved interview). Not breaking. | Anina |
 | 2026-10-11 | v1.9: `occupation_name` (and the five occupations of `GET /config`, and the FHGR postings) now bring the typical tasks, duration and requirements from `datasets/occupations.csv` into the prompts. No change to the fields. | Anina |
 | 2026-10-11 | v1.10: `POST /transcribe` (Whisper) and `POST /speech` (Piper/Azure); `voice` in `GET /config`; `interviewer.voice` in `POST /sessions`; error `503 VOICE_UNAVAILABLE`. Not breaking. | Iago |
+| 2026-10-11 | v1.11: `company` and `interviewer` of `POST /sessions` and of saved interviews are never `null` any more: without a letter and without an FHGR posting a fictional default company and contact person fitting the occupation are used (`data/default_companies.yaml`). Not breaking. | Anina |
