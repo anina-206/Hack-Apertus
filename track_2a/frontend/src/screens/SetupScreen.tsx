@@ -7,6 +7,7 @@ import {
   type InterviewerStyle,
   type LanguageCode,
   type Mode,
+  type Posting,
 } from "../api";
 import CardAccent from "../components/CardAccent";
 import { ArrowRight, Check, ChevronDown } from "../components/icons";
@@ -29,11 +30,21 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
 
   // Form fields
   const [occupationId, setOccupationId] = useState("");
+  // With postings (real backend), the candidate picks an apprenticeship at a company instead.
+  // Empty until the candidate picks one; until then a posting in the chosen language is used.
+  const [pickedPostingId, setPostingId] = useState("");
   const [style, setStyle] = useState<InterviewerStyle>("friendly");
   const [mode, setMode] = useState<Mode>("training");
   const [firstName, setFirstName] = useState("");
   const [schoolLevel, setSchoolLevel] = useState("");
   const [interests, setInterests] = useState("");
+
+  // Postings sorted by occupation name in the UI language
+  const postings = [...(config?.postings ?? [])].sort((a, b) =>
+    postingLabel(a, language).localeCompare(postingLabel(b, language)),
+  );
+  const postingId = pickedPostingId || defaultPosting(postings, language) || "";
+  const selectedPosting = postings.find((p) => p.id === postingId);
 
   // Start button
   const [starting, setStarting] = useState(false);
@@ -59,9 +70,10 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
 
   async function handleStart() {
     if (!config) return;
+    const posting = selectedPosting;
     const request: CreateSessionRequest = {
       language,
-      occupation_id: occupationId,
+      ...(posting ? { posting_id: posting.id } : { occupation_id: occupationId }),
       interviewer_style: style,
       mode,
       candidate: {
@@ -71,7 +83,12 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
       },
     };
     const occupation = config.occupations.find((o) => o.id === occupationId);
-    const summary = [occupation ? label(occupation.label, language) : "", languageNames[language], text.modes[mode]]
+    const occupationName = posting
+      ? postingLabel(posting, language)
+      : occupation
+        ? label(occupation.label, language)
+        : "";
+    const summary = [occupationName, languageNames[language], text.modes[mode]]
       .filter(Boolean)
       .join(" · ");
 
@@ -137,20 +154,46 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
           </Step>
 
           <Step number="2" chip="red" title={text.occupation}>
-            <div className="relative">
-              <select
-                value={occupationId}
-                onChange={(e) => setOccupationId(e.target.value)}
-                className={`${inputClass} appearance-none pr-12`}
-              >
-                {config.occupations.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {label(o.label, language)}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 right-5 h-5 w-5 -translate-y-1/2" />
-            </div>
+            {postings.length > 0 ? (
+              <>
+                <div className="relative">
+                  <select
+                    value={postingId}
+                    onChange={(e) => setPostingId(e.target.value)}
+                    aria-label={text.occupation}
+                    className={`${inputClass} appearance-none pr-12`}
+                  >
+                    {postings.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {postingLabel(p, language)} · {p.company}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-5 h-5 w-5 -translate-y-1/2" />
+                </div>
+                {selectedPosting && (
+                  <p className="mt-3 px-2 text-sm text-charcoal-soft">
+                    {text.atCompany} <span className="font-bold text-charcoal">{selectedPosting.company}</span>,{" "}
+                    {selectedPosting.place}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="relative">
+                <select
+                  value={occupationId}
+                  onChange={(e) => setOccupationId(e.target.value)}
+                  className={`${inputClass} appearance-none pr-12`}
+                >
+                  {config.occupations.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {label(o.label, language)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute top-1/2 right-5 h-5 w-5 -translate-y-1/2" />
+              </div>
+            )}
           </Step>
 
           <Step number="3" chip="blue" title={`${text.style} & ${text.mode}`}>
@@ -218,7 +261,7 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
       <footer className="sticky bottom-0 bg-gradient-to-t from-page via-page to-transparent px-4 pt-6 pb-4">
         <div className="mx-auto max-w-lg">
           {startError && <p className="mb-3 rounded-xl bg-danger-lighter px-4 py-3 text-danger">{text.error}</p>}
-          <PrimaryButton onClick={handleStart} disabled={!occupationId || starting} wide>
+          <PrimaryButton onClick={handleStart} disabled={!(postingId || occupationId) || starting} wide>
             {starting ? text.starting : text.start}
             {!starting && <ArrowRight />}
           </PrimaryButton>
@@ -227,6 +270,20 @@ export default function SetupScreen({ language, onLanguageChange, onStarted }: P
       </footer>
     </div>
   );
+}
+
+// ---------- postings ----------
+
+/** The posting's occupation in the UI language, e.g. "Informaticien/ne CFC". */
+function postingLabel(posting: Posting, language: LanguageCode) {
+  const name = label(posting.occupation_label, language) || posting.occupation;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/** Preselect a posting written in the chosen language, so the company fits the language region. */
+function defaultPosting(postings: Posting[], language: LanguageCode) {
+  const lang = language === "gsw" ? "de" : language;
+  return (postings.find((p) => p.lang === lang) ?? postings[0])?.id;
 }
 
 // ---------- small building blocks ----------

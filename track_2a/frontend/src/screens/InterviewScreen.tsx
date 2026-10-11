@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { api, PHASES, type CreateSessionResponse, type LanguageCode, type Phase } from "../api";
 import CardAccent from "../components/CardAccent";
-import { ArrowRight, Check, ChevronLeft, Mic, Speaker } from "../components/icons";
+import { ArrowRight, Check, ChevronLeft, Headphones, Mic, Speaker, Stop } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
 import { t, type UiTexts } from "../i18n";
-import { canListen, canSpeak, speak, startListening, stopSpeaking } from "../speech";
+import { canListen, canSpeak, speak, startListening, stopSpeaking, type ListenError } from "../speech";
 
 type Props = {
   session: CreateSessionResponse;
@@ -36,13 +36,25 @@ export default function InterviewScreen({ session, language, summary, onRestart,
   ]);
   const [questionId, setQuestionId] = useState<string | null>(session.question.id);
   const [phase, setPhase] = useState<Phase>(session.phase);
+  const [progress, setProgress] = useState(session.progress);
   const [done, setDone] = useState(false);
 
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(false);
   const [listening, setListening] = useState(false);
+  const [micError, setMicError] = useState<ListenError>(null);
   const stopListeningRef = useRef<(() => void) | null>(null);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  // Voice mode: every new question is read aloud, then the microphone starts by itself.
+  const [voiceMode, setVoiceMode] = useState(() => canSpeak && loadVoiceMode());
+  // Index of the message that is being read aloud right now, or null
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
+  // Counts readings. Stopping speech also calls its "finished" callback, so the callback only
+  // acts if its reading is still the current one.
+  const readingRef = useRef(0);
 
   // Always scroll to the newest message
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -53,18 +65,27 @@ export default function InterviewScreen({ session, language, summary, onRestart,
   // Stop voice features when leaving the screen
   useEffect(
     () => () => {
+      readingRef.current++;
       stopListeningRef.current?.();
       stopSpeaking();
     },
     [],
   );
 
+  // In voice mode, read each new interviewer message aloud (also the first question).
+  const lastInterviewerIndex = messages.findLastIndex((m) => m.role === "interviewer");
+  useEffect(() => {
+    if (voiceMode && lastInterviewerIndex >= 0) readAloud(lastInterviewerIndex, !done);
+    // Only when a new question arrives, not when voice mode is switched on
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastInterviewerIndex]);
+
   async function send() {
     const answer = draft.trim();
     if (!answer || !questionId || sending) return;
 
     stopListeningRef.current?.();
-    stopSpeaking();
+    stopReading();
 
     // Show the answer immediately, then wait for the interviewer
     setMessages((m) => [...m, { role: "candidate", text: answer }]);
@@ -86,6 +107,7 @@ export default function InterviewScreen({ session, language, summary, onRestart,
         return updated;
       });
       setPhase(res.phase);
+      setProgress(res.progress);
       setQuestionId(res.question?.id ?? null);
       setDone(res.done);
     } catch {
@@ -98,33 +120,69 @@ export default function InterviewScreen({ session, language, summary, onRestart,
     }
   }
 
-  function toggleMic() {
-    if (listening) {
-      stopListeningRef.current?.();
-      return;
-    }
-    const base = draft.trim();
+  function startMic() {
+    if (!canListen || stopListeningRef.current) return;
+    stopReading();
+    // Dictated text is added to what is already in the input field
+    const base = draftRef.current.trim();
     setListening(true);
+    setMicError(null);
     stopListeningRef.current = startListening(
       language,
       (spoken) => setDraft(base ? `${base} ${spoken}` : spoken),
-      () => {
+      (problem) => {
         setListening(false);
+        setMicError(problem);
         stopListeningRef.current = null;
       },
     );
   }
 
+  function toggleMic() {
+    if (listening) stopListeningRef.current?.();
+    else startMic();
+  }
+
+  /** Reads message `index` aloud. With `thenListen`, the microphone starts when reading is done. */
+  function readAloud(index: number, thenListen = false) {
+    stopListeningRef.current?.();
+    const reading = ++readingRef.current;
+    setSpeakingIndex(index);
+    speak(messages[index]?.text ?? "", language, () => {
+      if (readingRef.current !== reading) return; // stopped or replaced by a newer reading
+      setSpeakingIndex(null);
+      if (thenListen) startMic();
+    });
+  }
+
+  function stopReading() {
+    readingRef.current++;
+    setSpeakingIndex(null);
+    stopSpeaking();
+  }
+
+  function toggleVoiceMode() {
+    const on = !voiceMode;
+    setVoiceMode(on);
+    saveVoiceMode(on);
+    if (on && lastInterviewerIndex >= 0 && !done) readAloud(lastInterviewerIndex, true);
+    if (!on) {
+      stopReading();
+      stopListeningRef.current?.();
+    }
+  }
+
   function handleEnd() {
     if (window.confirm(text.endConfirm)) {
       stopListeningRef.current?.();
-      stopSpeaking();
+      stopReading();
       onRestart();
     }
   }
 
   const phaseIndex = PHASES.indexOf(phase);
-  const lastInterviewerIndex = messages.findLastIndex((m) => m.role === "interviewer");
+  // The question count only moves in the four scored phases (see docs/api.md)
+  const showQuestionCount = phaseIndex < 4 && progress.total > 0;
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-page">
@@ -138,10 +196,23 @@ export default function InterviewScreen({ session, language, summary, onRestart,
           >
             <ChevronLeft />
           </button>
-          <h1 className="flex-1 text-3xl font-bold tracking-tight">
+          <h1 className="min-w-0 flex-1 text-2xl font-bold tracking-tight whitespace-nowrap sm:text-3xl">
             {text.title}
             <span className="text-logo-yellow">.</span>
           </h1>
+          {canSpeak && (
+            <button
+              onClick={toggleVoiceMode}
+              aria-pressed={voiceMode}
+              aria-label={text.voiceMode}
+              title={text.voiceMode}
+              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
+                voiceMode ? "border-logo-yellow bg-logo-yellow text-charcoal" : "border-white/80 hover:bg-white/10"
+              }`}
+            >
+              <Headphones />
+            </button>
+          )}
           <button
             onClick={handleEnd}
             className="rounded-full border-2 border-white/80 px-4 py-1.5 text-sm font-bold hover:bg-white/10"
@@ -163,7 +234,9 @@ export default function InterviewScreen({ session, language, summary, onRestart,
           </span>
           <span className="flex-1 text-xl font-bold">{text.phases[phase]}</span>
           <span className="text-sm text-charcoal-soft">
-            {text.phase} {phaseIndex + 1} {text.of} {PHASES.length}
+            {showQuestionCount
+              ? `${text.question} ${progress.current} ${text.of} ${progress.total}`
+              : `${text.phase} ${phaseIndex + 1} ${text.of} ${PHASES.length}`}
           </span>
         </div>
         <div className="mt-3 flex gap-1.5" aria-hidden="true">
@@ -188,7 +261,8 @@ export default function InterviewScreen({ session, language, summary, onRestart,
             interviewer={interviewer}
             showName={i === 0}
             showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
-            onReadAloud={() => speak(msg.text, language)}
+            speaking={speakingIndex === i}
+            onReadAloud={() => (speakingIndex === i ? stopReading() : readAloud(i))}
           />
         ))}
 
@@ -217,6 +291,11 @@ export default function InterviewScreen({ session, language, summary, onRestart,
       {!done && (
         <footer className="border-t border-line bg-white px-4 pt-3 pb-3">
           {error && <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">{text.error}</p>}
+          {micError && (
+            <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">
+              {micError === "not-allowed" ? text.micDenied : text.micError}
+            </p>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -260,7 +339,9 @@ export default function InterviewScreen({ session, language, summary, onRestart,
               <ArrowRight />
             </button>
           </form>
-          <p className="mt-2 text-center text-xs text-charcoal-soft">{text.inputHint}</p>
+          <p className="mt-2 text-center text-xs text-charcoal-soft">
+            {listening ? (language === "gsw" ? text.mundartListening : text.listeningHint) : voiceMode ? text.voiceModeHint : text.inputHint}
+          </p>
         </footer>
       )}
     </div>
@@ -301,6 +382,7 @@ function Message({
   interviewer,
   showName,
   showReadAloud,
+  speaking,
   onReadAloud,
 }: {
   message: ChatMessage;
@@ -308,6 +390,7 @@ function Message({
   interviewer: Interviewer;
   showName: boolean;
   showReadAloud: boolean;
+  speaking: boolean;
   onReadAloud: () => void;
 }) {
   if (message.role === "candidate") {
@@ -345,16 +428,35 @@ function Message({
         <div className="rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3 text-lg leading-snug whitespace-pre-wrap shadow-sm">
           {message.text}
         </div>
-        {showReadAloud && (
+        {(showReadAloud || speaking) && (
           <button
             onClick={onReadAloud}
             className="mt-3 inline-flex items-center gap-1.5 rounded-full border-2 border-line bg-white px-3 py-1.5 text-sm font-bold text-brand hover:border-brand-light"
           >
-            <Speaker />
-            {text.readAloud}
+            {speaking ? <Stop /> : <Speaker />}
+            {speaking ? text.stopReading : text.readAloud}
           </button>
         )}
       </div>
     </div>
   );
+}
+
+// The voice-mode switch is remembered in this browser. Storage can be blocked, so both are guarded.
+const VOICE_MODE_KEY = "coach.voiceMode";
+
+function loadVoiceMode() {
+  try {
+    return localStorage.getItem(VOICE_MODE_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+function saveVoiceMode(on: boolean) {
+  try {
+    localStorage.setItem(VOICE_MODE_KEY, on ? "on" : "off");
+  } catch {
+    // not saved, the switch still works for this interview
+  }
 }

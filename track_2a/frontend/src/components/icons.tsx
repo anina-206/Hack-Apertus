@@ -61,3 +61,21 @@ export function Mic({ className = "h-5 w-5" }: IconProps) {
     </svg>
   );
 }
+
+export function Stop({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function Headphones({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 15v-3a8 8 0 0116 0v3" />
+      <rect x="3" y="14" width="4.5" height="6" rx="1.5" />
+      <rect x="16.5" y="14" width="4.5" height="6" rx="1.5" />
+    </svg>
+  );
+}

@@ -98,9 +98,18 @@ so the frontend never hardcodes occupations or profiles.
   "modes": [
     { "id": "training", "description": "Short feedback after every answer" },
     { "id": "rehearsal", "description": "Realistic, feedback only at the end" }
+  ],
+  "postings": [
+    { "id": "P-11", "lang": "de", "occupation": "Informatiker/in EFZ",
+      "occupation_label": { "de": "Informatiker/in EFZ", "fr": "informaticien/ne CFC", "it": "informatico/a AFC" },
+      "company": "Limmatcode GmbH", "place": "Zürich" }
   ]
 }
 ```
+
+`postings` are the 30 FHGR apprenticeship postings (real-sounding companies). `lang` is the language the
+posting is written in; any posting can be used in any interview language. The setup screen lets the
+candidate pick one and sends its `posting_id`.
 
 ### POST `/sessions`
 
@@ -350,3 +359,4 @@ Generated with one LLM call the first time, then cached.
 | 2026-10-10 | Optional `focus` in `POST /sessions`. Not breaking. | Iago |
 | 2026-10-10 | `occupation_id` is optional when `posting_id` is given (the posting's occupation is used). Not breaking. | Iago |
 | 2026-10-10 | Backend runs inside Aegra (same port 8000, same `/api/v1`); errors outside `/api/v1` keep FastAPI's format. Hidden occupation `lehrstelle_allgemein` is not listed in `GET /config`. Not breaking. | Iago |
+| 2026-10-11 | `occupation_label` (de/fr/it) for each entry of `postings` in `GET /config`. Not breaking. | Iago |
