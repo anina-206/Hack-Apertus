@@ -12,6 +12,7 @@ Mundart (gsw) is read with the German voice.
 import io
 import logging
 import os
+import re
 import threading
 import time
 import wave
@@ -62,6 +63,33 @@ def engine() -> str | None:
 
 def _base(language: str) -> str:
     return "de" if language == "gsw" else language
+
+
+# ---------- text cleanup ----------
+
+# Abbreviations the voices read letter by letter or not at all. Keys are matched as whole words.
+ABBREVIATIONS = {
+    "de": {"z.B.": "zum Beispiel", "z. B.": "zum Beispiel", "bzw.": "beziehungsweise", "d.h.": "das heisst",
+           "d. h.": "das heisst", "usw.": "und so weiter", "ca.": "circa", "evtl.": "eventuell",
+           "u.a.": "unter anderem", "inkl.": "inklusive", "Nr.": "Nummer", "z.Zt.": "zurzeit"},
+    "fr": {"p. ex.": "par exemple", "p.ex.": "par exemple", "env.": "environ", "N°": "numéro"},
+    "it": {"ad es.": "ad esempio", "es.": "esempio", "ecc.": "eccetera", "n.": "numero"},
+}
+# Swiss school and apprenticeship acronyms: spelled out letter by letter ("E F Z")
+ACRONYMS = ("EFZ", "EBA", "BMS", "BM1", "BM2", "BM", "KV", "ÜK", "CFC", "AFP", "MP", "AFC", "CFP")
+
+
+def spoken_text(text: str, language: str) -> str:
+    """The text as it should be spoken: no Markdown, emojis, links or gender signs, abbreviations written out."""
+    text = re.sub(r"https?://\S+", "", text)
+    text = re.sub(r"[*_#`>~|]+", "", text)  # Markdown: **bold**, _italic_, # headings, `code`, > quotes
+    text = re.sub(r"[\U0001F000-\U0001FAFF☀-➿️]", "", text)  # emojis and symbols
+    # Gender forms read as the first form: "Berufsbildner:in" -> "Berufsbildner", "Lernende/r" -> "Lernende"
+    text = re.sub(r"(?<=\w)[:*/]-?(?:in|innen|r|e|ne)\b", "", text)
+    for short, long in ABBREVIATIONS.get(_base(language), {}).items():
+        text = re.sub(rf"(?<!\w){re.escape(short)}(?=\s|$)", long, text)
+    text = re.sub(rf"\b({'|'.join(ACRONYMS)})\b", lambda m: " ".join(m.group(1)), text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 # ---------- Piper ----------
@@ -140,6 +168,7 @@ def speech(text: str, language: str, voice: str = "female") -> tuple[bytes, str,
     if current is None:
         raise VoiceUnavailable("text-to-speech is switched off (TTS_ENGINE=off)")
     started = time.monotonic()
+    text = spoken_text(text, language)
     if current == "azure":
         audio, media_type = _azure_speech(text, language, voice), "audio/mpeg"
     else:

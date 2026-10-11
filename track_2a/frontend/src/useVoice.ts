@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type AppConfig, type LanguageCode, type Voice } from "./api";
 import { canRecord, play, record, unlockAudio, type Playback, type Recording } from "./audio";
-import { canListen, canSpeak, speak, startListening, stopSpeaking, type ListenError } from "./speech";
+import { canListen, canSpeak, speak, speechChunks, startListening, stopSpeaking, type ListenError } from "./speech";
 
 /** Browser engine: pause after the last recognised word before the answer is sent. */
 export const SILENCE_MS = 3000;
@@ -261,20 +261,31 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
     const current = ++reading.current;
     setSpeakingKey(key);
     const { tts } = await loadServerVoice();
-    let spoken = false;
-    if (tts) {
-      try {
-        const audio = await api.speech(text, latest.current.language, latest.current.voice);
+    // Sentence by sentence: the first one plays while the server makes the next one
+    const chunks = tts ? speechChunks(text) : [];
+    let done = 0; // chunks already played
+    const load = (i: number) => {
+      const audio = api.speech(chunks[i], latest.current.language, latest.current.voice);
+      audio.catch(() => {}); // handled when it is awaited; avoids a warning if reading stops first
+      return audio;
+    };
+    try {
+      let next = chunks.length ? load(0) : null;
+      while (next) {
+        const audio = await next;
         if (reading.current !== current) return;
+        next = done + 1 < chunks.length ? load(done + 1) : null;
         playback.current = await play(audio);
         await playback.current.done;
-        spoken = true;
-      } catch {
-        // server voice failed: the browser reads it instead
+        if (reading.current !== current) return;
+        done++;
       }
+    } catch {
+      // server voice failed: the browser reads the rest instead
     }
-    if (!spoken && reading.current === current) {
-      await new Promise<void>((resolve) => speak(text, latest.current.language, resolve));
+    if ((done < chunks.length || !tts) && reading.current === current) {
+      const rest = tts ? chunks.slice(done).join(" ") : text;
+      await new Promise<void>((resolve) => speak(rest, latest.current.language, resolve));
     }
     if (reading.current !== current) return; // stopped or replaced by a newer reading
     playback.current = null;
