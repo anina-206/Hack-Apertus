@@ -390,7 +390,7 @@ def test_company_from_the_letter_replaces_the_default_posting(fake, api):
     resp = api.post("/api/v1/sessions", json={**SETUP, "application_text": "Sehr geehrte Frau Keller ..."})
     body = resp.json()  # informatiker_efz would otherwise get the FHGR company Limmatcode
     assert body["company"] == {"name": "Muster Garage AG", "place": "Chur"}
-    assert body["interviewer"] == {"name": "Frau Keller", "role": "Berufsbildnerin"}
+    assert body["interviewer"] == {"name": "Frau Keller", "role": "Berufsbildnerin", "voice": "female"}
 
 
 def test_letter_without_company_keeps_the_default_posting(fake, api):

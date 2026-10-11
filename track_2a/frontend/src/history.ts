@@ -1,6 +1,6 @@
 // Shape of an interview in the chat screen. Interviews are saved on the backend (logged-in users only).
 
-import type { LanguageCode, Phase, Report, SavedInterviewDetail } from "./api";
+import type { LanguageCode, Phase, Progress, Report, SavedInterviewDetail, Voice } from "./api";
 
 /** One bubble in the chat. `tip` is the short feedback after an answer (training mode). */
 export type ChatMessage = {
@@ -21,7 +21,9 @@ export type SavedInterview = {
   messages: ChatMessage[];
   /** The FHGR posting's company and interviewer (null/missing in the mock) */
   company?: { name: string; place: string } | null;
-  interviewer?: { name: string; role: string } | null;
+  interviewer?: { name: string; role: string; voice?: Voice } | null;
+  /** Main question number (only while the interview runs in this browser, not saved) */
+  progress?: Progress;
   /** Bullet points from the uploaded application, shown on top of the chat */
   application_summary?: string | null;
   /** An application was uploaded, but the backend could not summarise it */

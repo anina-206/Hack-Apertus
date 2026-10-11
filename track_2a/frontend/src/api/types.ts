@@ -53,8 +53,16 @@ export type AppConfig = {
   occupations: { id: string; label: LocalizedLabel }[];
   interviewer_styles: { id: InterviewerStyle; label: LocalizedLabel }[];
   modes: { id: Mode; description: string }[];
+  /** Server voice features (docs/api.md). Missing or off: the browser's own speech features are used. */
+  voice?: { stt: boolean; tts: "piper" | "azure" | null };
   dialects?: { code: Dialect; label: LocalizedLabel }[];
 };
+
+export type Voice = "female" | "male";
+
+// ---------- POST /transcribe ----------
+
+export type TranscribeResponse = { text: string; language: LanguageCode; duration_ms: number; model: string };
 
 // ---------- POST /sessions ----------
 
@@ -102,7 +110,7 @@ export type CreateSessionResponse = {
   question: Question;
   /** The FHGR posting's company and interviewer (null in the mock) */
   company?: { name: string; place: string } | null;
-  interviewer?: { name: string; role: string } | null;
+  interviewer?: { name: string; role: string; voice?: Voice } | null;
   /** Bullet points from the uploaded application (null if none, or if it could not be read) */
   application_summary?: string | null;
 };
@@ -228,6 +236,7 @@ export type ApiErrorCode =
   | "INTERVIEW_NOT_FOUND"
   | "TOO_MANY_REQUESTS"
   | "LLM_UNAVAILABLE"
+  | "VOICE_UNAVAILABLE"
   | "NETWORK_ERROR"; // frontend only: backend not reachable
 
 export class ApiError extends Error {

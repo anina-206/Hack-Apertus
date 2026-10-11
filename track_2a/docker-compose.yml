@@ -27,6 +27,8 @@ services:
       - ./data/eval:/app/data/eval
       # Interview sessions (SQLite), so a backend restart during a demo loses nothing.
       - ./data/sessions:/app/data/sessions
+      # Whisper and Piper models (about 2.5 GB), downloaded on the first start and then kept.
+      - ./data/models:/app/data/models
       # Accounts and saved interviews (SQLite)
       - storage:/app/storage
     # Values come from the shell or from .env next to this file (both optional,
@@ -45,6 +47,16 @@ services:
       POSTGRES_DB: coach
       AUTH_TYPE: noop
       REDIS_BROKER_ENABLED: "false"
+      # Voice (docs/api.md: /transcribe, /speech). STT_ENABLED=false or TTS_ENGINE=off switch them off;
+      # the frontend then uses the browser's own speech features.
+      STT_ENABLED: ${STT_ENABLED:-true}
+      STT_MODEL_DE: ${STT_MODEL_DE:-}
+      STT_MODEL: ${STT_MODEL:-}
+      TTS_ENGINE: ${TTS_ENGINE:-piper}
+      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY:-}
+      AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-switzerlandnorth}
+      MODELS_DIR: /app/data/models
+      HF_HOME: /app/data/models/hf
       # Eval only: judge model for python -m eval.bench_transcripts (see src/eval/judge.py)
       JUDGE_NAME: ${JUDGE_NAME:-}
       JUDGE_BASE_URL: ${JUDGE_BASE_URL:-}

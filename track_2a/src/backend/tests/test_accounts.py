@@ -189,7 +189,7 @@ def test_company_from_the_letter_is_saved_with_the_interview(fake, api):  # noqa
                    headers=auth(token)).json()["session_id"]
     saved = api.get(f"/api/v1/me/interviews/{sid}", headers=auth(token)).json()
     assert saved["company"] == {"name": "Muster Garage AG", "place": "Chur"}
-    assert saved["interviewer"] == {"name": "Frau Keller", "role": "Berufsbildnerin"}
+    assert saved["interviewer"] == {"name": "Frau Keller", "role": "Berufsbildnerin", "voice": "female"}
 
 
 # --- Deleting one saved interview (docs/api.md section 3b) -------------------------------------------------------

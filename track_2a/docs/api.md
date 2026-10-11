@@ -15,7 +15,7 @@ If something changes, change it here first, then in the code.
 |---|---|
 | Base URL | `http://localhost:8000/api/v1` |
 | CORS | Allow origins `http://localhost:5173` (Vite dev server) and `http://localhost:8080` (nginx container) |
-| Format | JSON only, UTF-8, `Content-Type: application/json` |
+| Format | JSON, UTF-8, `Content-Type: application/json`. Exceptions: `POST /transcribe` takes an audio upload (`multipart/form-data`), `POST /speech` returns audio |
 | Naming | `snake_case` for all keys |
 | IDs | Strings (UUID), never numbers |
 | Languages | `de`, `fr`, `it`, `gsw` (Swiss German, optional) |
@@ -47,6 +47,7 @@ If something changes, change it here first, then in the code.
 | 404 | `INTERVIEW_NOT_FOUND` | Saved interview does not exist or belongs to someone else |
 | 429 | `TOO_MANY_REQUESTS` | Too many failed logins or registrations, see section 3b. The `Retry-After` header says how many seconds to wait. |
 | 502 | `LLM_UNAVAILABLE` | Apertus did not answer or returned garbage |
+| 503 | `VOICE_UNAVAILABLE` | Speech-to-text or text-to-speech is switched off or failed (the frontend then uses the browser's voice features) |
 | 500 | `INTERNAL_ERROR` | Unexpected backend bug (should not happen) |
 
 ---
@@ -62,6 +63,8 @@ If something changes, change it here first, then in the code.
 | POST | `/sessions/{session_id}/answers` | Send an answer, get the next question | 2 (max 4) |
 | GET | `/sessions/{session_id}` | Current state (for page reload) | 0 |
 | GET | `/sessions/{session_id}/report` | Final feedback report | 1 (max 3, once, then cached) |
+| POST | `/transcribe` | Speech to text (Whisper) for a spoken answer | 0 |
+| POST | `/speech` | Text to speech (Piper or Azure) for the interviewer | 0 |
 
 Budget check: about 2 calls per answer + 1 for the report -> well below the limit of 5.
 If the model returns unusable JSON, the call is retried (max 3 attempts), and every retry counts as a call:
@@ -107,12 +110,17 @@ so the frontend never hardcodes occupations or profiles.
     { "id": "training", "description": "Short feedback after every answer" },
     { "id": "rehearsal", "description": "Realistic, feedback only at the end" }
   ],
+  "voice": { "stt": true, "tts": "piper" },
   "dialects": [
     { "code": "zh", "label": { "de": "Zürich", "fr": "Zurich", "it": "Zurigo" } },
     { "code": "be", "label": { "de": "Bern", "fr": "Berne", "it": "Berna" } }
   ]
 }
 ```
+
+`voice` says which server voice features are on: `stt` (`POST /transcribe`) and `tts`
+(`POST /speech`: `"piper"`, `"azure"` or `null` = off). When one is off, the frontend uses the browser's
+own speech recognition or speech synthesis instead.
 
 ### POST `/application/extract`
 
@@ -199,14 +207,15 @@ Response `201`:
     "text": "Grüezi Lara! Erzähl mir doch zuerst etwas über dich."
   },
   "company": { "name": "Limmatcode GmbH", "place": "Zürich" },
-  "interviewer": { "name": "Stefan Keller", "role": "Berufsbildner, Senior Software Engineer" },
+  "interviewer": { "name": "Stefan Keller", "role": "Berufsbildner, Senior Software Engineer", "voice": "male" },
   "application_summary": null
 }
 ```
 
 `application_summary` is the bullet-point summary of `application_text` (text), or `null` without an application.
 
-`company` and `interviewer` come from the posting (`null` if there is none). In the `candidate_questions`
+`company` and `interviewer` come from the posting (`null` if there is none). `interviewer.voice`
+(`"female"` / `"male"`) is the voice for `POST /speech`. In the `candidate_questions`
 phase the interviewer answers as this company, using only the posting's facts.
 
 ### POST `/sessions/{session_id}/answers`
@@ -359,6 +368,45 @@ Generated with one LLM call the first time, then cached.
   so the frontend can simply retry.
 
 ---
+
+### POST `/transcribe`
+
+Speech to text with Whisper (faster-whisper, runs in the backend container; nothing leaves the server).
+For `de` and `gsw` a Swiss German fine-tune is used: Mundart comes back as Standard German text.
+
+Request: `multipart/form-data` with
+
+| Field | Type | Notes |
+|---|---|---|
+| `audio` | file | What the browser's `MediaRecorder` records (`audio/webm`, `audio/ogg`, `audio/mp4`, `audio/wav`). At most 60 seconds / 5 MB |
+| `language` | string | `de`, `fr`, `it` or `gsw` |
+
+Response `200`:
+
+```json
+{ "text": "Ich baue gerne Computer zusammen.", "language": "gsw", "duration_ms": 3200, "model": "whisper-large-v3-turbo-swiss-german" }
+```
+
+`text` is `""` if nothing was said. Errors: `400 INVALID_REQUEST` (no audio, too long, unknown language),
+`503 VOICE_UNAVAILABLE` (switched off with `STT_ENABLED=false`, or the model could not be loaded).
+
+### POST `/speech`
+
+Text to speech for the interviewer's lines.
+
+```json
+{ "text": "Wie bist du auf diesen Beruf gekommen?", "language": "de", "voice": "female" }
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `text` | string | 1-1000 characters |
+| `language` | string | `de`, `fr`, `it` or `gsw` |
+| `voice` | string | optional, `female` (default) or `male`; use `interviewer.voice` from `POST /sessions` |
+
+Response `200`: the audio (`audio/wav` from Piper, `audio/mpeg` from Azure), header `X-TTS-Engine: piper|azure`.
+The engine is set in the backend with `TTS_ENGINE` (`piper`, `azure` or `off`). Azure needs `AZURE_SPEECH_KEY`
+and `AZURE_SPEECH_REGION` and uses Swiss voices (de-CH, fr-CH). Errors: `400 INVALID_REQUEST`, `503 VOICE_UNAVAILABLE`.
 
 ## 3b. Accounts and saved interviews (v1.1)
 
@@ -537,3 +585,4 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | 2026-10-11 | v1.7: optional `dialect` in `POST /sessions` and `dialects` in `GET /config` (Mundart: zh, be, bs, gr, vs). One extra LLM call per interviewer text in Mundart. Not breaking. | Anina |
 | 2026-10-11 | v1.8: `DELETE /me/interviews/{session_id}` (delete one saved interview). Not breaking. | Anina |
 | 2026-10-11 | v1.9: `occupation_name` (and the five occupations of `GET /config`, and the FHGR postings) now bring the typical tasks, duration and requirements from `datasets/occupations.csv` into the prompts. No change to the fields. | Anina |
+| 2026-10-11 | v1.10: `POST /transcribe` (Whisper) and `POST /speech` (Piper/Azure); `voice` in `GET /config`; `interviewer.voice` in `POST /sessions`; error `503 VOICE_UNAVAILABLE`. Not breaking. | Iago |

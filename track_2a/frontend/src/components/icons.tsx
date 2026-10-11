@@ -61,3 +61,45 @@ export function Mic({ className = "h-5 w-5" }: IconProps) {
     </svg>
   );
 }
+
+export function Stop({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function Headphones({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 15v-3a8 8 0 0116 0v3" />
+      <rect x="3" y="14" width="4.5" height="6" rx="1.5" />
+      <rect x="16.5" y="14" width="4.5" height="6" rx="1.5" />
+    </svg>
+  );
+}
+
+export function ChatBubble({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1h-8l-4 3v-3H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
+    </svg>
+  );
+}
+
+export function Pause({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M9 6v12M15 6v12" />
+    </svg>
+  );
+}
+
+export function Play({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M8 5.5v13l10-6.5-10-6.5z" fill="currentColor" />
+    </svg>
+  );
+}

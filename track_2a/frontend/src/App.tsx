@@ -64,6 +64,7 @@ export default function App() {
       messages: [{ role: "interviewer", text: session.question.text }],
       company: session.company,
       interviewer: session.interviewer,
+      progress: session.progress,
       application_summary: session.application_summary,
       application_failed: Boolean(request.application_text) && !session.application_summary,
     });

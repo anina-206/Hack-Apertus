@@ -17,6 +17,7 @@ import { ArrowRight, Check } from "../components/icons";
 import OccupationPicker from "../components/OccupationPicker";
 import type { Lehrberuf } from "../data/lehrberufe";
 import PrimaryButton from "../components/PrimaryButton";
+import { unlockAudio } from "../audio";
 import { fromServer, type SavedInterview } from "../history";
 import { label, languageNames, t } from "../i18n";
 import { occupationLabel } from "../occupation";
@@ -162,6 +163,7 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
 
   async function handleStart() {
     if (!config || !user || !occupation) return;
+    unlockAudio(); // a tap: lets the interviewer's voice play on phones later
     const known = knownOccupation(occupation);
     const request: CreateSessionRequest = {
       language,

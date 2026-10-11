@@ -1,0 +1,6 @@
+# Voice for POST /speech per FHGR posting, taken from the grammatical form of the interviewer's role
+# in the posting (Berufsbildner / Berufsbildnerin, formateur / formatrice, formatore / direttrice).
+# Postings that are not listed, and interviews without a posting, use `default`.
+default: female
+female: [P-03, P-04, P-06, P-08, P-09, P-10, P-12, P-16, P-17, P-19, P-24, P-25, P-26, P-27, P-28]
+male: [P-01, P-02, P-05, P-07, P-11, P-13, P-14, P-15, P-18, P-20, P-21, P-22, P-23, P-29, P-30]

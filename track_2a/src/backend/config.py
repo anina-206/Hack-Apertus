@@ -59,6 +59,38 @@ def postings() -> dict[str, dict]:
         return {p["id"]: p for p in (json.loads(line) for line in f if line.strip())}
 
 
+@lru_cache
+def _interviewer_voices() -> dict:
+    with open(DATA_DIR / "interviewer_voices.yaml", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def interviewer_voice(posting_id: Optional[str]) -> str:
+    """ "female" or "male": the voice for POST /speech, from data/interviewer_voices.yaml."""
+    voices = _interviewer_voices()
+    for voice in ("female", "male"):
+        if posting_id in voices.get(voice, []):
+            return voice
+    return voices["default"]
+
+
+# How the application letter shows which voice fits the contact person: the salutation before the name,
+# or the grammatical form of the role ("Berufsbildnerin" / "Berufsbildner", "formatrice" / "formateur").
+_SALUTATION = {"female": re.compile(r"^(frau|fr\.|madame|mme\.?|signora|sig\.ra)\s", re.I),
+               "male": re.compile(r"^(herr|hr\.|monsieur|m\.|signor|sig\.)\s", re.I)}
+_ROLE_ENDING = {"female": re.compile(r"(in|rice|euse|trice)$", re.I), "male": re.compile(r"(er|eur|ore)$", re.I)}
+
+
+def contact_voice(name: str, role: str) -> str:
+    """The voice for a contact person from the candidate's application letter, else the default."""
+    role_word = (role.split(",")[0].split() or [""])[-1]
+    for patterns, text in ((_SALUTATION, name.strip()), (_ROLE_ENDING, role_word)):
+        for voice, pattern in patterns.items():
+            if pattern.search(text):
+                return voice
+    return _interviewer_voices()["default"]
+
+
 def posting_from_company(company: dict) -> dict:
     """A posting-shaped dict (like an FHGR posting) from the company details found in the candidate's application letter.
 
@@ -99,7 +131,9 @@ def interviewer_of(posting: Optional[dict]) -> Optional[dict]:
     """`interviewer` of the API responses (null if the interviewer has no name)."""
     if not posting or not posting["interviewer"].get("name"):
         return None
-    return {"name": posting["interviewer"]["name"], "role": posting["interviewer"].get("role") or ""}
+    name, role = posting["interviewer"]["name"], posting["interviewer"].get("role") or ""
+    voice = interviewer_voice(posting["id"]) if posting.get("id") else contact_voice(name, role)
+    return {"name": name, "role": role, "voice": voice}
 
 
 def default_posting_id(occupation_id: str, language: str) -> Optional[str]:
@@ -196,12 +230,19 @@ def occupation_for(occupation_id: Optional[str], posting_id: Optional[str], occu
             "description": f"{intro[:400]} {knowledge}".strip(), "knowledge": bool(knowledge)}
 
 
+def voice_config() -> dict:
+    from backend.voice import stt, tts
+
+    return {"stt": stt.enabled(), "tts": tts.engine()}
+
+
 def public_config() -> dict:
     return {
         "languages": LANGUAGES,
         "occupations": [{"id": o["id"], "label": o["label"]} for o in occupations().values() if not o.get("hidden")],
         "interviewer_styles": [{"id": s["id"], "label": s["label"]} for s in interviewer_styles().values()],
         "modes": MODES,
+        "voice": voice_config(),
         "dialects": DIALECTS,
         "postings": [{"id": p["id"], "lang": p["lang"], "occupation": p["occupation"]["name_de"],
                       "company": p["company"]["name"], "place": p["company"]["place"]} for p in postings().values()],

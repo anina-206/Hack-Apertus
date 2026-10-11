@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { api, PHASES, type Phase } from "../api";
+import CallView, { type CallStatus } from "../components/CallView";
 import CardAccent from "../components/CardAccent";
-import { ArrowRight, Check, ChevronLeft, Mic, Speaker } from "../components/icons";
+import { ArrowRight, Check, ChevronLeft, Headphones, Mic, Speaker, Stop } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
 import type { ChatMessage, SavedInterview } from "../history";
 import { t, type UiTexts } from "../i18n";
-import { canListen, canSpeak, speak, startListening, stopSpeaking } from "../speech";
+import { canListen, canSpeak } from "../speech";
+import { useVoice } from "../useVoice";
 
 type Props = {
   /** The interview to show: a new one, or a saved one that is continued or only read. */
@@ -27,13 +29,22 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
   const [messages, setMessages] = useState<ChatMessage[]>(entry.messages);
   const [questionId, setQuestionId] = useState<string | null>(entry.question_id);
   const [phase, setPhase] = useState<Phase>(entry.phase);
+  // Saved interviews do not keep the question count; it shows again after the next answer
+  const [progress, setProgress] = useState(entry.progress ?? { current: 0, total: 0 });
   const [done, setDone] = useState(entry.done);
 
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(false);
-  const [listening, setListening] = useState(false);
-  const stopListeningRef = useRef<(() => void) | null>(null);
+
+  const voice = useVoice({
+    language,
+    voice: entry.interviewer?.voice ?? "female",
+    draft,
+    setDraft,
+    onSend: (answer) => send(answer),
+    onRepeat: () => voice.say(lastInterviewerIndex, messages[lastInterviewerIndex].text, true),
+  });
 
   // Always scroll to the newest message
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -41,21 +52,27 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  // Stop voice features when leaving the screen
-  useEffect(
-    () => () => {
-      stopListeningRef.current?.();
-      stopSpeaking();
-    },
-    [],
-  );
+  // Hands-free: read each new interviewer message aloud (in training mode with the tip first),
+  // then listen for the answer.
+  const lastInterviewerIndex = messages.findLastIndex((m) => m.role === "interviewer");
+  useEffect(() => {
+    if (voice.handsFree && lastInterviewerIndex >= 0) voice.say(lastInterviewerIndex, spokenText(), !done);
+    // Only when a new message arrives, not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastInterviewerIndex]);
 
-  async function send() {
-    const answer = draft.trim();
+  /** The newest interviewer message as it is read aloud: the tip of the last answer, then the question. */
+  function spokenText() {
+    const question = messages[lastInterviewerIndex].text;
+    const tip = messages[lastInterviewerIndex - 1]?.tip;
+    return tip ? `${text.tip}: ${withFullStop(tip)} ${question}` : question;
+  }
+
+  async function send(answerText = draft) {
+    const answer = answerText.trim();
     if (!answer || !questionId || sending) return;
 
-    stopListeningRef.current?.();
-    stopSpeaking();
+    voice.stopAll();
 
     // Show the answer immediately, then wait for the interviewer
     setMessages((m) => [...m, { role: "candidate", text: answer }]);
@@ -77,6 +94,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
         return updated;
       });
       setPhase(res.phase);
+      setProgress(res.progress);
       setQuestionId(res.question?.id ?? null);
       setDone(res.done);
     } catch {
@@ -89,33 +107,40 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
     }
   }
 
-  function toggleMic() {
-    if (listening) {
-      stopListeningRef.current?.();
-      return;
-    }
-    const base = draft.trim();
-    setListening(true);
-    stopListeningRef.current = startListening(
-      language,
-      (spoken) => setDraft(base ? `${base} ${spoken}` : spoken),
-      () => {
-        setListening(false);
-        stopListeningRef.current = null;
-      },
-    );
+  // In hands-free mode the call view is shown; "Chat" switches back to the messages.
+  const [showCall, setShowCall] = useState(true);
+  const callOpen = voice.handsFree && showCall && !done;
+
+  function toggleHandsFree() {
+    setShowCall(true);
+    if (voice.toggleHandsFree() && !done) voice.say(lastInterviewerIndex, spokenText(), true);
   }
+
+  const callStatus: CallStatus =
+    voice.speakingKey !== null
+      ? "speaking"
+      : sending
+        ? "thinking"
+        : voice.countdown !== null
+          ? "countdown"
+          : voice.transcribing
+            ? "transcribing"
+            : voice.listening
+              ? "listening"
+              : voice.paused
+                ? "paused"
+                : "idle";
 
   function handleEnd() {
     if (window.confirm(text.endConfirm)) {
-      stopListeningRef.current?.();
-      stopSpeaking();
+      voice.stopAll();
       onRestart();
     }
   }
 
   const phaseIndex = PHASES.indexOf(phase);
-  const lastInterviewerIndex = messages.findLastIndex((m) => m.role === "interviewer");
+  // The question count only moves in the four scored phases (see docs/api.md)
+  const showQuestionCount = phaseIndex < 4 && progress.total > 0;
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-page">
@@ -129,10 +154,23 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           >
             <ChevronLeft />
           </button>
-          <h1 className="flex-1 text-3xl font-bold tracking-tight">
+          <h1 className="min-w-0 flex-1 text-2xl font-bold tracking-tight whitespace-nowrap sm:text-3xl">
             {text.title}
             <span className="text-logo-yellow">.</span>
           </h1>
+          {canSpeak && (
+            <button
+              onClick={toggleHandsFree}
+              aria-pressed={voice.handsFree}
+              aria-label={text.voiceMode}
+              title={text.voiceMode}
+              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
+                voice.handsFree ? "border-logo-yellow bg-logo-yellow text-charcoal" : "border-white/80 hover:bg-white/10"
+              }`}
+            >
+              <Headphones />
+            </button>
+          )}
           <button
             onClick={handleEnd}
             className="rounded-full border-2 border-white/80 px-4 py-1.5 text-sm font-bold hover:bg-white/10"
@@ -154,7 +192,9 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           </span>
           <span className="flex-1 text-xl font-bold">{text.phases[phase]}</span>
           <span className="text-sm text-charcoal-soft">
-            {text.phase} {phaseIndex + 1} {text.of} {PHASES.length}
+            {showQuestionCount
+              ? `${text.question} ${progress.current} ${text.of} ${progress.total}`
+              : `${text.phase} ${phaseIndex + 1} ${text.of} ${PHASES.length}`}
           </span>
         </div>
         <div className="mt-3 flex gap-1.5" aria-hidden="true">
@@ -169,54 +209,99 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
         </div>
       </div>
 
-      {/* Messages */}
-      <main className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
-        {entry.application_summary && (
-          <details className="rounded-2xl bg-white px-4 py-3 text-sm shadow-card">
-            <summary className="cursor-pointer font-bold text-brand">{text.applicationCardTitle}</summary>
-            <p className="mt-2 whitespace-pre-wrap text-charcoal-soft">{entry.application_summary}</p>
-          </details>
-        )}
-        {entry.application_failed && (
-          <p className="rounded-xl bg-danger-lighter px-4 py-3 text-sm text-danger">{text.applicationFailed}</p>
-        )}
-
-        {messages.map((msg, i) => (
-          <Message
-            key={i}
-            message={msg}
-            text={text}
-            interviewer={interviewer}
-            showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
-            onReadAloud={() => speak(msg.text, language)}
-          />
-        ))}
-
-        {sending && (
-          <div className="ml-12 flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-3 shadow-card" aria-label={text.thinking}>
-            <Dot color="bg-logo-red" delay="0ms" />
-            <Dot color="bg-logo-yellow" delay="150ms" />
-            <Dot color="bg-logo-blue" delay="300ms" />
-          </div>
-        )}
-
-        {done && (
-          <div className="rounded-2xl bg-white p-6 text-center shadow-card">
-            <p className="mb-4 text-xl font-bold">{text.finished}</p>
-            <PrimaryButton onClick={onFinished}>{text.showFeedback}</PrimaryButton>
-            <button onClick={onRestart} className="mt-4 block w-full text-sm font-bold text-brand">
-              {text.newInterview}
+      {callOpen ? (
+        <CallView
+          text={text}
+          interviewer={interviewer}
+          status={callStatus}
+          question={messages[lastInterviewerIndex]?.text ?? ""}
+          tip={messages[lastInterviewerIndex - 1]?.tip}
+          answer={draft}
+          countdown={voice.countdown}
+          realSpeaker={voice.server.tts}
+          realMic={voice.server.stt}
+          onSkip={voice.skipReading}
+          onHold={voice.hold}
+          onResume={voice.resume}
+          onShowChat={() => setShowCall(false)}
+        />
+      ) : (
+        <main className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
+          {voice.handsFree && !done && (
+            <button
+              onClick={() => setShowCall(true)}
+              className="mx-auto flex items-center gap-2 rounded-full bg-brand-lighter px-4 py-2 text-sm font-bold text-brand"
+            >
+              <Headphones className="h-4 w-4" />
+              {text.showCall}
             </button>
-          </div>
-        )}
+          )}
+          {entry.application_summary && (
+            <details className="rounded-2xl bg-white px-4 py-3 text-sm shadow-card">
+              <summary className="cursor-pointer font-bold text-brand">{text.applicationCardTitle}</summary>
+              <p className="mt-2 whitespace-pre-wrap text-charcoal-soft">{entry.application_summary}</p>
+            </details>
+          )}
+          {entry.application_failed && (
+            <p className="rounded-xl bg-danger-lighter px-4 py-3 text-sm text-danger">{text.applicationFailed}</p>
+          )}
 
-        <div ref={bottomRef} />
-      </main>
+          {messages.map((msg, i) => (
+            <Message
+              key={i}
+              message={msg}
+              text={text}
+              interviewer={interviewer}
+              showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
+              speaking={voice.speakingKey === i}
+              onReadAloud={() => (voice.speakingKey === i ? voice.stopReading() : voice.say(i, msg.text))}
+            />
+          ))}
 
-      {/* Input */}
-      {!done && (
+          {sending && (
+            <div className="ml-12 flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-3 shadow-card" aria-label={text.thinking}>
+              <Dot color="bg-logo-red" delay="0ms" />
+              <Dot color="bg-logo-yellow" delay="150ms" />
+              <Dot color="bg-logo-blue" delay="300ms" />
+            </div>
+          )}
+
+          {done && (
+            <div className="rounded-2xl bg-white p-6 text-center shadow-card">
+              <p className="mb-4 text-xl font-bold">{text.finished}</p>
+              <PrimaryButton onClick={onFinished}>{text.showFeedback}</PrimaryButton>
+              <button onClick={onRestart} className="mt-4 block w-full text-sm font-bold text-brand">
+                {text.newInterview}
+              </button>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </main>
+      )}
+
+      {/* Input (in the call view the candidate speaks; "Chat" shows the input again) */}
+      {!done && !callOpen && (
         <footer className="border-t border-line bg-white px-4 pt-3 pb-3">
           {error && <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">{text.error}</p>}
+          {voice.micError && (
+            <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">
+              {voice.micError === "not-allowed" ? text.micDenied : text.micError}
+            </p>
+          )}
+          {voice.handsFree && !sending && (
+            <HandsFreeBar
+              text={text}
+              speaker={interviewer.name}
+              speaking={voice.speakingKey !== null}
+              listening={voice.listening}
+              transcribing={voice.transcribing}
+              countdown={voice.countdown}
+              paused={voice.paused}
+              onSkip={voice.skipReading}
+              onHold={voice.hold}
+            />
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -227,6 +312,8 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              // Typing in hands-free mode stops listening and auto-sending
+              onFocus={voice.hold}
               onKeyDown={(e) => {
                 // Enter sends, Shift+Enter makes a new line
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -241,11 +328,11 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             {canListen && (
               <button
                 type="button"
-                onClick={toggleMic}
+                onClick={voice.toggleMic}
                 aria-label={text.voiceInput}
-                aria-pressed={listening}
+                aria-pressed={voice.listening}
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                  listening ? "animate-pulse border-logo-red bg-logo-red text-white" : "border-line bg-white text-charcoal"
+                  voice.listening ? "animate-pulse border-logo-red bg-logo-red text-white" : "border-line bg-white text-charcoal"
                 }`}
               >
                 <Mic />
@@ -260,7 +347,15 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
               <ArrowRight />
             </button>
           </form>
-          <p className="mt-2 text-center text-xs text-charcoal-soft">{text.inputHint}</p>
+          <p className="mt-2 text-center text-xs text-charcoal-soft">
+            {voice.listening && language === "gsw"
+              ? text.mundartListening
+              : voice.handsFree
+                ? text.voiceModeHint
+                : voice.listening
+                  ? text.listeningHint
+                  : text.inputHint}
+          </p>
         </footer>
       )}
     </div>
@@ -300,12 +395,14 @@ function Message({
   text,
   interviewer,
   showReadAloud,
+  speaking,
   onReadAloud,
 }: {
   message: ChatMessage;
   text: UiTexts;
   interviewer: Interviewer;
   showReadAloud: boolean;
+  speaking: boolean;
   onReadAloud: () => void;
 }) {
   if (message.role === "candidate") {
@@ -342,16 +439,100 @@ function Message({
         <div className="rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3 text-lg leading-snug whitespace-pre-wrap shadow-sm">
           {message.text}
         </div>
-        {showReadAloud && (
+        {(showReadAloud || speaking) && (
           <button
             onClick={onReadAloud}
             className="mt-3 inline-flex items-center gap-1.5 rounded-full border-2 border-line bg-white px-3 py-1.5 text-sm font-bold text-brand hover:border-brand-light"
           >
-            <Speaker />
-            {text.readAloud}
+            {speaking ? <Stop /> : <Speaker />}
+            {speaking ? text.stopReading : text.readAloud}
           </button>
         )}
       </div>
     </div>
   );
+}
+
+
+/** "Gut gemacht" -> "Gut gemacht." so that reading aloud pauses before the question. */
+function withFullStop(sentence: string) {
+  return /[.!?…]$/.test(sentence.trim()) ? sentence.trim() : `${sentence.trim()}.`;
+}
+
+/** Hands-free status above the input: who speaks, listening, or the countdown before sending. */
+function HandsFreeBar({
+  text,
+  speaker,
+  speaking,
+  listening,
+  transcribing,
+  countdown,
+  paused,
+  onSkip,
+  onHold,
+}: {
+  text: UiTexts;
+  speaker: string;
+  speaking: boolean;
+  listening: boolean;
+  transcribing: boolean;
+  countdown: number | null;
+  paused: boolean;
+  onSkip: () => void;
+  onHold: () => void;
+}) {
+  const box = "mb-2 flex items-center gap-3 rounded-xl px-3 py-2 text-sm";
+  const action = "shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold";
+
+  if (speaking) {
+    return (
+      <div className={`${box} bg-brand-lighter text-brand`} role="status">
+        <Speaker className="h-4 w-4 shrink-0" />
+        <span className="flex-1">
+          {speaker} {text.speakingNow}
+        </span>
+        <button type="button" onClick={onSkip} className={`${action} border-brand`}>
+          {text.skip}
+        </button>
+      </div>
+    );
+  }
+  if (countdown !== null) {
+    return (
+      <div className={`${box} relative overflow-hidden bg-mint-lighter text-mint-dark`} role="status">
+        {/* Fills up during the pause; when full, the answer is sent */}
+        <div className="absolute inset-y-0 left-0 bg-logo-teal/25" style={{ width: `${Math.round(countdown * 100)}%` }} />
+        <ArrowRight className="relative h-4 w-4 shrink-0" />
+        <span className="relative flex-1">{text.sendingSoon}</span>
+        <button type="button" onClick={onHold} className={`${action} relative border-mint-dark`}>
+          {text.wait}
+        </button>
+      </div>
+    );
+  }
+  if (listening) {
+    return (
+      <div className={`${box} bg-danger-lighter text-logo-red`} role="status">
+        <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-logo-red" />
+        <span className="flex-1 text-charcoal">{text.listenNow}</span>
+      </div>
+    );
+  }
+  if (transcribing) {
+    return (
+      <div className={`${box} bg-brand-lighter text-brand`} role="status">
+        <span className="h-2.5 w-2.5 shrink-0 animate-bounce rounded-full bg-brand" />
+        <span className="flex-1">{text.transcribing}</span>
+      </div>
+    );
+  }
+  if (paused) {
+    return (
+      <div className={`${box} bg-page text-charcoal-soft`} role="status">
+        <Mic className="h-4 w-4 shrink-0" />
+        <span className="flex-1">{text.handsFreePaused}</span>
+      </div>
+    );
+  }
+  return null;
 }
