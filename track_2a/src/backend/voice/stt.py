@@ -96,8 +96,28 @@ def decode(data: bytes):
         raise ValueError(f"audio could not be read: {type(exc).__name__}") from exc
 
 
-def transcribe(data: bytes, language: str) -> dict:
-    """The spoken text of a recording. Blocking (seconds on a CPU): call it in a thread."""
+# Whisper's initial_prompt: a sentence with the words of the interview helps it spell occupation and company names
+# and typical terms ("Schnupperlehre") instead of guessing similar-sounding words.
+_HINT = {
+    "de": "Bewerbungsgespräch für eine Lehrstelle als {occupation}{company}. Schnupperlehre, Lehrbetrieb, Berufsschule, Lernende.",
+    "fr": "Entretien d'embauche pour un apprentissage de {occupation}{company}. Stage, entreprise formatrice, école professionnelle.",
+    "it": "Colloquio per un apprendistato come {occupation}{company}. Stage, azienda formatrice, scuola professionale.",
+}
+_AT = {"de": " bei {}", "fr": " chez {}", "it": " presso {}"}
+
+
+def vocabulary_hint(language: str, occupation: str, company: str = "") -> str:
+    lang = "de" if language == "gsw" else language
+    if lang not in _HINT or not occupation:
+        return ""
+    return _HINT[lang].format(occupation=occupation, company=_AT[lang].format(company) if company else "")
+
+
+def transcribe(data: bytes, language: str, hint: str = "") -> dict:
+    """The spoken text of a recording. Blocking (seconds on a CPU): call it in a thread.
+
+    `hint`: words that may come up (vocabulary_hint), passed to Whisper as initial_prompt.
+    """
     if not enabled():
         raise VoiceUnavailable("speech-to-text is switched off (STT_ENABLED=false)")
     audio = decode(data)
@@ -112,6 +132,7 @@ def transcribe(data: bytes, language: str) -> dict:
         language="de" if language == "gsw" else language,
         vad_filter=True,  # skip silence: Whisper tends to invent text for silent parts
         condition_on_previous_text=False,
+        initial_prompt=hint or None,
     )
     text = " ".join(s.text.strip() for s in segments).strip()
     logger.info("transcribed %.1f s of %s in %.1f s", seconds, language, time.monotonic() - started)

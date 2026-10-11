@@ -380,6 +380,7 @@ Request: `multipart/form-data` with
 |---|---|---|
 | `audio` | file | What the browser's `MediaRecorder` records (`audio/webm`, `audio/ogg`, `audio/mp4`, `audio/wav`). At most 60 seconds / 5 MB |
 | `language` | string | `de`, `fr`, `it` or `gsw` |
+| `session_id` | string, optional | The running interview: Whisper then gets the occupation and company as a hint and spells their words better. Unknown ids are ignored |
 
 Response `200`:
 
@@ -586,3 +587,4 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | 2026-10-11 | v1.8: `DELETE /me/interviews/{session_id}` (delete one saved interview). Not breaking. | Anina |
 | 2026-10-11 | v1.9: `occupation_name` (and the five occupations of `GET /config`, and the FHGR postings) now bring the typical tasks, duration and requirements from `datasets/occupations.csv` into the prompts. No change to the fields. | Anina |
 | 2026-10-11 | v1.10: `POST /transcribe` (Whisper) and `POST /speech` (Piper/Azure); `voice` in `GET /config`; `interviewer.voice` in `POST /sessions`; error `503 VOICE_UNAVAILABLE`. Not breaking. | Iago |
+| 2026-10-11 | v1.11: optional `session_id` in `POST /transcribe` (vocabulary hint for Whisper). Not breaking. | Iago |

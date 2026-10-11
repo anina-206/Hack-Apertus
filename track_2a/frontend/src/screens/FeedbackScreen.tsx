@@ -77,7 +77,8 @@ export default function FeedbackScreen({
   const observed = report?.criteria.filter((c) => c.score !== null) ?? [];
   const notObserved = report?.criteria.filter((c) => c.score === null) ?? [];
   const scaleMax = report?.scale?.max ?? 4;
-  // The overall score is an average (e.g. 2.8); a teenager reads the nearest level better than a decimal
+  // The overall score is an average (e.g. 2.8): the level name shows the nearest level, the number stays exact
+  // (otherwise 2.4 reads as "2 von 4" although most criteria are "Gut")
   const overall = report?.overall_score != null ? Math.round(report.overall_score) : null;
 
   return (
@@ -163,7 +164,10 @@ export default function FeedbackScreen({
                     <LevelMeter score={overall} max={scaleMax} />
                     <span>
                       <span className="font-bold">{text.levels[overall - 1]}</span>
-                      <span className="text-charcoal-soft"> · {overall} {text.outOf}</span>
+                      <span className="text-charcoal-soft">
+                        {" "}
+                        · {report.overall_score?.toLocaleString(language === "gsw" ? "de-CH" : language)} {text.outOf}
+                      </span>
                     </span>
                   </span>
                 </div>

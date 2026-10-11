@@ -45,6 +45,12 @@ def test_candidate_questions(answer, pos, mode):
     ("No, grazie, nessuna domanda.", True),
     ("Gibt es keine Probezeit?", False),
     ("Ich habe keine Frage zum Lohn, aber wie ist das Team organisiert und wer ist mein Ansprechpartner", False),
+    # Spoken (no punctuation) and longer than a few words: still a "no"
+    ("nein danke das wäre es meinerseits gewesen vielen Dank fürs Gespräch", True),
+    ("Das wäre alles von meiner Seite, vielen Dank für Ihre Zeit", True),
+    # Spoken questions come without "?"
+    ("nein aber wie viele Ferien habe ich im ersten Lehrjahr", False),
+    ("wie sieht bei euch die lehrlingsunterstützung aus", False),
 ])
 def test_has_no_more_questions(answer, expected):
     assert has_no_more_questions(answer) is expected

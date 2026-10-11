@@ -143,7 +143,8 @@ _ANALYSIS_EXAMPLE = {
 _FAIRNESS = (
     "Never lower a score because of dialect, spelling or grammar mistakes or German/French/Italian as a second "
     "language: communication is about tone, politeness and being understood. Do not penalise nervousness, "
-    "fillers or pauses."
+    "fillers or pauses. Spoken answers are transcribed automatically: odd words or missing punctuation are "
+    "transcription errors, not the candidate's; never criticise single words or dialect expressions."
 )
 
 
@@ -157,8 +158,26 @@ def _examples_block(text: Optional[str]) -> str:
             f"every answer gets its own scores):\n{text}\n\n")
 
 
+def _previous_tips(tips: tuple[str, ...]) -> str:
+    if not tips:
+        return ""
+    listed = "\n".join(f"- {tip}" for tip in tips)
+    return ("Tips the candidate already got in this interview (do not repeat them or say the same in other words; "
+            f"if the answer already does what a tip asked for, the new tip is about something else):\n{listed}\n")
+
+
+# The model scored answers full of real experiences as "vague" and kept asking for "concrete examples".
+_CALIBRATION = (
+    "A named place, company, project, object or experience the candidate really did (e.g. a Schnupperlehre at a "
+    "named company, something they built at home) is a concrete example: concrete_examples at least 3, and 4 if "
+    "they also say what they did and how it turned out. Real experience with the occupation (Schnupperlehre, "
+    "projects) plus their own reasons is plausibly justified motivation: motivation at least 3."
+)
+
+
 def analysis_messages(occupation: dict, language: str, phase: str, question: str, answer: str,
-                      posting: Optional[dict] = None, examples: Optional[str] = None) -> list[dict]:
+                      posting: Optional[dict] = None, examples: Optional[str] = None,
+                      previous_tips: tuple[str, ...] = ()) -> list[dict]:
     criteria = "\n".join(rubric.describe(key) for key in CRITERIA)
     focus = ", ".join(rubric.PHASE_FOCUS.get(phase, []))
     flags = "\n".join(f"- {key}: {desc}" for key, desc in safety.PROBLEM_FLAGS.items())
@@ -171,9 +190,11 @@ def analysis_messages(occupation: dict, language: str, phase: str, question: str
         f"Score each criterion from 1 to 4 using these levels:\n{criteria}\n\n"
         "Use null for every criterion this one answer gives no information about. A single answer usually "
         f"shows 2-5 criteria. In this part of the interview look especially at: {focus}.\n"
-        "Score each criterion on its own; they usually differ.\n\n"
+        "Score each criterion on its own; they usually differ.\n"
+        f"{_CALIBRATION}\n\n"
         f"{_examples_block(examples)}"
         f"{_FAIRNESS}\n"
+        f"{_previous_tips(previous_tips)}"
         'Set "follow_up" to true if the answer is vague or incomplete and a follow-up question would help.\n'
         f'Write "short_tip" (one sentence) in {LANGUAGES[language]}. {ADDRESS[language]} The tip is about the '
         "answer, not the person (no labels like 'shy'); say 'not yet' instead of 'not'; no exaggerated praise.\n"
@@ -195,26 +216,46 @@ def _preparation_hint(posting: Optional[dict]) -> str:
     return ("A well-prepared candidate could know (for 'preparation'): " + " ".join(posting["insider_facts"]) + "\n")
 
 
+# Generally true for an apprenticeship in Switzerland: the interviewer can answer common questions (holidays,
+# school, support) instead of dodging them ("sign up with us for details").
+_APPRENTICESHIP_FACTS = (
+    "General facts about an apprenticeship in Switzerland you may use: apprentices up to age 20 have at least 5 weeks "
+    "of holidays per year; vocational school (Berufsfachschule) is 1-2 days per week; a trained vocational trainer "
+    "(Berufsbildner/in) supports the apprentice and checks the learning progress regularly; the apprentice wage "
+    "follows the recommendation of the professional association and rises every year; there are also "
+    "inter-company courses (überbetriebliche Kurse)."
+)
+
+
 def _task(mode: str, phase: str, question_number: int, posting: Optional[dict] = None) -> str:
     goals = PHASE_GOALS.get(phase, [""])
     goal = goals[min(question_number, len(goals)) - 1]
     if posting:
         answer_question = ("The candidate asked a question. Answer it briefly as the company, using only the facts "
-                           "below; if they don't cover it, say honestly that you will find out.\n"
-                           f"{_company_facts(posting)}\n")
+                           "below and the general facts; if they don't cover it, say honestly that you will find out.\n"
+                           f"{_company_facts(posting)}\n{_APPRENTICESHIP_FACTS}\n")
         if posting.get("user_provided"):
             # These facts are the candidate's own notes: echoing them back word for word sounds unnatural
             answer_question += ("The facts were written by the candidate, so do not repeat them word for word and "
                                 "do not list them: answer in 1-2 own sentences, in the words of a real employee. Do not add any "
                                 "fact, product or service that is not in the facts.\n")
     else:
-        answer_question = ("The candidate asked a question. Answer it briefly and honestly; you do not know the "
-                           "company's internals, so stay general where needed.")
+        answer_question = ("The candidate asked a question. Answer it briefly and concretely, like a real "
+                           "vocational trainer would. Use the general facts below. For details only this company could "
+                           "know (e.g. how many apprentices it has), give a plausible answer that fits a typical Swiss "
+                           "company of this kind; never tell the candidate to ask somewhere else. If they asked "
+                           f"several things at once, answer each one in a few words.\n{_APPRENTICESHIP_FACTS}")
     tasks = {
         "opening": f"Greet the candidate briefly and ask your first question. Goal: {goal}",
         "follow_up": "The last answer was vague or incomplete. Ask ONE follow-up question that digs deeper into it.",
-        "next_question": f"Ask ONE new question. Goal: {goal}",
-        "new_phase": f"Start a new part of the interview with one short transition sentence, then ask ONE question. Goal: {goal}",
+        "next_question": f"Ask ONE new question about a new topic. Goal: {goal}{_NEW_TOPIC}",
+        "new_phase": (f"Start a new part of the interview with one short transition sentence, then ask ONE question. "
+                      f"Goal: {goal}{_NEW_TOPIC}"),
+        "clarify": ("The last answer was hard to understand (maybe the speech recognition got it wrong) or it was a "
+                    "question about the interview itself. If it was such a question, answer it in one short sentence "
+                    "(e.g. yes, the candidate may answer in Swiss German or in their own words). If you do not "
+                    "understand it, say so kindly and ask the candidate to say it again. Never guess what it meant "
+                    "and never invent facts about it. Then ask your last question again in simple words."),
         "support": ("The candidate seems very unsure or upset. Respond warmly in 1-2 sentences: say that this is "
                     "completely okay and that practising is exactly for this, and that they can also talk to a "
                     "person they trust (parents, a teacher, the career counsellor). Then ask ONE easier, "
@@ -230,6 +271,10 @@ def _task(mode: str, phase: str, question_number: int, posting: Optional[dict] =
     }
     return tasks[mode]
 
+
+# The model kept asking about the last answer instead of moving to the goal of the next question.
+_NEW_TOPIC = (" Ask exactly about this goal, even if the conversation was about something else just now; do not ask "
+              "again about the candidate's last answer.")
 
 _CLOSING_MODES = ("answer_and_close", "close")
 _NO_GOODBYE = (" The interview is not over yet: do not say goodbye, do not thank the candidate for the interview "
@@ -304,14 +349,16 @@ def interviewer_messages(occupation: dict, style: dict, language: str, candidate
         f"{_application(application, mode, application_point)}"
         f"{style['prompt'].strip()}\n"
         f"Conduct the interview in {LANGUAGES[language]}.\n"
-        f"Current interview phase: {phase}.\n"
-        f"{_task(mode, phase, question_number, posting)}\n"
         f"{_focus(focus, mode)}"
-        "Keep it short (at most 3 sentences), use simple words and keep a positive tone suitable for a teenager. "
-        "Do not evaluate or comment on the "
-        "candidate's answers. Do not repeat questions that were already asked."
+        "Keep it short (at most 3 sentences), use simple words and a friendly tone suitable for a teenager. "
+        "Do not praise, evaluate or comment on the candidate's answers (no 'Das klingt super!', 'Das ist ein sehr "
+        "guter Gedanke!'): a real interviewer reacts neutrally, at most with 'Danke.' or 'Okay.'. "
+        "Do not repeat questions that were already asked."
         f"{'' if mode in _CLOSING_MODES else _NO_GOODBYE}\n"
-        f"{_INTERVIEWER_SAFETY}"
+        f"{_INTERVIEWER_SAFETY}\n\n"
+        # The task comes last: the 8B model follows what it read last much more reliably
+        f"Current interview phase: {phase}.\n"
+        f"YOUR TASK NOW: {_task(mode, phase, question_number, posting)}"
     )
     messages = [{"role": "system", "content": system}]
     for turn in transcript:
@@ -323,8 +370,9 @@ def interviewer_messages(occupation: dict, style: dict, language: str, candidate
 
 # The short, most important parts come first, so a cut-off answer loses the least.
 _REPORT_EXAMPLE = {
-    "strengths": ["Strength 1", "Strength 2"],
-    "improvements": [{"tip": "Concrete tip.", "example_answer": "A short example of a better answer."}],
+    "strengths": ["Du hast ... (a strength, addressed to the candidate)", "Du ..."],
+    "improvements": [{"tip": "A concrete tip, addressed to the candidate.",
+                      "example_answer": "Ich ... (what the candidate could say, in the first person)"}],
     "closing": "One encouraging sentence.",
     "criteria": {key: {"comment": "One sentence that explains the score.", "evidence": "Exact quote from the candidate."}
                  for key in ("clarity", "motivation")},
@@ -336,7 +384,8 @@ _FEEDBACK_RULES = (
     "quote or a concrete moment from the interview; if there is no evidence, say so instead of guessing. Talk "
     "about the answer, never the person: no labels like 'shy', 'unmotivated' or 'introverted'. Say 'not yet' "
     "instead of 'not'. No exaggerated praise ('perfect') and no drama. Never create fear about finding an "
-    "apprenticeship and never compare with other young people. Do not judge dialect, spelling or nervousness. "
+    "apprenticeship and never compare with other young people. Do not judge dialect, spelling or nervousness, and "
+    "never criticise single words: spoken answers are transcribed automatically and may contain wrong words. "
     "Short, simple, active sentences."
 )
 
@@ -358,8 +407,9 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
         "supports it, or an empty string if there is none.\n"
         "- strengths: 2-3 strengths, each referring to something the candidate actually said.\n"
         "- improvements: 2-3 concrete tips, each referring to one of the candidate's answers, with a short "
-        "example of a better answer. The example may only use facts the candidate mentioned; for anything "
-        "else use a placeholder in square brackets, e.g. [dein Hobby].\n"
+        "example of a better answer. The example answer is what the candidate could say, in the first person "
+        "('Ich ...'), not a description. It may only use facts the candidate mentioned; for anything "
+        "else use a placeholder in square brackets, e.g. [dein Hobby]. Do not give two tips about the same thing.\n"
         "- closing: one encouraging sentence that reminds the candidate this was practice.\n"
         f"{_FEEDBACK_RULES}\n"
         "Base everything on the scores, tips and transcript below. Do not invent facts.\n\n"

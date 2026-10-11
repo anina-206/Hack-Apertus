@@ -465,18 +465,30 @@ VoiceLanguage = Literal["de", "fr", "it", "gsw"]
 
 
 @api.post("/transcribe")
-async def transcribe(audio: UploadFile = File(...), language: VoiceLanguage = Form(...)) -> dict:
+async def transcribe(audio: UploadFile = File(...), language: VoiceLanguage = Form(...),
+                     session_id: Optional[str] = Form(None)) -> dict:
     data = await audio.read(MAX_AUDIO_BYTES + 1)
     if not data:
         raise ApiError(400, "INVALID_REQUEST", "audio: empty file")
     if len(data) > MAX_AUDIO_BYTES:
         raise ApiError(400, "INVALID_REQUEST", "audio: larger than 5 MB")
     try:
-        return await asyncio.to_thread(stt.transcribe, data, language)
+        return await asyncio.to_thread(stt.transcribe, data, language, await _vocabulary_hint(session_id, language))
     except ValueError as exc:
         raise ApiError(400, "INVALID_REQUEST", f"audio: {exc}")
     except VoiceUnavailable as exc:
         raise ApiError(503, "VOICE_UNAVAILABLE", str(exc))
+
+
+async def _vocabulary_hint(session_id: Optional[str], language: str) -> str:
+    """Occupation and company of the session for Whisper; empty without (or with an unknown) session."""
+    state = await engine.get_state(session_id) if session_id else None
+    if not state:
+        return ""
+    occupation = config.occupation_for(state.get("occupation_id"), state.get("posting_id"), state.get("occupation_name"))
+    label = occupation["label"].get("de" if language == "gsw" else language) or occupation["label"]["de"]
+    company = config.company_of(config.posting_for(state))
+    return stt.vocabulary_hint(language, label, company["name"] if company else "")
 
 
 class SpeechRequest(BaseModel):
