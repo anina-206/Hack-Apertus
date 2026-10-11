@@ -19,6 +19,17 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
   const { language, summary } = entry;
   const text = t(language);
 
+  // The posting's interviewer (real backend) or the default persona from the UI texts (mock)
+  const interviewer: Interviewer = session.interviewer
+    ? { ...session.interviewer, initials: initialsOf(session.interviewer.name) }
+    : { name: text.interviewerName, role: text.interviewerRole, initials: text.interviewerInitials };
+
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: "interviewer", text: session.question.text },
+  ]);
+  const [questionId, setQuestionId] = useState<string | null>(session.question.id);
+  const [phase, setPhase] = useState<Phase>(session.phase);
+  const [done, setDone] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(entry.messages);
   const [questionId, setQuestionId] = useState<string | null>(entry.question_id);
   const [phase, setPhase] = useState<Phase>(entry.phase);
@@ -135,7 +146,9 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             {text.end}
           </button>
         </div>
-        <p className="mt-2 text-base text-white/90">{summary}</p>
+        <p className="mt-2 text-base text-white/90">
+          {session.company ? `${summary} · ${session.company.name}` : summary}
+        </p>
       </header>
 
       {/* Phase card: number, name and a segment per phase */}
@@ -169,6 +182,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             key={i}
             message={msg}
             text={text}
+            interviewer={interviewer}
             showName={i === 0}
             showReadAloud={canSpeak && i === lastInterviewerIndex && !sending}
             onReadAloud={() => speak(msg.text, language)}
@@ -266,15 +280,29 @@ function Avatar({ initials }: { initials: string }) {
   );
 }
 
+type Interviewer = { name: string; role: string; initials: string };
+
+/** "Stefan Keller" -> "SK" */
+function initialsOf(name: string) {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function Message({
   message,
   text,
+  interviewer,
   showName,
   showReadAloud,
   onReadAloud,
 }: {
   message: ChatMessage;
   text: UiTexts;
+  interviewer: Interviewer;
   showName: boolean;
   showReadAloud: boolean;
   onReadAloud: () => void;
@@ -304,11 +332,11 @@ function Message({
 
   return (
     <div className="flex items-start gap-3">
-      <Avatar initials={text.interviewerInitials} />
+      <Avatar initials={interviewer.initials} />
       <div className="min-w-0 max-w-[78%]">
         {showName && (
           <p className="mb-1 text-xs text-charcoal-soft">
-            {text.interviewerName} · {text.interviewerRole}
+            {interviewer.name} · {interviewer.role}
           </p>
         )}
         <div className="rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3 text-lg leading-snug whitespace-pre-wrap shadow-sm">

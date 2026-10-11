@@ -18,7 +18,8 @@ from typing import Literal
 PHASE_ORDER = ["intro", "motivation", "strengths_weaknesses", "situational", "candidate_questions", "closing"]
 
 # Main questions per scored phase (follow-ups come on top).
-QUESTIONS_PER_PHASE = {"intro": 1, "motivation": 2, "strengths_weaknesses": 2, "situational": 2}
+# 11 scored + the invitation to ask questions = 12 main questions (FHGR: a session has 10-15 plus follow-ups).
+QUESTIONS_PER_PHASE = {"intro": 2, "motivation": 3, "strengths_weaknesses": 3, "situational": 3}
 MAX_FOLLOW_UPS_PER_PHASE = 1
 MAX_CANDIDATE_TURNS = 2
 
@@ -33,6 +34,13 @@ Mode = Literal["follow_up", "next_question", "new_phase", "answer_candidate", "a
 _NO_MORE_QUESTIONS = re.compile(
     r"\b(nein|nei|nö|keine|kei|nüt|nichts|alles klar|non|rien|aucune|nessuna|niente|nulla|no|none|nope)\b",
     re.IGNORECASE,
+)
+
+# Pure courtesy replies ("Danke!", "Vielen Dank für das Gespräch", "Merci beaucoup") carry nothing to score:
+# every word is from this list.
+_COURTESY_WORDS = set(
+    "danke dank dankeschön vielen herzlichen merci vielmal für das gespräch auch ok okay super gern gerne "
+    "beaucoup pour l'entretien de rien thanks thank you grazie mille per il colloquio prego".split()
 )
 
 
@@ -58,6 +66,11 @@ def progress(pos: Position) -> dict:
 
 def is_scored(phase: str) -> bool:
     return phase in SCORED_PHASES
+
+
+def is_courtesy(answer: str) -> bool:
+    words = re.findall(r"[\w']+", answer.lower())
+    return 0 < len(words) <= 6 and all(word in _COURTESY_WORDS for word in words)
 
 
 def has_no_more_questions(answer: str) -> bool:

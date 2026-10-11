@@ -1,0 +1,13 @@
+[project]
+name = "HackApertusTemplate26"
+version = "0.1.0"
+description = "Langgraph Template for the FHGR Hack Apertus Challenge 2026"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aegra-cli>=0.10.7",
+    "grandalf>=0.8",
+    "langchain>=0.3.27",
+    "langgraph>=1.0.3",
+    "pydantic>=2.12.5",
+]

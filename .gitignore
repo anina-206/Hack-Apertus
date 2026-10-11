@@ -25,3 +25,6 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# Interview sessions (SQLite, created by the backend)
+track_2a/data/sessions/

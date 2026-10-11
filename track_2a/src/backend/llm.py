@@ -9,6 +9,7 @@ import contextvars
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from typing import Optional
@@ -45,6 +46,19 @@ def _get_client() -> tuple[AsyncOpenAI, str]:
     return _client, model
 
 
+# UTF-8 bytes read as Latin-1, e.g. "Ã¤" instead of "ä". The model sometimes emits these itself.
+_MOJIBAKE = re.compile(r"[\u00c2-\u00f4][\u0080-\u00bf]+")
+
+
+def fix_mojibake(text: str) -> str:
+    def repair(match: re.Match) -> str:
+        try:
+            return match.group().encode("latin-1").decode("utf-8")
+        except UnicodeDecodeError:
+            return match.group()
+    return _MOJIBAKE.sub(repair, text)
+
+
 def start_request() -> str:
     """Begin counting LLM calls for one user-facing answer."""
     request_id = uuid.uuid4().hex[:12]
@@ -78,7 +92,7 @@ async def chat_completion(messages: list[dict], purpose: str = "chat", **kwargs)
     try:
         response = await client.chat.completions.create(model=model, messages=messages, **kwargs)
         usage = response.usage
-        return response.choices[0].message.content or ""
+        return fix_mojibake(response.choices[0].message.content or "")
     except Exception as exc:
         status = f"error: {type(exc).__name__}"
         raise

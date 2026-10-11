@@ -1,5 +1,7 @@
 # Occupations offered on the setup screen (GET /api/v1/config).
 # `label` is shown to the user; `description` is only used in prompts.
+# `postings`: default FHGR posting (datasets/profiles/postings.jsonl) per interview language; the
+# company the interviewer works for. Languages without an entry use the `de` posting.
 - id: schreiner_efz
   label:
     de: Schreiner/in EFZ
@@ -8,6 +10,7 @@
   description: >-
     4-year apprenticeship in carpentry/joinery: building furniture, windows and interiors from
     wood, reading plans, working precisely with machines and hand tools, safety at work.
+  postings: {de: P-22}
 
 - id: informatiker_efz
   label:
@@ -17,6 +20,7 @@
   description: >-
     4-year apprenticeship in IT: application development or platform development
     (programming, setting up computers and networks, supporting users).
+  postings: {de: P-11}
 
 - id: kv_efz
   label:
@@ -26,6 +30,7 @@
   description: >-
     3-year commercial apprenticeship: office administration, customer contact,
     correspondence, accounting basics, working with colleagues across departments.
+  postings: {de: P-03, fr: P-04, it: P-05}
 
 - id: fage_efz
   label:
@@ -35,6 +40,7 @@
   description: >-
     3-year apprenticeship in healthcare: caring for patients and residents in hospitals
     or care homes, basic medical tasks, empathy and teamwork under time pressure.
+  postings: {de: P-08, fr: P-09}
 
 - id: detailhandel_efz
   label:
@@ -44,3 +50,16 @@
   description: >-
     3-year apprenticeship in retail: advising and serving customers, handling goods
     and stock, presenting products, working at the checkout.
+  postings: {de: P-06}
+
+# Not shown on the setup screen (hidden): used by the Agent Protocol graph (agent.py) when neither
+# the run config nor the first message names an occupation.
+- id: lehrstelle_allgemein
+  hidden: true
+  label:
+    de: Lehrstelle
+    fr: Apprentissage
+    it: Apprendistato
+  description: >-
+    The occupation is not known yet. In the first question also ask which apprenticeship the candidate
+    is applying for, and from then on treat the interview as an interview for that occupation.

@@ -1,0 +1,15 @@
+{
+  "name": "schnupper-interview-coach",
+  "dependencies": ["./src"],
+  "graphs": {
+    "agent": "./src/backend/agent.py:graph"
+  },
+  "http": {
+    "app": "backend.main:app",
+    "cors": {
+      "allow_origins": ["http://localhost:5173", "http://localhost:8080"],
+      "allow_methods": ["*"],
+      "allow_headers": ["*"]
+    }
+  }
+}

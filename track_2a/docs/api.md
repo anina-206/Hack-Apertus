@@ -20,6 +20,8 @@ If something changes, change it here first, then in the code.
 | IDs | Strings (UUID), never numbers |
 | Languages | `de`, `fr`, `it`, `gsw` (Swiss German, optional) |
 | Time | ISO 8601 in UTC, e.g. `2026-10-09T14:03:00Z` |
+| Scores | Integer 1-4 (FHGR: 1 Ungenügend … 4 Sehr gut), or `null` = not observed |
+| Auth | None (local demo, no personal data stored) |
 | Scores | Integer 1-5 (1 = weak, 5 = excellent) |
 | Auth | Optional. Without a token everything works as before (guest). With `Authorization: Bearer <token>` (see section 3b) interviews are saved to the user's account. |
 
@@ -128,19 +130,31 @@ Request:
 
 `candidate` is optional and only used to personalise questions. Use fake data in demos.
 
+`posting_id` is optional: an FHGR posting (`P-01` … `P-30`, listed in `GET /config` under `postings`).
+It sets the company the interviewer works for and who the interviewer is. Without it, the default
+posting of the occupation for that language is used (`data/occupations.yaml`).
+
+`focus` is optional: up to 3 criterion ids (e.g. the last report's `next_practice`). The interviewer then
+asks so that the candidate can practise these criteria. The feedback screen's "Genau das üben" button uses it.
+
 Response `201`:
 
 ```json
 {
   "session_id": "3f8a2c1e-6b1d-4b7e-9a51-2d3e4f5a6b7c",
   "phase": "intro",
-  "progress": { "current": 1, "total": 8 },
+  "progress": { "current": 1, "total": 12 },
   "question": {
     "id": "q1",
     "text": "Grüezi Lara! Erzähl mir doch zuerst etwas über dich."
-  }
+  },
+  "company": { "name": "Limmatcode GmbH", "place": "Zürich" },
+  "interviewer": { "name": "Stefan Keller", "role": "Berufsbildner, Senior Software Engineer" }
 }
 ```
+
+`company` and `interviewer` come from the posting (`null` if there is none). In the `candidate_questions`
+phase the interviewer answers as this company, using only the posting's facts.
 
 ### POST `/sessions/{session_id}/answers`
 
@@ -159,7 +173,7 @@ Response `200` (interview continues):
 {
   "done": false,
   "phase": "motivation",
-  "progress": { "current": 2, "total": 8 },
+  "progress": { "current": 2, "total": 12 },
   "question": {
     "id": "q2",
     "text": "Spannend! Wie bist du darauf gekommen, Informatikerin zu werden?",
@@ -167,16 +181,30 @@ Response `200` (interview continues):
   },
   "turn_feedback": {
     "short_tip": "Guter Einstieg! Nenne noch, warum dich gerade diese Firma interessiert.",
-    "scores": { "relevance": 4, "structure": 3, "examples": 4, "motivation": 3, "language": 4, "self_reflection": 3 }
+    "scores": { "clarity": 3, "relevance": 4, "motivation": 3, "self_reflection": null, "communication": 3,
+                "concrete_examples": 2, "demeanor": null, "preparation": null, "goal_orientation": null,
+                "difficult_questions": null, "initiative": null }
   },
   "meta": { "llm_calls": 2, "latency_ms": 4120 }
 }
 ```
 
 - `turn_feedback` is only present in `mode: "training"`. In `rehearsal` it is `null`.
-  It is also `null` in the `candidate_questions` phase (not scored) and if the analysis failed.
+  `scores` has all 11 criteria, each 1-4 or `null` (this answer showed nothing about it).
+  `turn_feedback` is also `null` for courtesy replies ("Danke!"), for "no more questions" and if the
+  analysis failed. A candidate's own question in `candidate_questions` is analysed (for `initiative`).
 - `is_follow_up: true` means the interviewer digs deeper into the last answer instead of moving on.
-- `progress.current` counts main questions (8 in total). Follow-ups and the turns in the
+- `question.guard` is only present when the guardrails answered (the interview stays at the same point,
+  `progress` does not move):
+  - `"crisis"`: the answer contained a clear sign of self-harm. Fixed text with Pro Juventute 147 and 144,
+    no LLM call, no `turn_feedback`.
+  - `"support"`: the analysis flagged distress. A warm reply, a hint to talk to a trusted person, an easier question.
+  - `"redirect"`: manipulation attempt, off-topic, impolite or discriminatory answer. Calm, stays in role,
+    asks the question again. Support and redirect happen at most once per question.
+- `turn_feedback.problem_flags`: FHGR problem flags the analysis found (`distress_signal`,
+  `manipulation_attempt`, `off_topic`, `inappropriate_tone`, `discriminatory`, `badmouthing`, `dishonesty`,
+  `privacy_oversharing`), usually `[]`.
+- `progress.current` counts main questions (12 in total). Follow-ups and the turns in the
   `candidate_questions` phase don't advance it, so it can stay the same for several turns.
 - Question ids (`q1`, `q2`, ...) count every interviewer question, including follow-ups.
 
@@ -186,7 +214,7 @@ Response `200` (interview finished):
 {
   "done": true,
   "phase": "closing",
-  "progress": { "current": 8, "total": 8 },
+  "progress": { "current": 12, "total": 12 },
   "question": null,
   "closing_message": "Vielen Dank, Lara! Wir melden uns bald bei dir.",
   "turn_feedback": null,
@@ -209,7 +237,7 @@ Lets the frontend restore the chat after a page reload.
   "mode": "training",
   "done": false,
   "phase": "motivation",
-  "progress": { "current": 2, "total": 8 },
+  "progress": { "current": 2, "total": 12 },
   "history": [
     { "role": "interviewer", "question_id": "q1", "text": "Grüezi Lara! Erzähl mir doch zuerst etwas über dich." },
     { "role": "candidate", "question_id": "q1", "text": "Ich bin Lara, 15, ..." },
@@ -231,14 +259,22 @@ Generated with one LLM call the first time, then cached.
 {
   "session_id": "3f8a2c1e-6b1d-4b7e-9a51-2d3e4f5a6b7c",
   "language": "de",
-  "overall_score": 3.6,
+  "scale": { "min": 1, "max": 4 },
+  "overall_score": 2.8,
   "criteria": [
     {
-      "id": "examples",
+      "id": "concrete_examples",
       "label": "Konkrete Beispiele",
-      "score": 4,
+      "score": 3,
       "comment": "Du hast dein PC-Projekt gut beschrieben.",
       "evidence": "In meiner Freizeit baue ich gerne PCs zusammen."
+    },
+    {
+      "id": "preparation",
+      "label": "Vorbereitung / Betriebskenntnis",
+      "score": null,
+      "comment": "Dazu gab es im Gespräch keine Aussage.",
+      "evidence": ""
     }
   ],
   "strengths": ["Natürlicher, sympathischer Einstieg", "Echtes Interesse an Technik"],
@@ -248,14 +284,22 @@ Generated with one LLM call the first time, then cached.
       "example_answer": "Mich spricht an, dass Sie Lernende früh in echte Projekte einbinden ..."
     }
   ],
-  "next_practice": ["motivation", "self_reflection"]
+  "next_practice": ["motivation", "self_reflection"],
+  "closing": "Du bist auf einem guten Weg, jedes Üben macht dich sicherer.",
+  "support_note": null
 }
 ```
 
+- `criteria` always lists all 11 criteria in rubric order. `score` is 1-4, or `null` if no answer
+  showed anything about the criterion (then `comment` is a fixed "not observed" text).
 - Numbers are computed in code from the per-answer analyses, not by the LLM: `criteria[].score` is
-  the rounded average per criterion, `overall_score` the average of all criteria (1 decimal),
-  `next_practice` the two weakest criteria.
-- The LLM writes `comment`, `evidence`, `strengths` and `improvements`. `evidence` is only kept if it
+  the rounded average of the non-null scores, `overall_score` the average of the shown scores
+  (1 decimal, `null` if nothing was observed), `next_practice` the two weakest criteria.
+  Exception: if the candidate asked no question at the end, `initiative` is 1 (rubric level 1).
+- `support_note` is a fixed text (where to get help, incl. Pro Juventute 147) when the interview showed
+  distress, else `null`. `closing` is one encouraging sentence written by the LLM (may be `""`).
+- The LLM writes `comment`, `evidence`, `strengths`, `improvements` and `closing`, following the FHGR
+  feedback rules (`datasets/rubric/feedback_guidelines.json`). `evidence` is only kept if it
   is a real quote from the candidate's answers, otherwise it is `""`.
 - If the report can't be generated, the response is `502 LLM_UNAVAILABLE` and nothing is cached,
   so the frontend can simply retry.
@@ -356,10 +400,24 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 
 **Phases (in order):** `intro` -> `motivation` -> `strengths_weaknesses` -> `situational` -> `candidate_questions` -> `closing`
 
-**Criteria (proposal, align with FHGR feedback guidelines after the Q&A on 8.10):**
+**Criteria:** the FHGR rubric, loaded from `datasets/rubric/criteria.json`. Scale 1 Ungenügend,
+2 Ausbaufähig, 3 Gut, 4 Sehr gut, or `null` = not observed. The first six are the challenge's core criteria.
 
 | id | DE label | Measures |
 |---|---|---|
+| `clarity` | Klarheit | Comprehensible, structured, traceable answers |
+| `relevance` | Relevanz | Fits the question and the apprenticeship |
+| `motivation` | Motivation | Genuine interest in the occupation and company |
+| `self_reflection` | Selbstreflexion | Realistic view of own strengths, weaknesses, experiences |
+| `communication` | Kommunikationsfähigkeit | Expression, tone, active listening (dialect is never penalised) |
+| `concrete_examples` | Konkrete Beispiele | Real situations instead of claims |
+| `demeanor` | Auftreten & Wirkung | Politeness, self-confidence, tone |
+| `preparation` | Vorbereitung / Betriebskenntnis | Knows the company and the occupation |
+| `goal_orientation` | Zielorientierung | Clear career choice and long-term ideas |
+| `difficult_questions` | Umgang mit schwierigen Fragen | Reaction to critical or unexpected questions |
+| `initiative` | Eigeninitiative | Asks own meaningful questions at the end |
+
+---|---|---|
 | `relevance` | Relevanz | Does the answer address the question? |
 | `structure` | Struktur | Clear beginning, middle, end (e.g. STAR) |
 | `examples` | Konkrete Beispiele | Real situations instead of empty claims |
@@ -371,9 +429,11 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 
 ## 5. Out of scope for v1
 
-- Judge benchmark format: handled by a separate adapter (CLI) that calls the same core logic. Defined after the Q&A on 8.10.
+- Judge benchmark format: not published yet. The same server also offers the Agent Protocol (Aegra, graph
+  `agent`, as in the FHGR project template), see README "Agent Protocol". It is not part of this contract.
 - Streaming answers (SSE) - possible v2 if latency feels too slow.
 - Voice input/output - possible v2 (TTS feature).
+- Accounts. (Sessions are persisted in SQLite when `SESSIONS_DB` is set, see README.)
 - E-mail, password reset, social login, rate limiting.
 - Continuing an unfinished interview after a backend restart.
 
@@ -385,3 +445,9 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | 2026-10-06 | Port 8000 (matches backend skeleton), CORS for frontend dev server | Anina |
 | 2026-10-10 | v1.1: optional accounts (`/auth/*`), saved interviews (`/me/interviews`), new error codes. Guest use unchanged, no breaking change. | Anina |
 | 2026-10-09 | Backend implements v1. Clarified: LLM calls incl. JSON retries, `progress` and question ids, `turn_feedback` in `candidate_questions`, `closing_message`, history after the end, how report numbers and `evidence` are made, report errors, dev-only `POST /chat`, CORS origin for the nginx container, `500 INTERNAL_ERROR`. No breaking changes. | Iago |
+| 2026-10-10 | **Breaking:** FHGR rubric (11 criteria, scale 1-4, `null` = not observed) replaces our 6 criteria (1-5). New `report.scale`; `overall_score` and `criteria[].score` can be `null`; `report.criteria` always has all 11; candidate questions are analysed (`initiative`); `history` candidate turns have `phase`. | Iago |
+| 2026-10-10 | Guardrails: `question.guard`, `turn_feedback.problem_flags`, report `closing` and `support_note`. Not breaking. | Iago |
+| 2026-10-10 | 12 main questions (intro 2, motivation 3, strengths/weaknesses 3, situational 3, + question round). Optional `posting_id`; `company` and `interviewer` in the session response; `postings` in `GET /config`. Not breaking. | Iago |
+| 2026-10-10 | Optional `focus` in `POST /sessions`. Not breaking. | Iago |
+| 2026-10-10 | `occupation_id` is optional when `posting_id` is given (the posting's occupation is used). Not breaking. | Iago |
+| 2026-10-10 | Backend runs inside Aegra (same port 8000, same `/api/v1`); errors outside `/api/v1` keep FastAPI's format. Hidden occupation `lehrstelle_allgemein` is not listed in `GET /config`. Not breaking. | Iago |

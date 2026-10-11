@@ -1,14 +1,17 @@
 """LangGraph core loop: one turn = analysis call -> interviewer call.
 
-    START ─(answer in scored phase)─> analyze ─> interviewer ─> END
-      └──(opening question, or candidate_questions phase)──┘
+    START ─(real answer or candidate question)─> analyze ─> interviewer ─> END
+      └──(opening question, "Danke", "no more questions")──┘
 
 Where the interview goes next is decided in code (phases.py), not by the LLM.
+Guardrails (safety.py): a crisis answer gets a fixed support message (0 calls); a flagged answer
+(distress, manipulation, off-topic, ...) gets one supportive or redirecting question at the same point.
 The final report is generated on request (report.py), not in the graph.
 
 Calls per answer (JSON retries count as calls):
 - scored phases: 1-3 analysis calls (parsing.MAX_JSON_ATTEMPTS) + 1 interviewer -> normally 2, at most 4
-- candidate_questions: 1 interviewer call, or 0 if the candidate has no (more) questions
+- candidate_questions: the candidate's question is analysed too (initiative), so also normally 2;
+  0 if the candidate has no (more) questions
 If all analysis attempts fail, the turn continues without an analysis instead of erroring.
 """
 
@@ -22,6 +25,9 @@ from langgraph.graph import END, START, StateGraph
 
 from backend import config, llm
 from backend.interview.parsing import Analysis, complete_json
+from backend.interview.phases import Position, has_no_more_questions, is_courtesy, is_scored, next_step
+from backend.interview.prompts import analysis_messages, closing_message, interviewer_messages
+from backend.interview.safety import CRISIS_MESSAGE, guard_mode, is_crisis
 from backend.interview.phases import Position, is_scored, next_step
 from backend.interview.prompts import (FURTHER, INVITATION, analysis_messages, closing_message,
                                        interviewer_messages)
@@ -34,6 +40,8 @@ class InterviewState(TypedDict, total=False):
     language: str
     occupation_id: str
     interviewer_style: str
+    posting_id: Optional[str]  # FHGR posting: the company the interviewer works for
+    focus: list[str]  # criteria this round should practise (from a previous report)
     mode: str
     candidate: Optional[dict]
     # Session-wide (kept by the checkpointer across turns)
@@ -42,9 +50,10 @@ class InterviewState(TypedDict, total=False):
     follow_ups_in_phase: int
     question_count: int  # interviewer questions so far, for ids q1, q2, ...
     current_question: Optional[dict]  # {"id", "text", "is_follow_up"}
-    transcript: Annotated[list[dict], operator.add]  # {"role": "interviewer"|"candidate", "question_id", "text"}
+    transcript: Annotated[list[dict], operator.add]  # {"role", "question_id", "text"}; candidate turns also "phase"
     analyses: Annotated[list[dict], operator.add]
     done: bool
+    support_needed: bool  # distress or crisis seen -> the report adds a support note
     closing_message: Optional[str]
     report: Optional[dict]
     # Per turn (reset by each invoke)
@@ -57,21 +66,47 @@ def position(state: InterviewState) -> Position:
     return Position(state["phase_index"], state["questions_in_phase"], state["follow_ups_in_phase"])
 
 
+def should_analyze(phase: str, answer: str) -> bool:
+    """Scored phases: every real answer. candidate_questions: real questions (for the initiative criterion)."""
+    if not answer or is_courtesy(answer) or is_crisis(answer):
+        return False
+    if phase == "candidate_questions":
+        return not has_no_more_questions(answer)
+    return is_scored(phase)
+
+
 def route_start(state: InterviewState) -> str:
-    return "analyze" if state.get("answer") and is_scored(position(state).phase) else "interviewer"
+    return "analyze" if should_analyze(position(state).phase, state.get("answer")) else "interviewer"
+
+
+def posting(state: InterviewState) -> Optional[dict]:
+    return config.postings().get(state.get("posting_id") or "")
+
+
+def occupation(state: InterviewState) -> dict:
+    return config.occupation_for(state.get("occupation_id"), state.get("posting_id"))
+
+
+async def run_analysis(occupation: dict, language: str, phase: str, question: str, answer: str,
+                       posting_: Optional[dict] = None) -> tuple[dict, int]:
+    """One analysis (1-3 calls). Returns (entry for state["analyses"], attempts). Also used by the eval benches."""
+    messages = analysis_messages(occupation, language, phase, question, answer, posting_)
+    result, attempts, error = await complete_json(messages, Analysis, purpose="analysis")
+    entry = {"phase": phase}
+    if result is None:
+        entry.update(parse_failed=True, error=error)
+    else:
+        entry.update(result.model_dump())
+    return entry, attempts
 
 
 async def analyze(state: InterviewState) -> dict:
-    phase = position(state).phase
-    messages = analysis_messages(config.occupations()[state["occupation_id"]], state["language"],
-                                 state["current_question"]["text"], state["answer"])
-    result, attempts, error = await complete_json(messages, Analysis, purpose="analysis")
-    entry = {"phase": phase, "question_id": state["current_question"]["id"]}
-    if result is None:
-        entry.update(parse_failed=True, error=error)
-        return {"analysis": None, "analysis_attempts": attempts, "analyses": [entry]}
-    entry.update(result.model_dump())
-    return {"analysis": entry, "analysis_attempts": attempts, "analyses": [entry]}
+    entry, attempts = await run_analysis(occupation(state), state["language"],
+                                         position(state).phase, state["current_question"]["text"], state["answer"],
+                                         posting(state))
+    entry["question_id"] = state["current_question"]["id"]
+    analysis = None if entry.get("parse_failed") else entry
+    return {"analysis": analysis, "analysis_attempts": attempts, "analyses": [entry]}
 
 
 def _drop_trailing_question(text: str) -> str:
@@ -85,24 +120,32 @@ def _drop_trailing_question(text: str) -> str:
 async def interviewer(state: InterviewState) -> dict:
     new_turns = []
     if state.get("answer"):
-        new_turns.append({"role": "candidate", "question_id": state["current_question"]["id"], "text": state["answer"]})
-        wants_follow_up = bool((state.get("analysis") or {}).get("follow_up"))
-        pos, mode = next_step(position(state), state["answer"], wants_follow_up)
+        new_turns.append({"role": "candidate", "question_id": state["current_question"]["id"], "text": state["answer"],
+                          "phase": position(state).phase})
+        analysis = state.get("analysis") or {}
+        guard = "crisis" if is_crisis(state["answer"]) else guard_mode(analysis.get("problem_flags", []),
+                                                                         state["current_question"])
+        if guard:  # stay at the same point of the interview
+            pos, mode = position(state), guard
+        else:
+            pos, mode = next_step(position(state), state["answer"], bool(analysis.get("follow_up")))
     else:
         pos, mode = Position(), "opening"
 
     style = config.interviewer_styles()[state["interviewer_style"]]
     if mode == "close":
         text = closing_message(state["language"], style["formal"], (state.get("candidate") or {}).get("first_name"))
+    elif mode == "crisis":
+        text = CRISIS_MESSAGE[state["language"]]
     elif mode == "new_phase" and pos.phase == "candidate_questions":
         text = INVITATION[(state["language"], style["formal"])]  # fixed line, no LLM call
     else:
         # answer_and_close still answers within the candidate_questions phase.
         phase = "candidate_questions" if mode == "answer_and_close" else pos.phase
         text = (await llm.chat_completion(
-            interviewer_messages(config.occupations()[state["occupation_id"]], style, state["language"],
+            interviewer_messages(occupation(state), style, state["language"],
                                  state.get("candidate"), phase, mode, pos.questions_in_phase,
-                                 state.get("transcript", []) + new_turns),
+                                 state.get("transcript", []) + new_turns, posting(state), state.get("focus")),
             purpose="interviewer",
             temperature=0.7,
         )).strip()
@@ -117,12 +160,16 @@ async def interviewer(state: InterviewState) -> dict:
 
     update = {"phase_index": pos.phase_index, "questions_in_phase": pos.questions_in_phase,
               "follow_ups_in_phase": pos.follow_ups_in_phase}
+    if mode in ("crisis", "support"):
+        update["support_needed"] = True
     if mode in ("close", "answer_and_close"):
         new_turns.append({"role": "interviewer", "question_id": None, "text": text})
         return {**update, "transcript": new_turns, "current_question": None, "done": True, "closing_message": text}
 
     question_count = state.get("question_count", 0) + 1
     question = {"id": f"q{question_count}", "text": text, "is_follow_up": mode == "follow_up"}
+    if mode in ("crisis", "support", "redirect"):
+        question["guard"] = mode
     new_turns.append({"role": "interviewer", "question_id": question["id"], "text": text})
     return {**update, "transcript": new_turns, "current_question": question, "question_count": question_count}
 
@@ -140,6 +187,12 @@ def build_graph(checkpointer=None):
 _TURN_RESET = {"analysis": None, "analysis_attempts": 0}
 
 
+def initial_state(setup: dict) -> dict:
+    """State for a new interview (REST: POST /sessions, Agent Protocol: first message of a thread)."""
+    return {**setup, "phase_index": 0, "questions_in_phase": 1, "follow_ups_in_phase": 0, "question_count": 0,
+            "done": False, "closing_message": None, "report": None, "answer": None, **_TURN_RESET}
+
+
 class InterviewEngine:
     """Session-level API over the graph; session id = LangGraph thread id."""
 
@@ -154,10 +207,7 @@ class InterviewEngine:
         return snapshot.values or None
 
     async def start(self, session_id: str, setup: dict) -> dict:
-        initial = {**setup, "phase_index": 0, "questions_in_phase": 1, "follow_ups_in_phase": 0,
-                   "question_count": 0, "done": False, "closing_message": None, "report": None,
-                   "answer": None, **_TURN_RESET}
-        return await self.graph.ainvoke(initial, self._config(session_id))
+        return await self.graph.ainvoke(initial_state(setup), self._config(session_id))
 
     async def answer(self, session_id: str, answer: str) -> dict:
         state = await self.graph.ainvoke({"answer": answer, **_TURN_RESET}, self._config(session_id))

@@ -22,7 +22,7 @@ Zur Laufzeit wird nur Apertus 1.5 8B verwendet. Claude wird nur für die Entwick
 ## Screens
 1. **Setup:** Sprache wählen (DE / FR / IT / Mundart), Kandidatenprofil und Lehrstelle wählen, Interview starten
 2. **Interview (Chat):** Nachrichtenverlauf, Eingabefeld, Phasen-Fortschritt, Lade- bzw. Streaming-Anzeige
-3. **Feedback:** Scores der 6 Kriterien als Chart, Stärken, konkrete Tipps (positiv, jugendgerecht)
+3. **Feedback:** Scores der 11 FHGR-Kriterien (1–4) als Chart, Stärken, konkrete Tipps (positiv, jugendgerecht)
 
 Interview-Phasen: Einstieg → Motivation → Stärken/Schwächen → Situationsfragen → Kandidatenfragen → Abschluss (`closing`) → Feedback-Report
 

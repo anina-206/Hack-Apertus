@@ -11,11 +11,12 @@ import ast
 import json
 import logging
 import re
-from typing import TypeVar
+from typing import Optional, TypeVar
 
 from pydantic import BaseModel, ValidationError, field_validator
 
 from backend import llm
+from backend.interview import rubric, safety
 from backend.interview.prompts import CRITERIA
 
 logger = logging.getLogger("interview")
@@ -33,25 +34,39 @@ def _norm_key(key) -> str:
     return re.sub(r"[\s\-]+", "_", str(key).strip().lower())
 
 
-class Analysis(BaseModel):
-    """Output of the per-answer analysis call."""
+# Keys the model may use for a criterion: the id or its label in any language ("Klarheit", "Pertinence").
+_CRITERION_ALIASES = {_norm_key(key): key for key in CRITERIA}
+_CRITERION_ALIASES.update({_norm_key(label): key for label, key in rubric.all_labels().items()})
+_CRITERION_ALIASES.update({"examples": "concrete_examples", "self_awareness": "self_reflection",
+                           "demeanour": "demeanor"})
 
-    scores: dict[str, int]
+
+class Analysis(BaseModel):
+    """Output of the per-answer analysis call. Scores are 1-4, or None if the answer shows nothing about it."""
+
+    scores: dict[str, Optional[int]]
     short_tip: str = ""
     follow_up: bool = False
+    problem_flags: list[str] = []
+
+    @field_validator("problem_flags", mode="before")
+    @classmethod
+    def _known_flags(cls, raw):
+        items = [raw] if isinstance(raw, str) else raw if isinstance(raw, list) else []
+        return [f for f in dict.fromkeys(_norm_key(i) for i in items) if f in safety.PROBLEM_FLAGS]
 
     @field_validator("scores", mode="before")
     @classmethod
     def _normalise_scores(cls, raw):
         if not isinstance(raw, dict):
             raise ValueError("scores must be an object")
-        scores = {}
+        scores = {key: None for key in CRITERIA}  # criteria the model leaves out count as not observed
         for key, value in raw.items():
-            if _norm_key(key) in CRITERIA:
-                scores[_norm_key(key)] = _to_score(value)
-        missing = [key for key in CRITERIA if key not in scores]
-        if missing:
-            raise ValueError(f"missing scores: {', '.join(missing)}")
+            criterion = _CRITERION_ALIASES.get(_norm_key(key))
+            if criterion:
+                scores[criterion] = _to_score(value)
+        if all(value is None for value in scores.values()):
+            raise ValueError("no criterion scored")
         return scores
 
     @field_validator("follow_up", mode="before")
@@ -60,6 +75,15 @@ class Analysis(BaseModel):
         if isinstance(value, str):
             return value.strip().lower() in ("true", "yes", "ja", "oui", "si", "sì", "1")
         return bool(value)
+
+
+
+# Names the model may use instead of "comment".
+_COMMENT_KEYS = ("comment", "text", "reason", "explanation", "feedback")
+
+
+def _list_key(item: dict) -> str:
+    return str(next((item[k] for k in ("id", "criterion", "key", "name", "label") if item.get(k)), ""))
 
 
 class CriterionNote(BaseModel):
@@ -76,15 +100,37 @@ class ReportDraft(BaseModel):
     """Output of the final report call (texts only; numbers are computed in code)."""
 
     criteria: dict[str, CriterionNote] = {}
+    strengths: list[str]
+    improvements: list[Improvement]
+    closing: str = ""
+
+    @field_validator("closing", mode="before")
+    @classmethod
+    def _text_only(cls, raw):
+        return raw if isinstance(raw, str) else ""
     strengths: list[str] = []
     improvements: list[Improvement] = []
 
     @field_validator("criteria", mode="before")
     @classmethod
     def _normalise_criteria(cls, raw):
+        # Accept {"relevance": {...}}, {"Relevanz": "text"} and [{"id": "relevance", "comment": ...}].
+        if isinstance(raw, list):
+            raw = {_list_key(item): item for item in raw if isinstance(item, dict)}
         if not isinstance(raw, dict):
             return {}
-        return {_norm_key(k): v for k, v in raw.items() if _norm_key(k) in CRITERIA and isinstance(v, dict)}
+        notes = {}
+        for key, value in raw.items():
+            criterion = _CRITERION_ALIASES.get(_norm_key(key))
+            if criterion is None:
+                continue
+            if isinstance(value, str):
+                value = {"comment": value}
+            if isinstance(value, dict):
+                comment = next((value[k] for k in _COMMENT_KEYS if isinstance(value.get(k), str)), "")
+                evidence = value.get("evidence") if isinstance(value.get("evidence"), str) else ""
+                notes[criterion] = {"comment": comment, "evidence": evidence}
+        return notes
 
     @field_validator("improvements", mode="before")
     @classmethod
@@ -92,13 +138,18 @@ class ReportDraft(BaseModel):
         return [{"tip": item} if isinstance(item, str) else item for item in raw or []]
 
 
-def _to_score(value) -> int:
+_NOT_OBSERVED = re.compile(r"^\s*(null|none|n/?a|-+|keine?|not observed|nicht beobachtet)?\s*$", re.IGNORECASE)
+
+
+def _to_score(value) -> Optional[int]:
     if isinstance(value, dict):  # {"score": 4, "reason": "..."}
         value = value.get("score", value.get("value"))
+    if value is None or _NOT_OBSERVED.match(str(value)):
+        return None
     match = re.search(r"\d+(\.\d+)?", str(value))
     if not match:
         raise ValueError(f"score is not a number: {value!r}")
-    return max(1, min(5, round(float(match.group()))))
+    return rubric.clamp(float(match.group()))
 
 
 def _candidates(text: str):

@@ -1,12 +1,20 @@
-"""HTTP API. The contract is docs/api.md: change it there first, then here."""
+"""HTTP API. The contract is docs/api.md: change it there first, then here.
+
+Runs standalone (uvicorn backend.main:app) or as the custom app inside Aegra (aegra.json "http"),
+which then adds the Agent Protocol routes (/threads, /runs, ...) for the graph `agent` (agent.py).
+"""
 
 import json
 import logging
 import os
 import time
 import uuid
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Literal, Optional
 
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,16 +26,45 @@ from backend import config, llm
 from backend.accounts import AccountError, Store
 from backend.interview.graph import InterviewEngine, position
 from backend.interview.phases import progress
+from backend.interview.prompts import CRITERIA
 from backend.interview.report import ReportUnavailable, build_report
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("api")
 
-app = FastAPI(title="Schnupper Interview Coach")
+engine = InterviewEngine()  # in memory; replaced by a SQLite-backed engine at startup if SESSIONS_DB is set
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """With SESSIONS_DB=/path/sessions.db, sessions survive a backend restart (LangGraph SQLite checkpointer)."""
+    global engine
+    db = os.environ.get("SESSIONS_DB", "").strip()
+    if not db:
+        yield
+        return
+    from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
+    Path(db).parent.mkdir(parents=True, exist_ok=True)
+    async with AsyncSqliteSaver.from_conn_string(db) as saver:
+        engine = InterviewEngine(saver)
+        logger.info(json.dumps({"event": "sessions_db", "path": db}))
+        yield
+
+
+app = FastAPI(title="Schnupper Interview Coach", lifespan=lifespan)
 api = APIRouter(prefix="/api/v1")
 engine = InterviewEngine()
 store = Store()  # SQLite file (DB_PATH, default storage/app.db)
 
+# Inside Aegra (AEGRA_CONFIG is set) Aegra adds CORS itself, from aegra.json "http.cors".
+if not os.environ.get("AEGRA_CONFIG"):
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173", "http://localhost:8080"],  # Vite dev server, nginx container
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
+    )
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:8080"],  # Vite dev server, nginx container
@@ -52,27 +89,38 @@ async def _api_error(_: Request, exc: ApiError):
     return _error(exc.status, exc.code, exc.message)
 
 
+def _ours(request: Request) -> bool:
+    """Our error format only for our API; Aegra's routes keep FastAPI's default format."""
+    return request.url.path.startswith("/api/v1")
+
+
 @app.exception_handler(AccountError)
 async def _account_error(_: Request, exc: AccountError):
     return _error(exc.status, exc.code, exc.message)
 
 
 @app.exception_handler(RequestValidationError)
-async def _validation_error(_: Request, exc: RequestValidationError):
+async def _validation_error(request: Request, exc: RequestValidationError):
+    if not _ours(request):
+        return await request_validation_exception_handler(request, exc)
     first = exc.errors()[0] if exc.errors() else {}
     field = ".".join(str(p) for p in first.get("loc", []) if p != "body")
     return _error(400, "INVALID_REQUEST", f"{field}: {first.get('msg', 'invalid request')}".strip(": "))
 
 
 @app.exception_handler(StarletteHTTPException)
-async def _http_error(_: Request, exc: StarletteHTTPException):
+async def _http_error(request: Request, exc: StarletteHTTPException):
+    if not _ours(request):
+        return await http_exception_handler(request, exc)
     # Unknown routes, wrong methods etc. (FastAPI would answer {"detail": ...}).
     return _error(exc.status_code, "INVALID_REQUEST", str(exc.detail))
 
 
 @app.exception_handler(Exception)
-async def _unexpected_error(_: Request, exc: Exception):
+async def _unexpected_error(request: Request, exc: Exception):
     logger.exception("Unexpected error")
+    if not _ours(request):
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
     return _error(500, "INTERNAL_ERROR", "Unexpected error in the backend.")
 
 
@@ -126,17 +174,26 @@ class Candidate(BaseModel):
 
 class SessionRequest(BaseModel):
     language: Literal["de", "fr", "it", "gsw"]
-    occupation_id: str
+    occupation_id: Optional[str] = None  # one of data/occupations.yaml; optional if posting_id is given
     interviewer_style: str = "friendly"
     mode: Literal["training", "rehearsal"] = "training"
     candidate: Optional[Candidate] = None
+    posting_id: Optional[str] = None  # FHGR posting (company); default per occupation and language
+    focus: list[str] = Field(default=[], max_length=3)  # criteria to practise (e.g. the report's next_practice)
 
     @model_validator(mode="after")
     def _known_ids(self):
-        if self.occupation_id not in config.occupations():
+        if not self.occupation_id and not self.posting_id:
+            raise ValueError("occupation_id or posting_id is required")
+        if self.occupation_id and self.occupation_id not in config.occupations():
             raise ValueError(f"unknown occupation_id '{self.occupation_id}'")
         if self.interviewer_style not in config.interviewer_styles():
             raise ValueError(f"unknown interviewer_style '{self.interviewer_style}'")
+        if self.posting_id and self.posting_id not in config.postings():
+            raise ValueError(f"unknown posting_id '{self.posting_id}'")
+        unknown = [c for c in self.focus if c not in CRITERIA]
+        if unknown:
+            raise ValueError(f"unknown focus criteria: {', '.join(unknown)}")
         return self
 
 
@@ -174,8 +231,10 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
     setup = req.model_dump()
     if setup["candidate"]:
         setup["candidate"] = {k: v for k, v in setup["candidate"].items() if v}
+    setup["posting_id"] = req.posting_id or config.default_posting_id(req.occupation_id, req.language)
     state = await _llm(engine.start(session_id, setup))
     question = state["current_question"]
+    posting = config.postings().get(setup["posting_id"] or "")
     if user:
         store.save_interview(session_id, user["id"], state)
     return {
@@ -183,6 +242,8 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
         "phase": position(state).phase,
         "progress": progress(position(state)),
         "question": {"id": question["id"], "text": question["text"]},
+        "company": {"name": posting["company"]["name"], "place": posting["company"]["place"]} if posting else None,
+        "interviewer": {"name": posting["interviewer"]["name"], "role": posting["interviewer"]["role"]} if posting else None,
     }
 
 
@@ -205,7 +266,8 @@ async def answer(session_id: str, req: AnswerRequest) -> dict:
     analysis = state.get("analysis")
     turn_feedback = None
     if state["mode"] == "training" and analysis:
-        turn_feedback = {"short_tip": analysis["short_tip"], "scores": analysis["scores"]}
+        turn_feedback = {"short_tip": analysis["short_tip"], "scores": analysis["scores"],
+                         "problem_flags": analysis.get("problem_flags", [])}
 
     _save(session_id, state, turn_feedback, req.question_id)
 

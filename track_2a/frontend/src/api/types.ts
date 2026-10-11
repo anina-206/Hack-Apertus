@@ -21,13 +21,22 @@ export const PHASES: Phase[] = [
   "closing",
 ];
 
-export type CriterionId =
-  | "relevance"
-  | "structure"
-  | "examples"
-  | "motivation"
-  | "language"
-  | "self_reflection";
+/** The 11 FHGR criteria (datasets/rubric/criteria.json), in rubric order. */
+export const CRITERIA = [
+  "clarity",
+  "relevance",
+  "motivation",
+  "self_reflection",
+  "communication",
+  "concrete_examples",
+  "demeanor",
+  "preparation",
+  "goal_orientation",
+  "difficult_questions",
+  "initiative",
+] as const;
+
+export type CriterionId = (typeof CRITERIA)[number];
 
 export type Mode = "training" | "rehearsal";
 export type InterviewerStyle = "friendly" | "strict";
@@ -58,6 +67,9 @@ export type CreateSessionRequest = {
   interviewer_style: InterviewerStyle;
   mode: Mode;
   candidate?: Candidate;
+  posting_id?: string;
+  /** Criteria the new round should practise, e.g. the last report's next_practice */
+  focus?: CriterionId[];
 };
 
 export type Progress = { current: number; total: number };
@@ -66,6 +78,8 @@ export type Question = {
   id: string;
   text: string;
   is_follow_up?: boolean;
+  /** Set when the guardrails answered instead of a normal question (see docs/api.md). */
+  guard?: "crisis" | "support" | "redirect";
 };
 
 export type CreateSessionResponse = {
@@ -73,15 +87,20 @@ export type CreateSessionResponse = {
   phase: Phase;
   progress: Progress;
   question: Question;
+  /** The FHGR posting's company and interviewer (null in the mock) */
+  company?: { name: string; place: string } | null;
+  interviewer?: { name: string; role: string } | null;
 };
 
 // ---------- POST /sessions/{id}/answers ----------
 
-export type Scores = Record<CriterionId, number>; // each 1-5
+/** Each 1-4, or null when the answer showed nothing about this criterion. */
+export type Scores = Partial<Record<CriterionId, number | null>>;
 
 export type TurnFeedback = {
   short_tip: string;
   scores: Scores;
+  problem_flags?: string[];
 };
 
 export type AnswerResponse = {
@@ -119,17 +138,21 @@ export type SessionState = {
 export type Report = {
   session_id: string;
   language: LanguageCode;
-  overall_score: number;
+  scale: { min: number; max: number }; // 1-4
+  overall_score: number | null; // null if no criterion was observed
   criteria: {
     id: CriterionId;
     label: string;
-    score: number;
+    score: number | null; // null = not observed in the interview
+
     comment: string;
     evidence?: string;
   }[];
   strengths: string[];
   improvements: { tip: string; example_answer?: string }[];
   next_practice: CriterionId[];
+  closing?: string; // one encouraging sentence
+  support_note?: string | null; // where to get help, only if the interview showed distress
 };
 
 // ---------- Accounts (docs/api.md section 3b) ----------
