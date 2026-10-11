@@ -19,6 +19,13 @@ export type SavedInterview = {
   question_id: string | null; // null when the interview is over
   done: boolean;
   messages: ChatMessage[];
+  /** The FHGR posting's company and interviewer (null/missing in the mock) */
+  company?: { name: string; place: string } | null;
+  interviewer?: { name: string; role: string } | null;
+  /** Bullet points from the uploaded application, shown on top of the chat */
+  application_summary?: string | null;
+  /** An application was uploaded, but the backend could not summarise it */
+  application_failed?: boolean;
   report?: Report; // filled in once the feedback screen has loaded it
 };
 
@@ -38,6 +45,8 @@ export function fromServer(d: SavedInterviewDetail, summary: string): SavedInter
     question_id: d.current_question_id,
     done: d.done,
     messages,
+    company: d.company,
+    interviewer: d.interviewer,
     report: d.report ?? undefined,
   };
 }

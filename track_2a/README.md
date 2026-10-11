@@ -207,18 +207,21 @@ the FHGR feedback rules. Without `JUDGE_NAME` the judge is skipped. The coach it
 ## Limitations
 
 - Sessions are stored in SQLite (`data/sessions/sessions.db`, set by `SESSIONS_DB` in docker-compose) and survive a restart. Without `SESSIONS_DB` (tests, local dev) they are kept in memory.
-- Running interviews are kept in memory and are lost when the backend restarts. Interviews of logged-in users are also saved in SQLite (Docker volume `storage`), so they stay readable, but an unfinished one cannot be continued after a restart.
-- Accounts are minimal: username and password only, no e-mail, no password reset, no rate limiting.
+- Interviews of logged-in users are also saved as readable copies in SQLite (Docker volume `storage`, `/me/interviews`).
+- Accounts are minimal: username and password only, no e-mail, no password reset. Failed logins are rate limited per IP (in memory; behind a proxy all users share one IP). Users can delete their account. No HTTPS in the demo setup: put a TLS proxy in front for real use.
 - Swiss German (`gsw`) is a beta: the 8B model may mix in Standard German or spell inconsistently.
-- The interviewer knows nothing about a specific company, so it answers candidate questions in general terms.
+- The interviewer only knows the facts of the chosen posting (fictional FHGR companies); it cannot know a real company.
 
 ## Data
 
 `data/` holds only small YAML configuration files (limit: 100 MB). `datasets/` and `fhgr/` are the FHGR
-challenge material (synthetic, fictional persons and companies). No real personal data is stored; the optional
-candidate details (first name, school level, interests) are kept with the session (SQLite / Postgres).
-`data/` holds only small YAML configuration files (limit: 100 MB). Guests leave no data on the server. Only if someone creates an account, the username, a password hash and the
-saved interviews (including the optional candidate details) are stored in `storage/app.db`. Use fake data in demos.
+challenge material (synthetic, fictional persons and companies). Without an account nothing personal is kept
+beyond the running session. If someone creates an account, the username, a password hash and the saved interviews
+(including the optional candidate details: first name, school level, interests) are stored in `storage/app.db`.
+Use fake data in demos.
+
+An uploaded application (PDF, .docx, .txt) is read in memory and summarised with one LLM call at the start of the
+interview; the full text is not stored, only the short summary (without contact data) stays in the session.
 
 ## Hack Apertus
 

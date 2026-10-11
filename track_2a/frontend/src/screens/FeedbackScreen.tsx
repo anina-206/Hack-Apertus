@@ -14,8 +14,8 @@ type Props = {
   /** Called once a freshly loaded report is there, so it can be saved. */
   onReportLoaded: (report: Report) => void;
   onRestart: () => void;
-  /** Start a new interview with the same settings that practises these criteria */
-  onPracticeAgain: (focus: CriterionId[]) => Promise<void>;
+  /** Start a new interview with the same settings that practises these criteria (not available for opened old ones) */
+  onPracticeAgain?: (focus: CriterionId[]) => Promise<void>;
 };
 
 /** Bar colour by FHGR level (1-4): 3-4 Gut/Sehr gut = teal, 2 Ausbaufähig = yellow, 1 Ungenügend = red. */
@@ -25,15 +25,21 @@ function scoreColor(score: number) {
   return "var(--color-logo-red)";
 }
 
-export default function FeedbackScreen({ sessionId, language, onRestart, onPracticeAgain }: Props) {
-export default function FeedbackScreen({ sessionId, language, savedReport, onReportLoaded, onRestart }: Props) {
+export default function FeedbackScreen({
+  sessionId,
+  language,
+  savedReport,
+  onReportLoaded,
+  onRestart,
+  onPracticeAgain,
+}: Props) {
   const text = t(language);
   const [starting, setStarting] = useState(false);
 
   async function practiceAgain(focus: CriterionId[]) {
     setStarting(true);
     try {
-      await onPracticeAgain(focus);
+      await onPracticeAgain?.(focus);
     } catch {
       setStarting(false);
       setError(true);
@@ -215,11 +221,13 @@ export default function FeedbackScreen({ sessionId, language, savedReport, onRep
                     </span>
                   ))}
                 </div>
-                <div className="mt-4">
-                  <PrimaryButton onClick={() => practiceAgain(report.next_practice)} disabled={starting} wide>
-                    {starting ? text.starting : text.practiceThis}
-                  </PrimaryButton>
-                </div>
+                {onPracticeAgain && (
+                  <div className="mt-4">
+                    <PrimaryButton onClick={() => practiceAgain(report.next_practice)} disabled={starting} wide>
+                      {starting ? text.starting : text.practiceThis}
+                    </PrimaryButton>
+                  </div>
+                )}
               </Card>
             )}
 

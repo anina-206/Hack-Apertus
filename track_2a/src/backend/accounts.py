@@ -11,11 +11,13 @@ import os
 import re
 import secrets
 import sqlite3
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
+from backend import config
 from backend.interview.graph import position
 from backend.interview.phases import progress
 
@@ -50,9 +52,51 @@ CREATE TABLE IF NOT EXISTS interviews (
 class AccountError(Exception):
     """`code` is an error code from docs/api.md."""
 
-    def __init__(self, status: int, code: str, message: str):
+    def __init__(self, status: int, code: str, message: str, retry_after: Optional[int] = None):
         super().__init__(message)
-        self.status, self.code, self.message = status, code, message
+        self.status, self.code, self.message, self.retry_after = status, code, message, retry_after
+
+
+class RateLimiter:
+    """Allows `limit` counted events per `window` seconds and key. In memory: a restart resets it."""
+
+    def __init__(self, limit: int, window: int, clock=time.monotonic):
+        self.limit, self.window, self.clock = limit, window, clock
+        self.hits: dict[str, list[float]] = {}
+
+    def _recent(self, key: str) -> list[float]:
+        now = self.clock()
+        recent = [t for t in self.hits.get(key, []) if now - t < self.window]
+        if recent:
+            self.hits[key] = recent
+        else:
+            self.hits.pop(key, None)
+        return recent
+
+    def check(self, key: str) -> None:
+        """Raises 429 if the limit is used up."""
+        recent = self._recent(key)
+        if len(recent) >= self.limit:
+            wait = max(1, int(self.window - (self.clock() - recent[0])) + 1)
+            raise AccountError(429, "TOO_MANY_REQUESTS", f"Too many attempts. Try again in {wait} seconds.", wait)
+
+    def count(self, key: str) -> None:
+        if len(self.hits) > 10_000:  # do not grow without bound under an attack
+            for old in list(self.hits):
+                self._recent(old)
+        self.hits.setdefault(key, []).append(self.clock())
+
+    def reset(self, key: str) -> None:
+        self.hits.pop(key, None)
+
+
+class Limits:
+    """The limits of docs/api.md section 3b."""
+
+    def __init__(self):
+        self.login_user = RateLimiter(5, 15 * 60)   # per IP and username
+        self.login_ip = RateLimiter(20, 15 * 60)    # per IP
+        self.register = RateLimiter(10, 60 * 60)    # per IP
 
 
 def _now() -> str:
@@ -117,6 +161,14 @@ class Store:
             raise AccountError(401, "INVALID_CREDENTIALS", "Wrong username or password.")
         return self._new_token(row["id"]), {"id": row["id"], "username": row["display_name"]}
 
+    def delete_account(self, user_id: str, password: str) -> None:
+        """Deletes the user; tokens and saved interviews go with it (ON DELETE CASCADE)."""
+        with self._db() as db:
+            row = db.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+            if row is None or not _check_password(password, row["password_hash"]):
+                raise AccountError(401, "INVALID_CREDENTIALS", "Wrong password.")
+            db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
     def _new_token(self, user_id: str) -> str:
         token = secrets.token_urlsafe(32)
         expires = (datetime.now(timezone.utc) + timedelta(days=TOKEN_DAYS)).strftime(TIME_FORMAT)
@@ -155,8 +207,11 @@ class Store:
                 feedback[question_id] = turn_feedback
             data = {
                 "language": state["language"], "occupation_id": state["occupation_id"],
+                "occupation_name": state.get("occupation_name"),
                 "interviewer_style": state["interviewer_style"], "mode": state["mode"],
-                "candidate": state.get("candidate"), "done": bool(state.get("done")),
+                "candidate": state.get("candidate"), "posting_id": state.get("posting_id"),
+                "company_input": state.get("company"),
+                "done": bool(state.get("done")),
                 "phase": pos.phase, "progress": progress(pos), "history": state.get("transcript", []),
                 "current_question_id": (state.get("current_question") or {}).get("id"),
                 "turn_feedback": feedback, "report": state.get("report") or old.get("report"),
@@ -175,10 +230,16 @@ class Store:
         for r in rows:
             d = json.loads(r["data"])
             result.append({"session_id": r["session_id"], "language": d["language"], "occupation_id": d["occupation_id"],
-                           "interviewer_style": d["interviewer_style"], "mode": d["mode"],
+                           "occupation_name": d.get("occupation_name"), "interviewer_style": d["interviewer_style"], "mode": d["mode"],
                            "created_at": r["created_at"], "updated_at": r["updated_at"], "done": d["done"],
                            "overall_score": (d.get("report") or {}).get("overall_score")})
         return result
+
+    def delete_interview(self, user_id: str, session_id: str) -> bool:
+        """Deletes one interview of this user; False if there is none (or it belongs to someone else)."""
+        with self._db() as db:
+            cursor = db.execute("DELETE FROM interviews WHERE session_id = ? AND user_id = ?", (session_id, user_id))
+        return cursor.rowcount > 0
 
     def get_interview(self, user_id: str, session_id: str) -> Optional[dict]:
         with self._db() as db:
@@ -190,7 +251,11 @@ class Store:
         feedback = d.get("turn_feedback", {})
         history = [({**t, "turn_feedback": feedback.get(t["question_id"])} if t["role"] == "candidate" else t)
                    for t in d["history"]]
+        posting = config.posting_for({"company": d.get("company_input"), "posting_id": d.get("posting_id")})
+        company, interviewer = config.company_of(posting), config.interviewer_of(posting)
         return {"session_id": session_id, "language": d["language"], "occupation_id": d["occupation_id"],
+                "occupation_name": d.get("occupation_name"),
                 "interviewer_style": d["interviewer_style"], "mode": d["mode"], "candidate": d.get("candidate"),
+                "company": company, "interviewer": interviewer,
                 "created_at": r["created_at"], "done": d["done"], "phase": d["phase"], "progress": d["progress"],
                 "current_question_id": d["current_question_id"], "history": history, "report": d.get("report")}

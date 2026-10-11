@@ -1,5 +1,6 @@
 import type {
   AnswerResponse,
+  ApplicationExtract,
   AppConfig,
   AuthResponse,
   CreateSessionRequest,
@@ -18,6 +19,8 @@ import type {
  */
 export interface InterviewApi {
   getConfig(): Promise<AppConfig>;
+  /** Reads an uploaded application (PDF, Word or text) and returns its text. Nothing is stored. */
+  extractApplication(file: File): Promise<ApplicationExtract>;
   createSession(req: CreateSessionRequest): Promise<CreateSessionResponse>;
   sendAnswer(sessionId: string, questionId: string, text: string): Promise<AnswerResponse>;
   getSession(sessionId: string): Promise<SessionState>;
@@ -27,6 +30,10 @@ export interface InterviewApi {
   login(username: string, password: string): Promise<AuthResponse>;
   logout(): Promise<void>;
   me(): Promise<User>;
+  /** Deletes the account with all saved interviews. Needs the password again. */
+  deleteAccount(password: string): Promise<void>;
   listInterviews(): Promise<InterviewListItem[]>;
   getSavedInterview(sessionId: string): Promise<SavedInterviewDetail>;
+  /** Deletes one saved interview of the logged-in user. */
+  deleteInterview(sessionId: string): Promise<void>;
 }

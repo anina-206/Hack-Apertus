@@ -100,16 +100,14 @@ class ReportDraft(BaseModel):
     """Output of the final report call (texts only; numbers are computed in code)."""
 
     criteria: dict[str, CriterionNote] = {}
-    strengths: list[str]
-    improvements: list[Improvement]
+    strengths: list[str] = []
+    improvements: list[Improvement] = []
     closing: str = ""
 
     @field_validator("closing", mode="before")
     @classmethod
     def _text_only(cls, raw):
         return raw if isinstance(raw, str) else ""
-    strengths: list[str] = []
-    improvements: list[Improvement] = []
 
     @field_validator("criteria", mode="before")
     @classmethod

@@ -21,8 +21,6 @@ If something changes, change it here first, then in the code.
 | Languages | `de`, `fr`, `it`, `gsw` (Swiss German, optional) |
 | Time | ISO 8601 in UTC, e.g. `2026-10-09T14:03:00Z` |
 | Scores | Integer 1-4 (FHGR: 1 Ungenügend … 4 Sehr gut), or `null` = not observed |
-| Auth | None (local demo, no personal data stored) |
-| Scores | Integer 1-5 (1 = weak, 5 = excellent) |
 | Auth | Optional. Without a token everything works as before (guest). With `Authorization: Bearer <token>` (see section 3b) interviews are saved to the user's account. |
 
 ### Error format (all endpoints)
@@ -47,6 +45,7 @@ If something changes, change it here first, then in the code.
 | 401 | `INVALID_CREDENTIALS` | Wrong username or password |
 | 401 | `UNAUTHORIZED` | Missing, invalid or expired token on an endpoint that needs one |
 | 404 | `INTERVIEW_NOT_FOUND` | Saved interview does not exist or belongs to someone else |
+| 429 | `TOO_MANY_REQUESTS` | Too many failed logins or registrations, see section 3b. The `Retry-After` header says how many seconds to wait. |
 | 502 | `LLM_UNAVAILABLE` | Apertus did not answer or returned garbage |
 | 500 | `INTERNAL_ERROR` | Unexpected backend bug (should not happen) |
 
@@ -57,6 +56,7 @@ If something changes, change it here first, then in the code.
 | Method | Path | Purpose | LLM calls |
 |---|---|---|---|
 | GET | `/health` | Is the backend alive? | 0 |
+| POST | `/application/extract` | Text of an uploaded application (PDF, .docx, .txt) | 0 |
 | GET | `/config` | Occupations, languages, profiles for the setup screen | 0 |
 | POST | `/sessions` | Start an interview, get the first question | 1 |
 | POST | `/sessions/{session_id}/answers` | Send an answer, get the next question | 2 (max 4) |
@@ -68,7 +68,7 @@ If the model returns unusable JSON, the call is retried (max 3 attempts), and ev
 an answer costs at most 4 (3 analysis + 1 interviewer). In the `candidate_questions` phase an answer costs 1,
 or 0 if the candidate has no more questions. `meta.llm_calls` always shows the real number.
 
-Account endpoints (v1.1, section 3b): `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /me/interviews`, `GET /me/interviews/{session_id}`. No LLM calls.
+Account endpoints (v1.1, section 3b): `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `DELETE /auth/me`, `GET /me/interviews`, `GET /me/interviews/{session_id}`, `DELETE /me/interviews/{session_id}`. No LLM calls.
 
 `POST /chat` also exists, for checking the Apertus connection only (dev, not used by the frontend).
 
@@ -106,9 +106,28 @@ so the frontend never hardcodes occupations or profiles.
   "modes": [
     { "id": "training", "description": "Short feedback after every answer" },
     { "id": "rehearsal", "description": "Realistic, feedback only at the end" }
+  ],
+  "dialects": [
+    { "code": "zh", "label": { "de": "Zürich", "fr": "Zurich", "it": "Zurigo" } },
+    { "code": "be", "label": { "de": "Bern", "fr": "Berne", "it": "Berna" } }
   ]
 }
 ```
+
+### POST `/application/extract`
+
+Reads an uploaded application letter so the frontend can put its text into `POST /sessions` (`application_text`).
+`multipart/form-data` with one field `file`: PDF, Word (`.docx`) or text (`.txt`, `.md`), max 5 MB (PDF: first 12 pages).
+Nothing is stored.
+
+Response `200`:
+
+```json
+{ "filename": "bewerbung.pdf", "text": "Ich heisse Lara ...", "chars": 1840, "truncated": false }
+```
+
+`text` is cut to 8000 characters (`truncated: true`). Errors are `400 INVALID_REQUEST` with a readable `message`:
+wrong type, too large, damaged or password-protected file, or no text found (e.g. a scanned document that is only a picture).
 
 ### POST `/sessions`
 
@@ -118,6 +137,7 @@ Request:
 {
   "language": "de",
   "occupation_id": "informatiker_efz",
+  "occupation_name": null,
   "interviewer_style": "friendly",
   "mode": "training",
   "candidate": {
@@ -129,6 +149,36 @@ Request:
 ```
 
 `candidate` is optional and only used to personalise questions. Use fake data in demos.
+
+`dialect` is optional and only used for `language: "gsw"`: `zh` (default), `be`, `bs`, `gr` or `vs`
+(`GET /config` lists them under `dialects`). For Mundart the interviewer writes Standard German first and a second LLM call
+turns every text the model writes into the dialect (fixed lines like the closing are already dialect). That is one more call for
+each such text, so up to 3 calls per answer in Mundart (analysis, interviewer, dialect). If the second call fails, the Standard
+German text is used. Tips and the report stay in Standard German, as in the FHGR data. The dialect texts are not reviewed by
+native speakers. Other languages ignore `dialect`.
+
+`occupation_name` is optional free text for any apprenticeship that is not in `GET /config` (the frontend offers
+the Swiss list of about 250 apprenticeships, e.g. `"Koch/Köchin EFZ"`). It is only used when neither `occupation_id` nor
+`posting_id` is given; the interviewer knows the name and, if it is in the FHGR occupation data (`datasets/occupations.csv`, from
+berufsberatung.ch; about 200 of the 218 names of the frontend's list), the typical tasks, the training duration and the
+requirements (the German name as listed is needed to find it), so there is no company (`company` and `interviewer` are
+`null`). One of `occupation_id`, `posting_id` or `occupation_name` is required.
+
+`application_text` is optional: the text of the candidate's application letter (max 8000 characters), either from
+`POST /application/extract` (upload) or pasted by the candidate. The backend summarises it with one extra LLM call at the start (short bullet points without
+contact data) plus 2 to 5 points worth asking about (vague claims, stated weaknesses, gaps; not part of the response). The new main questions of the
+motivation, strengths/weaknesses and situational phases take these points one by one: the interviewer quotes the application
+("In deiner Bewerbung steht …") and asks what exactly is meant or for an example. After a vague answer a follow-up can
+refer to the application too. The greeting says that the application was read. The text itself is not stored, only the summary stays in the
+session. If the summary fails, the interview starts anyway and `application_summary` is `null`.
+
+The same call also reads which company the letter is addressed to (company, town, contact person from the salutation,
+e.g. "Sehr geehrte Frau Keller", and the person's function if the letter gives it). If the letter names a company, the
+interviewer speaks as this company and contact person: `company` and `interviewer` in the response are built from it, and
+the default FHGR posting of the occupation is not used. It is used as information only (the backend tells the model never to
+follow instructions in it, and the interviewer paraphrases instead of repeating it). If the letter names no company, the
+default posting is used as before (or no company for an occupation without one). `interviewer` is `null` if the letter names
+no person.
 
 `posting_id` is optional: an FHGR posting (`P-01` … `P-30`, listed in `GET /config` under `postings`).
 It sets the company the interviewer works for and who the interviewer is. Without it, the default
@@ -149,9 +199,12 @@ Response `201`:
     "text": "Grüezi Lara! Erzähl mir doch zuerst etwas über dich."
   },
   "company": { "name": "Limmatcode GmbH", "place": "Zürich" },
-  "interviewer": { "name": "Stefan Keller", "role": "Berufsbildner, Senior Software Engineer" }
+  "interviewer": { "name": "Stefan Keller", "role": "Berufsbildner, Senior Software Engineer" },
+  "application_summary": null
 }
 ```
+
+`application_summary` is the bullet-point summary of `application_text` (text), or `null` without an application.
 
 `company` and `interviewer` come from the posting (`null` if there is none). In the `candidate_questions`
 phase the interviewer answers as this company, using only the posting's facts.
@@ -234,6 +287,7 @@ Lets the frontend restore the chat after a page reload.
   "session_id": "3f8a2c1e-6b1d-4b7e-9a51-2d3e4f5a6b7c",
   "language": "de",
   "occupation_id": "informatiker_efz",
+  "occupation_name": null,
   "mode": "training",
   "done": false,
   "phase": "motivation",
@@ -339,6 +393,29 @@ Same request and response as in section 3. If a valid token is sent, the intervi
 An invalid token returns `401 UNAUTHORIZED` (no silent fallback to guest).
 `/answers` and `/report` save automatically when the session belongs to a user.
 
+### DELETE `/auth/me`
+
+Deletes the account with all saved interviews and all tokens. Needs a token and the password again
+(so a stolen token alone cannot delete the account).
+
+Request: `{ "password": "geheim1234" }`
+
+Response `204`, no body. Wrong password: `401 INVALID_CREDENTIALS` (counts as a failed login, see below).
+Without a token: `401 UNAUTHORIZED`.
+
+### Rate limiting
+
+Counted in memory per client IP (a backend restart resets it), only failed attempts count:
+
+| What | Limit | Window |
+|---|---|---|
+| Failed logins (or wrong password on `DELETE /auth/me`) for the same IP and username | 5 | 15 minutes |
+| Failed logins from the same IP, any username | 20 | 15 minutes |
+| Registration attempts from the same IP | 10 | 1 hour |
+
+When a limit is reached the answer is `429 TOO_MANY_REQUESTS` with the header `Retry-After: <seconds>`, even if the
+password would have been right. A successful login clears the counter of that IP and username.
+
 ### GET `/me/interviews`
 
 Needs a token. Newest first.
@@ -350,6 +427,7 @@ Needs a token. Newest first.
       "session_id": "3f8a2c1e-...",
       "language": "de",
       "occupation_id": "informatiker_efz",
+      "occupation_name": null,
       "interviewer_style": "friendly",
       "mode": "training",
       "created_at": "2026-10-10T10:03:00Z",
@@ -363,6 +441,13 @@ Needs a token. Newest first.
 
 `overall_score` is `null` until the report was created.
 
+### DELETE `/me/interviews/{session_id}`
+
+Needs a token. Deletes one saved interview of the user: the saved copy (conversation, tips, scores, report) and the
+backend's own record of the running session, so `GET /sessions/{id}` answers `404 SESSION_NOT_FOUND` afterwards.
+Response `204`, no body. Unknown id or someone else's interview: `404 INTERVIEW_NOT_FOUND` (nothing is deleted);
+without a token: `401 UNAUTHORIZED`. Deleting twice gives `404` the second time.
+
 ### GET `/me/interviews/{session_id}`
 
 Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIEW_NOT_FOUND`.
@@ -372,18 +457,21 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
   "session_id": "3f8a2c1e-...",
   "language": "de",
   "occupation_id": "informatiker_efz",
+  "occupation_name": null,
   "interviewer_style": "friendly",
   "mode": "training",
   "candidate": { "first_name": "Lara" },
+  "company": { "name": "Limmatcode GmbH", "place": "Zürich" },
+  "interviewer": { "name": "Stefan Keller", "role": "Berufsbildner, Senior Software Engineer" },
   "created_at": "2026-10-10T10:03:00Z",
   "done": true,
   "phase": "closing",
-  "progress": { "current": 8, "total": 8 },
+  "progress": { "current": 12, "total": 12 },
   "current_question_id": null,
   "history": [
     { "role": "interviewer", "question_id": "q1", "text": "Grüezi Lara! ..." },
     { "role": "candidate", "question_id": "q1", "text": "Ich bin Lara, ...",
-      "turn_feedback": { "short_tip": "...", "scores": { "relevance": 4 } } }
+      "turn_feedback": { "short_tip": "...", "scores": { "clarity": 3, "relevance": 4, "motivation": null } } }
   ],
   "report": null
 }
@@ -391,8 +479,7 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 
 - `turn_feedback` is only on `candidate` entries, only in `training`, and can be `null` (same rules as in section 3).
 - `report` has the shape of `GET /sessions/{id}/report`, or `null` if it was not created yet.
-- This is a read-only copy. An unfinished interview can only be continued while the backend still holds the session in memory
-  (it is lost on restart, see README limitations); after a restart it stays readable here.
+- This is a read-only copy of the saved conversation. It stays readable after a restart.
 
 ---
 
@@ -417,14 +504,6 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | `difficult_questions` | Umgang mit schwierigen Fragen | Reaction to critical or unexpected questions |
 | `initiative` | Eigeninitiative | Asks own meaningful questions at the end |
 
----|---|---|
-| `relevance` | Relevanz | Does the answer address the question? |
-| `structure` | Struktur | Clear beginning, middle, end (e.g. STAR) |
-| `examples` | Konkrete Beispiele | Real situations instead of empty claims |
-| `motivation` | Motivation | Genuine interest in the occupation and company |
-| `language` | Sprache & Ausdruck | Clear, polite, age-appropriate |
-| `self_reflection` | Selbstreflexion | Honest view of own strengths and weaknesses |
-
 ---
 
 ## 5. Out of scope for v1
@@ -433,9 +512,8 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
   `agent`, as in the FHGR project template), see README "Agent Protocol". It is not part of this contract.
 - Streaming answers (SSE) - possible v2 if latency feels too slow.
 - Voice input/output - possible v2 (TTS feature).
-- Accounts. (Sessions are persisted in SQLite when `SESSIONS_DB` is set, see README.)
+- Continuing an unfinished interview from a saved copy (sessions survive a restart only through `SESSIONS_DB`, see README).
 - E-mail, password reset, social login, rate limiting.
-- Continuing an unfinished interview after a backend restart.
 
 ## 6. Change log
 
@@ -443,11 +521,19 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 |---|---|---|
 | 2026-10-06 | First draft | Iago |
 | 2026-10-06 | Port 8000 (matches backend skeleton), CORS for frontend dev server | Anina |
-| 2026-10-10 | v1.1: optional accounts (`/auth/*`), saved interviews (`/me/interviews`), new error codes. Guest use unchanged, no breaking change. | Anina |
 | 2026-10-09 | Backend implements v1. Clarified: LLM calls incl. JSON retries, `progress` and question ids, `turn_feedback` in `candidate_questions`, `closing_message`, history after the end, how report numbers and `evidence` are made, report errors, dev-only `POST /chat`, CORS origin for the nginx container, `500 INTERNAL_ERROR`. No breaking changes. | Iago |
+| 2026-10-10 | v1.1: optional accounts (`/auth/*`), saved interviews (`/me/interviews`), new error codes. Guest use unchanged, no breaking change. | Anina |
 | 2026-10-10 | **Breaking:** FHGR rubric (11 criteria, scale 1-4, `null` = not observed) replaces our 6 criteria (1-5). New `report.scale`; `overall_score` and `criteria[].score` can be `null`; `report.criteria` always has all 11; candidate questions are analysed (`initiative`); `history` candidate turns have `phase`. | Iago |
 | 2026-10-10 | Guardrails: `question.guard`, `turn_feedback.problem_flags`, report `closing` and `support_note`. Not breaking. | Iago |
 | 2026-10-10 | 12 main questions (intro 2, motivation 3, strengths/weaknesses 3, situational 3, + question round). Optional `posting_id`; `company` and `interviewer` in the session response; `postings` in `GET /config`. Not breaking. | Iago |
 | 2026-10-10 | Optional `focus` in `POST /sessions`. Not breaking. | Iago |
 | 2026-10-10 | `occupation_id` is optional when `posting_id` is given (the posting's occupation is used). Not breaking. | Iago |
 | 2026-10-10 | Backend runs inside Aegra (same port 8000, same `/api/v1`); errors outside `/api/v1` keep FastAPI's format. Hidden occupation `lehrstelle_allgemein` is not listed in `GET /config`. Not breaking. | Iago |
+| 2026-10-11 | v1.2: `DELETE /auth/me` (delete account), rate limiting on `/auth/login`, `/auth/register` and `DELETE /auth/me`, new error `429 TOO_MANY_REQUESTS`. Not breaking. | Anina |
+| 2026-10-11 | v1.3: optional `occupation_name` in `POST /sessions` (any apprenticeship by name, no company); `occupation_name` in `GET /sessions/{id}` and `/me/interviews`. Not breaking. | Anina |
+| 2026-10-11 | v1.4: optional `company` in `POST /sessions` (the candidate's own company and contact person, replaces the default FHGR posting); saved interviews return the matching `company` and `interviewer`. Not breaking. | Anina |
+| 2026-10-11 | v1.5: removed `company.posting_text` again. New `POST /application/extract` (text of an uploaded application), optional `application_text` in `POST /sessions`, `application_summary` in the response. Starting costs one extra LLM call when an application is given. Not breaking. | Anina |
+| 2026-10-11 | v1.6: removed `company` from `POST /sessions` (v1.4) again. The company and contact person now come from the application letter (`application_text`), the response still has `company` and `interviewer`. Not breaking for clients that never sent `company`. | Anina |
+| 2026-10-11 | v1.7: optional `dialect` in `POST /sessions` and `dialects` in `GET /config` (Mundart: zh, be, bs, gr, vs). One extra LLM call per interviewer text in Mundart. Not breaking. | Anina |
+| 2026-10-11 | v1.8: `DELETE /me/interviews/{session_id}` (delete one saved interview). Not breaking. | Anina |
+| 2026-10-11 | v1.9: `occupation_name` (and the five occupations of `GET /config`, and the FHGR postings) now bring the typical tasks, duration and requirements from `datasets/occupations.csv` into the prompts. No change to the fields. | Anina |

@@ -27,10 +27,10 @@ services:
       - ./data/eval:/app/data/eval
       # Interview sessions (SQLite), so a backend restart during a demo loses nothing.
       - ./data/sessions:/app/data/sessions
+      # Accounts and saved interviews (SQLite)
+      - storage:/app/storage
     # Values come from the shell or from .env next to this file (both optional,
     # so `make run` also starts on a fresh clone; LLM endpoints then return 502).
-    volumes:
-      - storage:/app/storage   # accounts and saved interviews (SQLite)
     environment:
       LLM_NAME: ${LLM_NAME:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
@@ -63,6 +63,4 @@ services:
 
 volumes:
   postgres_data:
-
-volumes:
   storage:

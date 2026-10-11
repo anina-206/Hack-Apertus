@@ -3,6 +3,7 @@ import {
   api,
   ApiError,
   type AppConfig,
+  type Dialect,
   type CreateSessionRequest,
   type CreateSessionResponse,
   type InterviewerStyle,
@@ -12,10 +13,13 @@ import {
   type User,
 } from "../api";
 import CardAccent from "../components/CardAccent";
-import { ArrowRight, Check, ChevronDown } from "../components/icons";
+import { ArrowRight, Check } from "../components/icons";
+import OccupationPicker from "../components/OccupationPicker";
+import type { Lehrberuf } from "../data/lehrberufe";
 import PrimaryButton from "../components/PrimaryButton";
 import { fromServer, type SavedInterview } from "../history";
 import { label, languageNames, t } from "../i18n";
+import { occupationLabel } from "../occupation";
 
 type Props = {
   language: LanguageCode;
@@ -40,6 +44,12 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
   // Interviews of the logged-in user, saved on the backend
   const [remote, setRemote] = useState<InterviewListItem[]>([]);
 
+  // "Delete account" panel
+  const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -53,12 +63,21 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
   }, [user]);
 
   // Form fields
-  const [occupationId, setOccupationId] = useState("");
+  const [occupation, setOccupation] = useState<Lehrberuf | null>(null);
   const [style, setStyle] = useState<InterviewerStyle>("friendly");
   const [mode, setMode] = useState<Mode>("training");
+  const [dialect, setDialect] = useState<Dialect>("zh");
   const [firstName, setFirstName] = useState("");
   const [schoolLevel, setSchoolLevel] = useState("");
   const [interests, setInterests] = useState("");
+
+  // The uploaded application: its text (sent when the interview starts) and what to show
+  const [application, setApplication] = useState<{ filename: string; text: string; truncated: boolean } | null>(null);
+  const [applicationState, setApplicationState] = useState<"idle" | "reading" | "error">("idle");
+  // ... or the letter pasted as text
+  const [showPaste, setShowPaste] = useState(false);
+  const [pastedText, setPastedText] = useState("");
+  const applicationText = application?.text ?? (pastedText.trim() || undefined);
 
   // Start button
   const [starting, setStarting] = useState(false);
@@ -67,11 +86,7 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
   function loadConfig() {
     api
       .getConfig()
-      .then((c) => {
-        setConfig(c);
-        // Preselect the first occupation so the start button works right away
-        setOccupationId((current) => current || c.occupations[0]?.id || "");
-      })
+      .then(setConfig)
       .catch(() => setLoadError(true));
   }
 
@@ -82,39 +97,87 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
 
   useEffect(loadConfig, []);
 
-  function summaryOf(occupationId: string, lang: LanguageCode, m: Mode) {
-    const occupation = config?.occupations.find((o) => o.id === occupationId);
-    return [occupation ? label(occupation.label, lang) : occupationId, languageNames[lang], t(lang).modes[m]]
-      .filter(Boolean)
-      .join(" · ");
+  /** The apprenticeships the backend knows (with a company) match by name; all others are sent by name only. */
+  function knownOccupation(o: Lehrberuf) {
+    const wanted = occupationLabel(o).toLowerCase();
+    return config?.occupations.find((k) => (k.label.de ?? "").toLowerCase() === wanted);
+  }
+
+  function summaryOf(occupationId: string, occupationName: string | null | undefined, lang: LanguageCode, m: Mode) {
+    const known = config?.occupations.find((o) => o.id === occupationId);
+    const name = occupationName || (known ? label(known.label, lang) : "");
+    return [name, languageNames[lang], t(lang).modes[m]].filter(Boolean).join(" · ");
   }
 
   async function openRemote(item: InterviewListItem) {
     try {
       const detail = await api.getSavedInterview(item.session_id);
-      onOpenSaved(fromServer(detail, summaryOf(item.occupation_id, item.language, item.mode)));
+      onOpenSaved(fromServer(detail, summaryOf(item.occupation_id, item.occupation_name, item.language, item.mode)));
     } catch {
       setStartError(true);
     }
   }
 
+  async function handleApplicationFile(file: File | undefined) {
+    if (!file) return;
+    setApplicationState("reading");
+    try {
+      const result = await api.extractApplication(file);
+      setApplication({ filename: result.filename || file.name, text: result.text, truncated: result.truncated });
+      setApplicationState("idle");
+    } catch {
+      setApplication(null);
+      setApplicationState("error");
+    }
+  }
+
+  async function handleDeleteInterview(sessionId: string) {
+    if (!window.confirm(text.deleteInterviewConfirm)) return;
+    try {
+      await api.deleteInterview(sessionId);
+      setRemote((list) => list.filter((item) => item.session_id !== sessionId));
+    } catch {
+      setStartError(true);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      await api.deleteAccount(deletePassword);
+      onLogout(); // the account is gone: forget the login in this browser too
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : "";
+      setDeleteError(
+        code === "INVALID_CREDENTIALS"
+          ? text.wrongPassword
+          : code === "TOO_MANY_REQUESTS"
+            ? text.tooManyRequests
+            : text.error,
+      );
+      setDeleteBusy(false);
+    }
+  }
+
   async function handleStart() {
-    if (!config || !user) return;
+    if (!config || !user || !occupation) return;
+    const known = knownOccupation(occupation);
     const request: CreateSessionRequest = {
       language,
-      occupation_id: occupationId,
+      // The German name: the backend looks it up in its occupation data (tasks, duration, requirements)
+      ...(known ? { occupation_id: known.id } : { occupation_name: occupationLabel(occupation) }),
       interviewer_style: style,
       mode,
+      dialect: language === "gsw" ? dialect : undefined,
       candidate: {
         first_name: firstName.trim() || undefined,
         school_level: schoolLevel.trim() || undefined,
         interests: interests.trim() || undefined,
       },
+      application_text: applicationText,
     };
-    const occupation = config.occupations.find((o) => o.id === occupationId);
-    const summary = [occupation ? label(occupation.label, language) : "", languageNames[language], text.modes[mode]]
-      .filter(Boolean)
-      .join(" · ");
+    const summary = summaryOf(known?.id ?? "", known ? undefined : occupationLabel(occupation, language), language, mode);
 
     setStarting(true);
     setStartError(false);
@@ -158,6 +221,11 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
         <div className="mx-auto max-w-lg">
           <div className="mb-4 flex items-center justify-end gap-3 text-sm">
             {user && <span className="truncate text-white/90">{user.username}</span>}
+            {user && (
+              <button onClick={() => setDeleting(true)} className="font-bold text-white/80 underline hover:text-white">
+                {text.deleteAccount}
+              </button>
+            )}
             <button
               onClick={user ? onLogout : onLoginClick}
               className="rounded-full border-2 border-white/80 px-4 py-1.5 font-bold hover:bg-white/10"
@@ -174,6 +242,40 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
       </header>
 
       <main className="mx-auto -mt-7 w-full max-w-lg flex-1 px-4">
+        {user && deleting && (
+          <div className="relative z-10 mb-4 rounded-2xl bg-white p-4 shadow-card">
+            <p className="mb-3 text-sm">{text.deleteAccountWhy}</p>
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder={text.password}
+              autoComplete="current-password"
+              className={inputClass}
+            />
+            {deleteError && <p className="mt-3 rounded-xl bg-danger-lighter px-4 py-2 text-sm text-danger">{deleteError}</p>}
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={!deletePassword || deleteBusy}
+                className="flex-1 rounded-full bg-danger px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleteBusy ? text.pleaseWait : text.deleteAccountConfirm}
+              </button>
+              <button
+                onClick={() => {
+                  setDeleting(false);
+                  setDeletePassword("");
+                  setDeleteError(null);
+                }}
+                className="rounded-full border-2 border-line px-4 py-2.5 text-sm font-bold"
+              >
+                {text.cancel}
+              </button>
+            </div>
+          </div>
+        )}
+
         {!user && (
           <div className="relative z-10 mb-4 rounded-2xl border-2 border-logo-yellow bg-white p-4 shadow-card">
             <p className="font-bold">{text.loginRequired}</p>
@@ -203,26 +305,112 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
                 </Choice>
               ))}
             </div>
+            {language === "gsw" && config.dialects && (
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-bold">{text.dialect}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {config.dialects.map((d) => (
+                    <Choice key={d.code} selected={dialect === d.code} onClick={() => setDialect(d.code)}>
+                      {label(d.label, language)}
+                    </Choice>
+                  ))}
+                </div>
+                <p className="mt-2 text-sm text-charcoal-soft">{text.dialectHint}</p>
+              </div>
+            )}
           </Step>
 
           <Step number="2" chip="red" title={text.occupation}>
-            <div className="relative">
-              <select
-                value={occupationId}
-                onChange={(e) => setOccupationId(e.target.value)}
-                className={`${inputClass} appearance-none pr-12`}
-              >
-                {config.occupations.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {label(o.label, language)}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 right-5 h-5 w-5 -translate-y-1/2" />
-            </div>
+            <OccupationPicker
+              language={language}
+              value={occupation}
+              onChange={setOccupation}
+              placeholder={text.occupationSearch}
+              noResults={text.occupationNone}
+              className={inputClass}
+            />
+            <p className="mt-2 text-sm text-charcoal-soft">{text.occupationHint}</p>
           </Step>
 
-          <Step number="3" chip="blue" title={`${text.style} & ${text.mode}`}>
+          <Step
+            number="3"
+            chip="blue"
+            title={
+              <>
+                {text.application} <span className="font-normal text-charcoal-soft">{text.optional}</span>
+              </>
+            }
+          >
+            <p className="mb-3 -mt-2 text-sm text-charcoal-soft">{text.applicationHint}</p>
+            {application ? (
+              <div className="flex items-center gap-3 rounded-2xl bg-mint-lighter px-4 py-3 text-mint-dark">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-logo-teal text-white">
+                  <Check className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold">{application.filename}</p>
+                  <p className="text-sm">
+                    {application.text.length} {text.applicationChars} {text.applicationRead}
+                    {application.truncated && ` · ${text.applicationTruncated}`}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setApplication(null)}
+                  className="shrink-0 text-sm font-bold underline"
+                >
+                  {text.applicationRemove}
+                </button>
+              </div>
+            ) : (
+              <label
+                className={`flex min-h-12 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-line bg-white px-5 py-3 text-base font-bold text-brand hover:border-brand-light ${
+                  applicationState === "reading" ? "pointer-events-none opacity-60" : ""
+                }`}
+              >
+                {applicationState === "reading" ? text.applicationReading : text.applicationChoose}
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt,.md"
+                  className="sr-only"
+                  onChange={(e) => {
+                    handleApplicationFile(e.target.files?.[0]);
+                    e.target.value = ""; // the same file can be chosen again after an error
+                  }}
+                />
+              </label>
+            )}
+            {!application && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPaste(!showPaste)}
+                  aria-expanded={showPaste}
+                  className="text-sm font-bold text-brand"
+                >
+                  {showPaste ? text.applicationPasteHide : text.applicationPaste}
+                </button>
+                {showPaste && (
+                  <div className="mt-3">
+                    <TextArea
+                      label=""
+                      value={pastedText}
+                      onChange={setPastedText}
+                      placeholder={text.applicationPastePlaceholder}
+                      maxLength={8000}
+                      rows={8}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            {applicationState === "error" && (
+              <p className="mt-3 rounded-xl bg-danger-lighter px-4 py-2 text-sm text-danger">{text.applicationError}</p>
+            )}
+            <p className="mt-3 text-xs text-charcoal-soft">{text.applicationPrivacy}</p>
+          </Step>
+
+          <Step number="4" chip="teal" title={`${text.style} & ${text.mode}`}>
             <p className="mb-2 text-sm font-bold">{text.styleQuestion}</p>
             <div className="grid grid-cols-2 gap-3">
               {config.interviewer_styles.map((s) => (
@@ -250,8 +438,8 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
           </Step>
 
           <Step
-            number="4"
-            chip="teal"
+            number="5"
+            chip="yellow"
             title={
               <>
                 {text.profile} <span className="font-normal text-charcoal-soft">{text.optional}</span>
@@ -287,10 +475,10 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
             <h2 className="mb-3 text-xl font-bold">{text.previousInterviews}</h2>
             <ul className="space-y-2">
               {remote.map((item) => (
-                <li key={item.session_id} className="rounded-2xl bg-white shadow-card">
-                  <button onClick={() => openRemote(item)} className="w-full px-4 py-3 text-left">
+                <li key={item.session_id} className="flex items-center gap-2 rounded-2xl bg-white shadow-card">
+                  <button onClick={() => openRemote(item)} className="min-w-0 flex-1 px-4 py-3 text-left">
                     <p className="truncate font-bold">
-                      {summaryOf(item.occupation_id, item.language, item.mode)}
+                      {summaryOf(item.occupation_id, item.occupation_name, item.language, item.mode)}
                       {item.overall_score !== null && " · Ø " + item.overall_score}
                     </p>
                     <p className="text-sm text-charcoal-soft">
@@ -298,11 +486,18 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
                       {!item.done && " · " + text.inProgress}
                     </p>
                   </button>
+                  <button
+                    onClick={() => handleDeleteInterview(item.session_id)}
+                    className="mr-3 shrink-0 rounded-full px-3 py-1.5 text-sm font-bold text-danger hover:bg-danger-lighter"
+                  >
+                    {text.deleteInterview}
+                  </button>
                 </li>
               ))}
             </ul>
           </section>
         )}
+
       </main>
 
       {/* Start bar: always visible at the bottom */}
@@ -310,7 +505,7 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
         <div className="mx-auto max-w-lg">
           {startError && <p className="mb-3 rounded-xl bg-danger-lighter px-4 py-3 text-danger">{text.error}</p>}
           {user ? (
-            <PrimaryButton onClick={handleStart} disabled={!occupationId || starting} wide>
+            <PrimaryButton onClick={handleStart} disabled={!occupation || starting} wide>
               {starting ? text.starting : text.start}
               {!starting && <ArrowRight />}
             </PrimaryButton>
@@ -320,7 +515,9 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
               <ArrowRight />
             </PrimaryButton>
           )}
-          <p className="mt-3 text-center text-xs text-charcoal-soft">{text.startHint}</p>
+          <p className="mt-3 text-center text-xs text-charcoal-soft">
+            {user && !occupation ? text.fillRequired : text.startHint}
+          </p>
         </div>
       </footer>
     </div>
@@ -400,16 +597,70 @@ function TextField({
   value,
   onChange,
   placeholder,
+  maxLength,
+  required,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  maxLength?: number;
+  required?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-bold">{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputClass} />
+      <span className="mb-2 block text-sm font-bold">
+        {label}
+        {required && <span className="text-danger"> *</span>}
+      </span>
+      <input
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        className={inputClass}
+      />
+    </label>
+  );
+}
+
+/** Several lines of text, e.g. the pasted application letter. */
+function TextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+  rows = 3,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  maxLength: number;
+  rows?: number;
+  required?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-bold">
+        {label}
+        {required && <span className="text-danger"> *</span>}
+      </span>
+      <textarea
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        rows={rows}
+        className="w-full resize-y rounded-3xl border-2 border-line bg-white px-5 py-3.5 text-base text-charcoal placeholder:text-charcoal/40 focus:border-brand focus:outline-none"
+      />
+      <span className="mt-1 block text-right text-xs text-charcoal-soft">
+        {value.length}/{maxLength}
+      </span>
     </label>
   );
 }

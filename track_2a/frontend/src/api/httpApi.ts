@@ -13,7 +13,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     response = await fetch(BASE_URL + path, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        // A file upload (FormData) sets its own Content-Type with the boundary
+        ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
         // Logged in: the backend saves the interviews for this user
         ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
         ...options.headers,
@@ -33,6 +34,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const httpApi: InterviewApi = {
   getConfig: () => request("/config"),
+
+  extractApplication: (file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request("/application/extract", { method: "POST", body: form });
+  },
 
   createSession: (req) => request("/sessions", { method: "POST", body: JSON.stringify(req) }),
 
@@ -56,7 +63,11 @@ export const httpApi: InterviewApi = {
 
   me: () => request("/auth/me"),
 
+  deleteAccount: (password) => request("/auth/me", { method: "DELETE", body: JSON.stringify({ password }) }),
+
   listInterviews: async () => (await request<{ interviews: InterviewListItem[] }>("/me/interviews")).interviews,
 
   getSavedInterview: (sessionId) => request(`/me/interviews/${sessionId}`),
+
+  deleteInterview: (sessionId) => request(`/me/interviews/${sessionId}`, { method: "DELETE" }),
 };

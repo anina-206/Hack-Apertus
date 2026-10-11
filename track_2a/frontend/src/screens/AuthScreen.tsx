@@ -43,9 +43,11 @@ export default function AuthScreen({ language, onLoggedIn, onCancel }: Props) {
           ? text.loginFailed
           : code === "USERNAME_TAKEN"
             ? text.usernameTaken
-            : code === "INVALID_REQUEST"
-              ? text.invalidInput
-              : text.error,
+            : code === "TOO_MANY_REQUESTS"
+              ? text.tooManyRequests
+              : code === "INVALID_REQUEST"
+                ? text.invalidInput
+                : text.error,
       );
       setBusy(false);
     }

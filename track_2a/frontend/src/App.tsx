@@ -1,11 +1,10 @@
-import { useState } from "react";
-import { api, type CreateSessionRequest, type CreateSessionResponse, type CriterionId, type LanguageCode } from "./api";
 import { useEffect, useState } from "react";
 import {
   api,
   ApiError,
   type CreateSessionRequest,
   type CreateSessionResponse,
+  type CriterionId,
   type LanguageCode,
   type Report,
   type User,
@@ -22,13 +21,12 @@ type Screen = "setup" | "auth" | "interview" | "feedback";
 export default function App() {
   const [screen, setScreen] = useState<Screen>("setup");
   const [language, setLanguage] = useState<LanguageCode>("de");
-  const [session, setSession] = useState<CreateSessionResponse | null>(null);
-  const [summary, setSummary] = useState("");
-  const [lastRequest, setLastRequest] = useState<CreateSessionRequest | null>(null);
-  // Logged-in user (null = guest). The token itself lives in auth.ts.
+  // Logged-in user (null = not logged in). The token itself lives in auth.ts.
   const [user, setUser] = useState<User | null>(getStoredUser);
   // The interview that is open (new or saved)
   const [entry, setEntry] = useState<SavedInterview | null>(null);
+  // Settings of the interview that was just started, for "practise this" (not known for opened old ones)
+  const [lastRequest, setLastRequest] = useState<CreateSessionRequest | null>(null);
 
   // A stored login can be expired: ask the backend once and forget it if it says no
   useEffect(() => {
@@ -54,8 +52,6 @@ export default function App() {
 
   function handleStarted(session: CreateSessionResponse, request: CreateSessionRequest, summary: string) {
     setLanguage(request.language);
-    setSession(newSession);
-    setSummary(newSummary);
     setLastRequest(request);
     setEntry({
       session_id: session.session_id,
@@ -66,6 +62,10 @@ export default function App() {
       question_id: session.question.id,
       done: false,
       messages: [{ role: "interviewer", text: session.question.text }],
+      company: session.company,
+      interviewer: session.interviewer,
+      application_summary: session.application_summary,
+      application_failed: Boolean(request.application_text) && !session.application_summary,
     });
     setScreen("interview");
   }
@@ -73,20 +73,20 @@ export default function App() {
   /** Opens a saved interview: finished ones start at the chat too, from there the report is one click away. */
   function handleOpen(saved: SavedInterview) {
     setLanguage(saved.language);
+    setLastRequest(null);
     setEntry(saved);
     setScreen("interview");
   }
 
   /** "Practise this": same settings as the last interview, focused on the weakest criteria */
   async function handlePracticeAgain(focus: CriterionId[]) {
-    if (!lastRequest) return;
-    const request = { ...lastRequest, focus };
-    handleStarted(await api.createSession(request), request, summary);
+    if (!entry || !lastRequest) return;
+    const request = { ...lastRequest, focus };  // same settings, including company and application
+    handleStarted(await api.createSession(request), request, entry.summary);
   }
 
   function handleReportLoaded(report: Report) {
-    if (!entry) return;
-    setEntry({ ...entry, report });
+    setEntry((current) => (current ? { ...current, report } : current));
   }
 
   function handleRestart() {
@@ -128,20 +128,15 @@ export default function App() {
         />
       )}
 
-      {screen === "feedback" && session && (
-        <FeedbackScreen
-          sessionId={session.session_id}
-          language={language}
-          onRestart={handleRestart}
-          onPracticeAgain={handlePracticeAgain}
-        />
       {screen === "feedback" && entry && (
         <FeedbackScreen
+          key={entry.session_id}
           sessionId={entry.session_id}
           language={entry.language}
           savedReport={entry.report}
           onReportLoaded={handleReportLoaded}
           onRestart={handleRestart}
+          onPracticeAgain={lastRequest ? handlePracticeAgain : undefined}
         />
       )}
     </div>
