@@ -47,6 +47,8 @@ function loadServerVoice(): Promise<ServerVoice> {
 
 type Options = {
   language: LanguageCode;
+  /** Lets Whisper know the occupation and company, so it gets their words right */
+  sessionId?: string;
   /** The interviewer's voice for POST /speech */
   voice: Voice;
   draft: string;
@@ -57,7 +59,7 @@ type Options = {
   onRepeat: () => void;
 };
 
-export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }: Options) {
+export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, onRepeat }: Options) {
   const [handsFree, setHandsFree] = useState(() => canSpeak && loadHandsFree());
   /** Key of the text that is being read aloud (the message index), or null */
   const [speakingKey, setSpeakingKey] = useState<number | null>(null);
@@ -73,8 +75,8 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
   const [server, setServer] = useState<{ stt: boolean; tts: boolean }>({ stt: false, tts: false });
 
   // The speech callbacks run later, so they read the current values from here
-  const latest = useRef({ language, voice, draft, handsFree, onSend, onRepeat });
-  latest.current = { language, voice, draft, handsFree, onSend, onRepeat };
+  const latest = useRef({ language, sessionId, voice, draft, handsFree, onSend, onRepeat });
+  latest.current = { language, sessionId, voice, draft, handsFree, onSend, onRepeat };
 
   const stopRecognition = useRef<(() => void) | null>(null); // browser engine
   const recording = useRef<Recording | null>(null); // server engine
@@ -168,7 +170,7 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
     }
     setTranscribing(true);
     try {
-      const { text } = await api.transcribe(audio, latest.current.language);
+      const { text } = await api.transcribe(audio, latest.current.language, latest.current.sessionId);
       if (round !== listenRound.current) return; // stopped in the meantime
       const base = latest.current.draft.trim();
       if (!text.trim()) {

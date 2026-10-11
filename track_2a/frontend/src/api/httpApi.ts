@@ -89,11 +89,12 @@ export const httpApi: InterviewApi = {
 
   deleteInterview: (sessionId) => request(`/me/interviews/${sessionId}`, { method: "DELETE" }),
 
-  async transcribe(audio, language) {
+  async transcribe(audio, language, sessionId) {
     // multipart/form-data: the browser sets the Content-Type (with the boundary) itself
     const form = new FormData();
     form.append("audio", audio, `answer.${audio.type.includes("mp4") ? "mp4" : "webm"}`);
     form.append("language", language);
+    if (sessionId) form.append("session_id", sessionId);
     return checked(await send("/transcribe", { method: "POST", body: form })).json();
   },
 

@@ -35,6 +35,19 @@ _NO_MORE_QUESTIONS = re.compile(
     r"\b(nein|nei|nö|keine|kei|nüt|nichts|alles klar|non|rien|aucune|nessuna|niente|nulla|no|none|nope)\b",
     re.IGNORECASE,
 )
+# A reply that starts like this is a "no" however long it is ("nein danke, das wäre es meinerseits gewesen, ...").
+_STARTS_WITH_NO = re.compile(
+    r"^\W*(nein|nei|nö|nope|no|non|keine fragen?|kei frag\w*|das wär'?s|das wäre? (es|alles)|das isch alles|"
+    r"c'est tout|è tutto|that's all)\b",
+    re.IGNORECASE,
+)
+# Spoken answers come without "?", so a question is also recognised by its question word.
+_QUESTION_WORD = re.compile(
+    r"\b(wie|was|wann|wo|wieso|warum|weshalb|wer|welche\w*|gibt es|git es|habt ihr|händ ihr|kann ich|darf ich|"
+    r"comment|quand|où|pourquoi|combien|quel\w*|est-ce|come|quando|dove|perché|quanto|quant\w|qual\w*|"
+    r"how|what|when|where|why|which)\b",
+    re.IGNORECASE,
+)
 
 # Pure courtesy replies ("Danke!", "Vielen Dank für das Gespräch", "Merci beaucoup") carry nothing to score:
 # every word is from this list.
@@ -74,9 +87,16 @@ def is_courtesy(answer: str) -> bool:
 
 
 def has_no_more_questions(answer: str) -> bool:
-    """True for short replies like "Nein, danke" that contain no question."""
+    """True for replies like "Nein, danke" that contain no question.
+
+    Short replies may have the "no" anywhere; longer ones must start with it and must not contain a question word.
+    """
     text = answer.strip()
-    return "?" not in text and len(text.split()) <= 8 and bool(_NO_MORE_QUESTIONS.search(text))
+    if "?" in text or _QUESTION_WORD.search(text):
+        return False
+    if _STARTS_WITH_NO.search(text):
+        return len(text.split()) <= 30
+    return len(text.split()) <= 8 and bool(_NO_MORE_QUESTIONS.search(text))
 
 
 def next_step(pos: Position, answer: str, wants_follow_up: bool) -> tuple[Position, Mode]:

@@ -14,6 +14,7 @@ from statistics import mean
 from typing import Optional
 
 from backend import config
+from backend.interview.language import swiss_spelling
 from backend.interview.parsing import ReportDraft, complete_json
 from backend.interview import rubric, safety
 from backend.interview.phases import has_no_more_questions
@@ -36,6 +37,29 @@ def _verified_evidence(quote: str, candidate_texts: list[str]) -> str:
     if quote and any(_norm(quote) in _norm(text) for text in candidate_texts):
         return quote
     return ""
+
+
+# "Der Kandidat verknüpft ...", "Er zeigt ...": the report must speak to the candidate (du/tu), not about them.
+_THIRD_PERSON = re.compile(
+    r"\b(der|die|dem|den) (kandidat|kandidatin|bewerber|bewerberin)\b|(^|[.!] )(er|sie) [a-zäöü]+t\b|"
+    r"\b(le|la) (candidat|candidate)\b|"
+    r"\b(il|la) candidat[oa]\b",
+    re.IGNORECASE,
+)
+_THIRD_PERSON_FIX = ("IMPORTANT: Write every text directly to the candidate with 'du' (fr/it: 'tu'), e.g. 'Du hast ...'. "
+                     "Never write 'der Kandidat', 'er' or 'sie' about them.")
+
+# An example answer is what the candidate could say ("Ich ..."), not a description of what is missing.
+_FIRST_PERSON = re.compile(r"\b(ich|mir|mich|mein\w*|je|j'|moi|mon|ma|mes|io|mi|il mio|la mia)\b", re.IGNORECASE)
+
+
+def _texts(draft: ReportDraft) -> list[str]:
+    return ([draft.closing, *draft.strengths] + [i.tip for i in draft.improvements]
+            + [n.comment for n in draft.criteria.values()])
+
+
+def _in_third_person(draft: ReportDraft) -> bool:
+    return any(_THIRD_PERSON.search(text) for text in _texts(draft) if text)
 
 
 def final_scores(state: dict) -> tuple[dict[str, int], dict[str, float]]:
@@ -65,19 +89,18 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
     transcript = state.get("transcript", [])
     candidate_texts = [t["text"] for t in transcript if t["role"] == "candidate"]
 
+    messages = report_messages(occupation or config.occupation_for(state.get("occupation_id"), state.get("posting_id"),
+                                                                  state.get("occupation_name")),
+                               state["language"], scores, analyses, transcript, config.posting_for(state))
     draft: Optional[ReportDraft]
-    draft, _, error = await complete_json(
-        report_messages(occupation or config.occupation_for(state.get("occupation_id"), state.get("posting_id"),
-                                                           state.get("occupation_name")),
-                        state["language"], scores,
-                        analyses, transcript, config.posting_for(state)),
-        ReportDraft,
-        purpose="report",
-        temperature=0.4,
-        max_tokens=2500,
-    )
+    draft, _, error = await complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500)
     if draft is None:
         raise ReportUnavailable(f"Report could not be generated: {error}")
+    if _in_third_person(draft):  # one more try; the first draft is kept if the second is no better
+        messages[0] = {**messages[0], "content": messages[0]["content"] + "\n" + _THIRD_PERSON_FIX}
+        retry, _, _ = await complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500)
+        if retry is not None and not _in_third_person(retry):
+            draft = retry
 
     missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
     if missing:
@@ -89,6 +112,10 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
     if not improvements:
         tips = list(dict.fromkeys(a["short_tip"] for a in analyses if a.get("short_tip")))[:3]
         improvements = [{"tip": tip, "example_answer": ""} for tip in tips]
+    for item in improvements:
+        if not _FIRST_PERSON.search(item["example_answer"]):
+            item["example_answer"] = ""
+        item["tip"], item["example_answer"] = swiss_spelling(item["tip"], language), swiss_spelling(item["example_answer"], language)
 
     criteria = []
     for key in CRITERIA:  # all 11 in rubric order; not observed ones have score None
@@ -97,7 +124,7 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
             "id": key,
             "label": rubric.label(key, language),
             "score": scores.get(key),
-            "comment": (note.comment if note else "") if key in scores else rubric.NOT_OBSERVED[language],
+            "comment": swiss_spelling(note.comment if note else "", language) if key in scores else rubric.NOT_OBSERVED[language],
             "evidence": _verified_evidence(note.evidence, candidate_texts) if note else "",
         })
 
@@ -108,10 +135,10 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
         # Average of the shown scores of the observed criteria, so the overall score matches the bars.
         "overall_score": round(mean(scores.values()), 1) if scores else None,
         "criteria": criteria,
-        "strengths": draft.strengths,
+        "strengths": [swiss_spelling(text, language) for text in draft.strengths],
         "improvements": improvements,
         "next_practice": sorted(means, key=lambda k: means[k])[:2],
-        "closing": draft.closing,
+        "closing": swiss_spelling(draft.closing, language),
         # FHGR rule L3: point to a real person when the interview showed distress.
         "support_note": safety.SUPPORT_NOTE[language] if _distress(state) else None,
     }

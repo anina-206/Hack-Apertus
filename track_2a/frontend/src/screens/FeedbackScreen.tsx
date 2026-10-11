@@ -111,7 +111,8 @@ export default function FeedbackScreen({
     .map((c) => ({ ...c, score: toLevel(c.score ?? 1, report?.scale?.max ?? 4) }));
   const notObserved = report?.criteria.filter((c) => c.score === null) ?? [];
   const scaleMax = report?.scale?.max ?? 4;
-  // The overall score is an average (e.g. 2.8); a teenager reads the nearest level better than a decimal
+  // The overall score is an average (e.g. 2.8): the level pill shows the nearest level, the number stays exact
+  // (otherwise 2.4 reads as "2 von 4" although most criteria are "Gut")
   const overall = report?.overall_score != null ? toLevel(report.overall_score, scaleMax) : null;
   const reducedMotion = usePrefersReducedMotion();
   // Level per criterion last time; only real improvements are shown (no "worse than before")
@@ -253,7 +254,10 @@ export default function FeedbackScreen({
                         <LevelMeter score={overall} max={scaleMax} />
                         <span className="whitespace-nowrap">
                           <LevelPill score={overall} text={text} />
-                          <span className="text-charcoal-soft"> · {overall} {text.outOf}</span>
+                          <span className="text-charcoal-soft">
+                            {" "}
+                            · {report.overall_score?.toLocaleString(language === "gsw" ? "de-CH" : language)} {text.outOf}
+                          </span>
                         </span>
                       </span>
                     </div>

@@ -28,8 +28,8 @@ export interface InterviewApi {
   sendAnswer(sessionId: string, questionId: string, text: string): Promise<AnswerResponse>;
   getSession(sessionId: string): Promise<SessionState>;
   getReport(sessionId: string): Promise<Report>;
-  /** Speech to text (Whisper). Only when config.voice.stt is true. */
-  transcribe(audio: Blob, language: LanguageCode): Promise<TranscribeResponse>;
+  /** Speech to text (Whisper). Only when config.voice.stt is true. `sessionId` gives Whisper the occupation's words. */
+  transcribe(audio: Blob, language: LanguageCode, sessionId?: string): Promise<TranscribeResponse>;
   /** Text to speech: the audio for one interviewer line. Only when config.voice.tts is set. */
   speech(text: string, language: LanguageCode, voice: Voice): Promise<Blob>;
   // Accounts: with a login the interviews are saved on the backend

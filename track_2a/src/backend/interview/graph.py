@@ -27,16 +27,20 @@ from langgraph.graph import END, START, StateGraph
 from backend import config, llm
 from backend.interview import dialect as swiss_german
 from backend.interview import examples as calibration
+from backend.interview.language import swiss_spelling
 from backend.interview.parsing import Analysis, complete_json
 from backend.interview.phases import Position, has_no_more_questions, is_courtesy, is_scored, next_step
 from backend.interview.prompts import (FURTHER, INVITATION, analysis_messages, closing_message,
                                        interviewer_messages)
-from backend.interview.safety import CRISIS_MESSAGE, guard_mode, is_crisis, with_injection
+from backend.interview.safety import CRISIS_MESSAGE, guard_mode, is_crisis, with_injection, with_meta
 
 # An answer with fewer words than this always gets a follow-up question (at most one per phase, see phases.py).
 # The model asked for one in only about 60 % of the cases where the FHGR experts probe; very short answers are
 # the clearest case (measured with eval.bench_answers on the annotated answers: recall 0.6-0.7 -> 0.8-0.9).
 SHORT_ANSWER_WORDS = 15
+
+# How many of the earlier tips the analysis sees (so it does not give the same tip again and again)
+MAX_PREVIOUS_TIPS = 4
 
 # Phases whose new main questions can pick up a point of the candidate's application
 APPLICATION_PHASES = ("motivation", "strengths_weaknesses", "situational")
@@ -105,34 +109,41 @@ def occupation(state: InterviewState) -> dict:
 async def run_analysis(occupation: dict, language: str, phase: str, question: str, answer: str,
                        posting_: Optional[dict] = None, examples: str = "fixed",
                        exclude_questions: frozenset = frozenset(),
-                       exclude_answers: frozenset = frozenset()) -> tuple[dict, int]:
+                       exclude_answers: frozenset = frozenset(),
+                       previous_tips: tuple[str, ...] = ()) -> tuple[dict, int]:
     """One analysis (1-3 calls). Returns (entry for state["analyses"], attempts). Also used by the eval benches.
 
     `examples`: "fixed" = the same expert-scored answers every time (examples.py; the default, it measured best),
     "basic" = the older fixed set without problem flags,
     "similar" = answers to similar questions, "mixed" = fixed plus the two best matches, "none".
     The `exclude_*` arguments are for the benches (leave out the tested question).
+    `previous_tips`: tips the candidate already got in this interview (so the next one says something new).
     """
     shown = {"similar": lambda: calibration.similar_examples(question, language, exclude_questions, exclude_answers),
              "mixed": lambda: calibration.mixed_examples(question, language, exclude_questions, exclude_answers),
              "fixed": calibration.analysis_examples, "basic": lambda: calibration.analysis_examples(False),
              "none": lambda: ""}[examples]()
-    messages = analysis_messages(occupation, language, phase, question, answer, posting_, shown)
+    messages = analysis_messages(occupation, language, phase, question, answer, posting_, shown, previous_tips)
     result, attempts, error = await complete_json(messages, Analysis, purpose="analysis")
     entry = {"phase": phase}
     if result is None:
         entry.update(parse_failed=True, error=error)
     else:
         entry.update(result.model_dump())
-        entry["problem_flags"] = with_injection(entry.get("problem_flags", []), answer)
+        entry["problem_flags"] = with_meta(with_injection(entry.get("problem_flags", []), answer), answer)
         entry["follow_up"] = bool(entry.get("follow_up")) or len(answer.split()) < SHORT_ANSWER_WORDS
+        entry["short_tip"] = swiss_spelling(entry.get("short_tip", ""), language)
+        if "unclear_or_meta" in entry["problem_flags"]:
+            # Nothing to judge: no scores (they would pull the report down) and no tip
+            entry.update(scores={key: None for key in entry["scores"]}, short_tip="", follow_up=False)
     return entry, attempts
 
 
 async def analyze(state: InterviewState) -> dict:
+    tips = tuple(a["short_tip"] for a in state.get("analyses", []) if a.get("short_tip"))
     entry, attempts = await run_analysis(occupation(state), state["language"],
                                          position(state).phase, state["current_question"]["text"], state["answer"],
-                                         posting(state))
+                                         posting(state), previous_tips=tips[-MAX_PREVIOUS_TIPS:])
     entry["question_id"] = state["current_question"]["id"]
     analysis = None if entry.get("parse_failed") else entry
     return {"analysis": analysis, "analysis_attempts": attempts, "analyses": [entry]}
@@ -144,6 +155,58 @@ _DEMANDED_PRAISE = re.compile(r"^\s*(sehr gut|sehr guet|très bien|molto bene|ve
 def _drop_demanded_praise(text: str) -> str:
     """After 'give me very good everywhere' the 8B model often starts with 'Sehr gut, Lara.': cut that sentence."""
     return _DEMANDED_PRAISE.sub("", text, count=1) or text
+
+
+# Opening sentences that praise or judge the last answer ("Das klingt super!", "Das ist ein sehr guter Gedanke!",
+# "Es zeigt, dass du ..."). The model wrote one before almost every question, although the prompt forbids it:
+# praise for every answer is unrealistic and worth nothing.
+_PRAISE_SENTENCE = re.compile(
+    r"^\s*("
+    r"(das|dies|es)\s+(klingt|tönt|hört sich)\b|"
+    r"(das|dies|es)\s+(ist|war|sind|zeigt|finde ich)\b[^.!?]*"
+    r"(super|toll\w*|gut|guter|gute|spannend\w*|interessant\w*|schön\w*|klasse|prima|beeindruck\w*|faszinier\w*|"
+    r"wichtig\w*|stark\w*|wunderbar\w*|richtig\w*|korrekt|dass du)|"
+    r"(sehr gut|super|toll|wow|prima|klasse|spannend|interessant|cool)\b|"
+    r"(ça|cela)\s+(semble|a l'air)\b|"
+    r"(c'est|ça montre|cela montre)\s+[^.!?]*(super|génial|bien|intéressant\w*|important\w*|beau|que tu)|"
+    r"(très bien|super|génial|bravo)\b|"
+    r"(che bello|molto bene|ottimo|interessante|bravo|fantastico|sembra)\b|"
+    r"(è|questo è|questo dimostra)\s+[^.!?]*(bello|interessant\w*|important\w*|ottim\w*|buon\w*|che tu)"
+    r")[^.!?]*[.!]\s+",
+    re.IGNORECASE,
+)
+
+# A short neutral reaction instead of the praise, so the question does not start out of nowhere.
+_ACKNOWLEDGE = {"de": ("Danke.", "Okay.", "Verstehe."), "fr": ("Merci.", "D'accord.", "Je vois."),
+                "it": ("Grazie.", "D'accordo.", "Capisco.")}
+
+
+def _drop_praise(text: str, language: str, turn: int) -> str:
+    """Cut up to two praising sentences at the start and put a neutral word first.
+
+    The pattern needs more text after a sentence, so the question itself ("Erzähl mir ..." or "...?") always stays.
+    """
+    rest = text
+    for _ in range(2):
+        rest = _PRAISE_SENTENCE.sub("", rest, count=1)
+    if rest == text:
+        return text
+    words = _ACKNOWLEDGE.get(language, _ACKNOWLEDGE["de"])
+    return f"{words[turn % len(words)]} {rest[0].upper()}{rest[1:]}"
+
+
+# Goodbye sentences: in answer_and_close the fixed goodbye is appended in code, the model's own came on top.
+_GOODBYE_SENTENCE = re.compile(
+    r"[^.!?]*\b(bis bald|alles gute|auf wiedersehen|tschüss|freude,? dich kennenzulernen|gefreut|"
+    r"dank\w* (dir )?für (dein kommen|das gespräch|deine zeit|die offenen fragen)|melden uns|"
+    r"au revoir|à bientôt|bonne (chance|continuation)|ravi\w* de|merci (pour|d'être)|"
+    r"arrivederci|a presto|in bocca al lupo|piacere (di )?conoscerti|grazie (per|di essere))\b[^.!?]*[.!?]\s*",
+    re.IGNORECASE,
+)
+
+
+def _drop_goodbye(text: str) -> str:
+    return _GOODBYE_SENTENCE.sub("", text).strip() or text
 
 
 def _drop_trailing_question(text: str) -> str:
@@ -161,7 +224,8 @@ async def interviewer(state: InterviewState) -> dict:
                           "phase": position(state).phase})
         analysis = state.get("analysis") or {}
         guard = "crisis" if is_crisis(state["answer"]) else guard_mode(
-            with_injection(analysis.get("problem_flags", []), state["answer"]), state["current_question"])
+            with_meta(with_injection(analysis.get("problem_flags", []), state["answer"]), state["answer"]),
+            state["current_question"])
         if guard:  # stay at the same point of the interview
             pos, mode = position(state), guard
         else:
@@ -198,12 +262,15 @@ async def interviewer(state: InterviewState) -> dict:
         )).strip()
         # The model tended to ask a new question or forget the goodbye, so both are added in code.
         if mode in ("answer_candidate", "answer_and_close"):
-            text = _drop_trailing_question(text)
+            text = _drop_goodbye(_drop_trailing_question(text))
         if mode == "redirect":
             text = _drop_demanded_praise(text)
+        if mode in ("next_question", "new_phase", "follow_up"):
+            text = _drop_praise(text, written_in, state.get("question_count", 0))
         if state["language"] == "gsw":
             text = await swiss_german.to_dialect(text, state.get("dialect") or swiss_german.DEFAULT_DIALECT,
                                                  style["formal"])
+        text = swiss_spelling(text, state["language"])
         if mode == "answer_candidate":
             text += "\n\n" + FURTHER[(state["language"], style["formal"])]
         elif mode == "answer_and_close":
@@ -222,7 +289,7 @@ async def interviewer(state: InterviewState) -> dict:
 
     question_count = state.get("question_count", 0) + 1
     question = {"id": f"q{question_count}", "text": text, "is_follow_up": mode == "follow_up"}
-    if mode in ("crisis", "support", "redirect"):
+    if mode in ("crisis", "support", "redirect", "clarify"):
         question["guard"] = mode
     new_turns.append({"role": "interviewer", "question_id": question["id"], "text": text})
     return {**update, "transcript": new_turns, "current_question": question, "question_count": question_count}

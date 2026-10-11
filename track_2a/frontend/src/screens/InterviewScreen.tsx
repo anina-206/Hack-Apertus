@@ -64,6 +64,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
 
   const voice = useVoice({
     language,
+    sessionId: entry.session_id,
     voice: entry.interviewer?.voice ?? "female",
     draft,
     setDraft,
