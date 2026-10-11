@@ -6,11 +6,30 @@ import { ApiError, type InterviewListItem } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 
-/** Small fetch wrapper: sends JSON, parses JSON, turns error responses into ApiError. */
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  let response: Response;
+/** How long to wait for an answer. Calls that run Apertus (or Whisper/Piper) can take a while. */
+const TIMEOUT_MS = 20_000;
+const SLOW_TIMEOUT_MS = 120_000;
+
+/** fetch that gives up after `ms`: a hanging backend shows an error instead of spinning forever. */
+async function fetchWithTimeout(url: string, options: RequestInit, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
-    response = await fetch(BASE_URL + path, {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch {
+    throw controller.signal.aborted
+      ? new ApiError("TIMEOUT", "Backend did not answer in time.")
+      : new ApiError("NETWORK_ERROR", "Backend not reachable.");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Small fetch wrapper: sends JSON, parses JSON, turns error responses into ApiError. */
+async function request<T>(path: string, options: RequestInit = {}, timeoutMs = TIMEOUT_MS): Promise<T> {
+  const response = await fetchWithTimeout(
+    BASE_URL + path,
+    {
       ...options,
       headers: {
         // A file upload (FormData) sets its own Content-Type with the boundary
@@ -19,10 +38,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
         ...options.headers,
       },
-    });
-  } catch {
-    throw new ApiError("NETWORK_ERROR", "Backend not reachable.");
-  }
+    },
+    timeoutMs,
+  );
 
   const body = await response.json().catch(() => null);
   if (!response.ok) {
@@ -38,20 +56,20 @@ export const httpApi: InterviewApi = {
   extractApplication: (file) => {
     const form = new FormData();
     form.append("file", file);
-    return request("/application/extract", { method: "POST", body: form });
+    return request("/application/extract", { method: "POST", body: form }, SLOW_TIMEOUT_MS);
   },
 
-  createSession: (req) => request("/sessions", { method: "POST", body: JSON.stringify(req) }),
+  createSession: (req) => request("/sessions", { method: "POST", body: JSON.stringify(req) }, SLOW_TIMEOUT_MS),
 
   sendAnswer: (sessionId, questionId, text) =>
     request(`/sessions/${sessionId}/answers`, {
       method: "POST",
       body: JSON.stringify({ question_id: questionId, text }),
-    }),
+    }, SLOW_TIMEOUT_MS),
 
   getSession: (sessionId) => request(`/sessions/${sessionId}`),
 
-  getReport: (sessionId) => request(`/sessions/${sessionId}/report`),
+  getReport: (sessionId) => request(`/sessions/${sessionId}/report`, {}, SLOW_TIMEOUT_MS),
 
   register: (username, password) =>
     request("/auth/register", { method: "POST", body: JSON.stringify({ username, password }) }),
@@ -90,12 +108,8 @@ export const httpApi: InterviewApi = {
 };
 
 /** fetch without the JSON defaults of request(), for audio uploads and downloads. */
-async function send(path: string, options: RequestInit): Promise<Response> {
-  try {
-    return await fetch(BASE_URL + path, options);
-  } catch {
-    throw new ApiError("NETWORK_ERROR", "Backend not reachable.");
-  }
+function send(path: string, options: RequestInit): Promise<Response> {
+  return fetchWithTimeout(BASE_URL + path, options, SLOW_TIMEOUT_MS);
 }
 
 function checked(response: Response): Response {

@@ -381,13 +381,17 @@ export const mockApi: InterviewApi = {
     const language = session.request.language;
     const r = reportTexts[language];
     const text = t(language);
+    // "Practise this": the practised criteria come out one level better, so the comparison can be shown
+    const focus = session.request.focus ?? [];
+    const scores: Partial<Record<CriterionId, number>> = { ...reportScores };
+    for (const id of focus) if (scores[id] !== undefined) scores[id] = Math.min(4, scores[id] + 1);
     const criteria = CRITERIA.map((id) => ({
       id,
       label: text.criteria[id],
-      score: reportScores[id] ?? null,
+      score: scores[id] ?? null,
       comment: r.comments[id] ?? text.notObserved,
     }));
-    const observed = Object.values(reportScores);
+    const observed = Object.values(scores);
     const average = observed.reduce((sum, score) => sum + score, 0) / observed.length;
     return {
       session_id: sessionId,
