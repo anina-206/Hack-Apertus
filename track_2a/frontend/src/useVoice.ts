@@ -144,12 +144,8 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
     try {
       const rec = await record(pause, IDLE_MS, {
         onSilence: () => finishRecording(round),
-        onIdle: () => {
-          recording.current?.cancel();
-          recording.current = null;
-          setListening(false);
-          if (latest.current.handsFree) setPaused(true);
-        },
+        // No speech noticed for a while: the microphone may just be quiet, so let Whisper listen anyway
+        onIdle: () => finishRecording(round),
       });
       if (round !== listenRound.current) return rec.cancel(); // stopped while the microphone was starting
       recording.current = rec;
@@ -166,6 +162,7 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
     setListening(false);
     const audio = await rec.stop();
     if (!audio) {
+      setMicError("nothing");
       if (latest.current.handsFree) setPaused(true);
       return;
     }
@@ -175,6 +172,7 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
       if (round !== listenRound.current) return; // stopped in the meantime
       const base = latest.current.draft.trim();
       if (!text.trim()) {
+        setMicError("nothing");
         if (latest.current.handsFree) setPaused(true);
         return;
       }
@@ -258,6 +256,7 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
 
   /** Reads a text aloud. With `thenListen`, the microphone starts when reading is done. */
   async function say(key: number, text: string, thenListen = false) {
+    unlockAudio(); // still inside the tap on "Vorlesen": later, after loading the audio, it would be too late
     stopMic();
     const current = ++reading.current;
     setSpeakingKey(key);
