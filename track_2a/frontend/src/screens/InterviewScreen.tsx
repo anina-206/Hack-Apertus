@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, PHASES, type Phase } from "../api";
 import CallView, { type CallStatus } from "../components/CallView";
 import CardAccent from "../components/CardAccent";
-import { ArrowRight, Check, ChevronLeft, Headphones, Mic, Speaker, Stop } from "../components/icons";
+import { ArrowRight, Headphones, Lightbulb, Mic, Speaker, Stop } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
 import type { ChatMessage, SavedInterview } from "../history";
 import { t, type UiTexts } from "../i18n";
 import { canListen, canSpeak } from "../speech";
+import { useFocusHeading } from "../useFocusHeading";
 import { useVoice } from "../useVoice";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 export default function InterviewScreen({ entry, onRestart, onFinished }: Props) {
   const { language, summary } = entry;
   const text = t(language);
+  const headingRef = useFocusHeading<HTMLHeadingElement>();
 
   // The posting's interviewer (real backend) or the default persona from the UI texts (mock)
   const interviewer: Interviewer = entry.interviewer
@@ -131,12 +133,30 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
                 ? "paused"
                 : "idle";
 
+  // "Pausieren" asks first, in a small sheet at the bottom (thumb reach) instead of window.confirm
+  const [confirmEnd, setConfirmEnd] = useState(false);
+
   function handleEnd() {
-    if (window.confirm(text.endConfirm)) {
-      voice.stopAll();
-      onRestart();
-    }
+    voice.hold();
+    setConfirmEnd(true);
   }
+
+  const closeEndSheet = useCallback(() => setConfirmEnd(false), []);
+
+  function endNow() {
+    voice.stopAll();
+    onRestart();
+  }
+
+  // The microphone message for the current problem, shown in the chat and in the call view
+  const micMessage =
+    voice.micError === "not-allowed"
+      ? text.micDenied
+      : voice.micError === "nothing"
+        ? text.micNothing
+        : voice.micError
+          ? text.micError
+          : null;
 
   const phaseIndex = PHASES.indexOf(phase);
   // The question count only moves in the four scored phases (see docs/api.md)
@@ -146,15 +166,13 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
     <div className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-page">
       {/* Blue header */}
       <header className="bg-brand px-4 pt-5 pb-12 text-white">
+        {/* No back arrow here: leaving the interview is one clear button, "Beenden" */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleEnd}
-            aria-label={text.back}
-            className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10"
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="min-w-0 flex-1 truncate text-2xl font-bold tracking-tight outline-none sm:text-3xl"
           >
-            <ChevronLeft />
-          </button>
-          <h1 className="min-w-0 flex-1 text-2xl font-bold tracking-tight whitespace-nowrap sm:text-3xl">
             {text.title}
             <span className="text-logo-yellow">.</span>
           </h1>
@@ -164,7 +182,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
               aria-pressed={voice.handsFree}
               aria-label={text.voiceMode}
               title={text.voiceMode}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 transition ${
                 voice.handsFree ? "border-logo-yellow bg-logo-yellow text-charcoal" : "border-white/80 hover:bg-white/10"
               }`}
             >
@@ -173,7 +191,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           )}
           <button
             onClick={handleEnd}
-            className="rounded-full border-2 border-white/80 px-4 py-1.5 text-sm font-bold hover:bg-white/10"
+            className="min-h-11 shrink-0 rounded-full border-2 border-white/80 px-4 text-sm font-bold hover:bg-white/10"
           >
             {text.end}
           </button>
@@ -220,13 +238,15 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           countdown={voice.countdown}
           realSpeaker={voice.server.tts}
           realMic={voice.server.stt}
+          error={micMessage}
           onSkip={voice.skipReading}
           onHold={voice.hold}
           onResume={voice.resume}
           onShowChat={() => setShowCall(false)}
         />
       ) : (
-        <main className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
+        // role="log": a screen reader announces each new message
+        <main className="flex-1 space-y-4 overflow-y-auto px-4 py-5" role="log" aria-live="polite" aria-relevant="additions">
           {voice.handsFree && !done && (
             <button
               onClick={() => setShowCall(true)}
@@ -243,7 +263,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             </details>
           )}
           {entry.application_failed && (
-            <p className="rounded-xl bg-danger-lighter px-4 py-3 text-sm text-danger">{text.applicationFailed}</p>
+            <p role="alert" className="rounded-xl bg-danger-lighter px-4 py-3 text-sm text-danger">{text.applicationFailed}</p>
           )}
 
           {messages.map((msg, i) => (
@@ -259,7 +279,8 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           ))}
 
           {sending && (
-            <div className="ml-12 flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-3 shadow-card" aria-label={text.thinking}>
+            <div className="ml-13 flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-3 shadow-card" role="status">
+              <span className="sr-only">{text.thinking}</span>
               <Dot color="bg-logo-red" delay="0ms" />
               <Dot color="bg-logo-yellow" delay="150ms" />
               <Dot color="bg-logo-blue" delay="300ms" />
@@ -270,7 +291,10 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             <div className="rounded-2xl bg-white p-6 text-center shadow-card">
               <p className="mb-4 text-xl font-bold">{text.finished}</p>
               <PrimaryButton onClick={onFinished}>{text.showFeedback}</PrimaryButton>
-              <button onClick={onRestart} className="mt-4 block w-full text-sm font-bold text-brand">
+              <button
+                onClick={onRestart}
+                className="mx-auto mt-3 block min-h-11 rounded-full px-5 font-bold text-brand-dark underline underline-offset-4 hover:text-brand"
+              >
                 {text.newInterview}
               </button>
             </div>
@@ -283,10 +307,14 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
       {/* Input (in the call view the candidate speaks; "Chat" shows the input again) */}
       {!done && !callOpen && (
         <footer className="border-t border-line bg-white px-4 pt-3 pb-3">
-          {error && <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">{text.error}</p>}
-          {voice.micError && (
-            <p className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">
-              {voice.micError === "not-allowed" ? text.micDenied : text.micError}
+          {error && (
+            <p role="alert" className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">
+              {text.error}
+            </p>
+          )}
+          {micMessage && (
+            <p role="alert" className="mb-2 rounded-xl bg-danger-lighter px-3 py-2 text-sm text-danger">
+              {micMessage}
             </p>
           )}
           {voice.handsFree && !sending && (
@@ -322,8 +350,9 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
                 }
               }}
               placeholder={text.answerPlaceholder}
+              aria-label={text.answerPlaceholder}
               rows={1}
-              className="field-sizing-content max-h-32 min-h-12 flex-1 resize-none rounded-3xl border-2 border-line bg-white px-5 py-2.5 text-base placeholder:text-charcoal/40 focus:border-brand focus:outline-none"
+              className="field-sizing-content max-h-32 min-h-12 flex-1 resize-none rounded-3xl border-2 border-line bg-white px-5 py-2.5 text-base placeholder:text-charcoal/40 focus:border-brand focus:ring-4 focus:ring-brand/20 focus:outline-none"
             />
             {canListen && (
               <button
@@ -358,19 +387,68 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           </p>
         </footer>
       )}
+
+      {confirmEnd && <EndSheet text={text} onStay={closeEndSheet} onEnd={endNow} />}
+    </div>
+  );
+}
+
+/** Bottom sheet: pause the interview (it stays saved) or keep practising. Esc or a tap outside keeps practising. */
+function EndSheet({ text, onStay, onEnd }: { text: UiTexts; onStay: () => void; onEnd: () => void }) {
+  const stayRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    stayRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onStay();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onStay]);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-charcoal/40" onClick={onStay}>
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="end-sheet-text"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg rounded-t-3xl bg-white px-5 pt-6 pb-6 shadow-card"
+      >
+        <p id="end-sheet-text" className="text-lg leading-snug">
+          {text.endConfirm}
+        </p>
+        <div className="mt-5 flex flex-col gap-3">
+          <button
+            ref={stayRef}
+            onClick={onStay}
+            className="min-h-12 rounded-full bg-brand px-5 text-lg font-bold text-white shadow-button hover:bg-brand-dark"
+          >
+            {text.endConfirmNo}
+          </button>
+          <button
+            onClick={onEnd}
+            className="min-h-12 rounded-full border-2 border-line px-5 font-bold text-charcoal hover:border-brand-light"
+          >
+            {text.endConfirmYes}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 function Dot({ color, delay }: { color: string; delay: string }) {
-  return <span className={`h-2 w-2 animate-bounce rounded-full ${color}`} style={{ animationDelay: delay }} />;
+  return (
+    <span
+      className={`h-2 w-2 animate-dot rounded-full motion-reduce:animate-none ${color}`}
+      style={{ animationDelay: delay }}
+    />
+  );
 }
 
-/** The interviewer's avatar: a small tilted red square with initials. */
+/** The interviewer's avatar: a small tilted red square with initials (large bold text, so white on red is readable). */
 function Avatar({ initials }: { initials: string }) {
   return (
     <div
-      className="flex h-9 w-9 shrink-0 -rotate-6 items-center justify-center rounded-lg bg-logo-red text-sm font-bold text-white"
+      className="flex h-10 w-10 shrink-0 -rotate-6 items-center justify-center rounded-lg bg-logo-red text-lg font-bold text-white"
       aria-hidden="true"
     >
       {initials}
@@ -414,9 +492,7 @@ function Message({
         {message.tip && (
           <div className="ml-8 rounded-xl bg-mint-lighter px-4 py-3 text-sm text-mint-dark">
             <p className="mb-1 flex items-center gap-2 font-bold">
-              <span className="flex h-5 w-5 items-center justify-center rounded-md bg-logo-teal text-white">
-                <Check className="h-3.5 w-3.5" />
-              </span>
+              <Lightbulb className="h-4 w-4" />
               {text.feedbackTitle}
             </p>
             <p>
@@ -442,7 +518,7 @@ function Message({
         {(showReadAloud || speaking) && (
           <button
             onClick={onReadAloud}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border-2 border-line bg-white px-3 py-1.5 text-sm font-bold text-brand hover:border-brand-light"
+            className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 border-line bg-white px-4 text-sm font-bold text-brand-dark hover:border-brand-light"
           >
             {speaking ? <Stop /> : <Speaker />}
             {speaking ? text.stopReading : text.readAloud}
@@ -482,7 +558,7 @@ function HandsFreeBar({
   onHold: () => void;
 }) {
   const box = "mb-2 flex items-center gap-3 rounded-xl px-3 py-2 text-sm";
-  const action = "shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold";
+  const action = "min-h-10 shrink-0 rounded-full border-2 px-4 text-sm font-bold";
 
   if (speaking) {
     return (
@@ -521,7 +597,7 @@ function HandsFreeBar({
   if (transcribing) {
     return (
       <div className={`${box} bg-brand-lighter text-brand`} role="status">
-        <span className="h-2.5 w-2.5 shrink-0 animate-bounce rounded-full bg-brand" />
+        <span className="h-2.5 w-2.5 shrink-0 animate-dot rounded-full bg-brand motion-reduce:animate-none" />
         <span className="flex-1">{text.transcribing}</span>
       </div>
     );
