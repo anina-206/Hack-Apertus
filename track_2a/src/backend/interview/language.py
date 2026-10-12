@@ -17,8 +17,3 @@ def detect(text: str, default: str = "de") -> str:
     counts = {lang: sum(w in stop for w in words) for lang, stop in STOPWORDS.items()}
     best = max(counts, key=counts.get)
     return best if counts[best] else default
-
-
-def swiss_spelling(text: str, language: str) -> str:
-    """Swiss Standard German and Mundart never use 'ß'. The prompt asks for 'ss', but the 8B model forgets it."""
-    return text.replace("ß", "ss") if language in ("de", "gsw") and text else text

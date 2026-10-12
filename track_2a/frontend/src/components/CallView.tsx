@@ -6,6 +6,7 @@
 // made-up pulse is shown instead.
 
 import { useEffect, useRef } from "react";
+import type { Interviewer, Voice } from "../api";
 import { meter } from "../audio";
 import type { UiTexts } from "../i18n";
 import Alert from "./Alert";
@@ -16,7 +17,7 @@ export type CallStatus = "speaking" | "thinking" | "listening" | "transcribing" 
 
 type Props = {
   text: UiTexts;
-  interviewer: { name: string; role: string; initials: string; voice?: "female" | "male" };
+  interviewer: Interviewer;
   status: CallStatus;
   /** The interviewer's current question */
   question: string;
@@ -150,7 +151,7 @@ function SpeakerAvatar({
   real,
 }: {
   name: string;
-  voice?: "female" | "male";
+  voice?: Voice;
   active: boolean;
   writing: boolean;
   real: boolean;
@@ -206,17 +207,9 @@ function SpeakerAvatar({
         glow.current.style.opacity = String(active ? 0.35 + level * 0.65 : 0);
         glow.current.style.transform = `rotate(-6deg) scale(${1 + (reducedMotion ? 0.08 : level * 0.18)})`;
       }
-      // The face: mouth open with the voice, eyebrows up a little, a blink every few seconds
       mouth += (target - mouth) * 0.5;
-      const { mouth: lips, eyes, brows } = face.current;
-      lips?.setAttribute("ry", String(mouth * 3.6));
-      lips?.setAttribute("rx", String(4 - mouth * 0.8));
-      // While writing, eyes and eyebrows go down a little: the face looks at the notepad
-      const down = writing ? 1.5 : 0;
-      if (brows) brows.style.transform = `translateY(${down + (reducedMotion ? 0 : -level * 1.6)}px)`;
       if (time > blinkAt + 140) blinkAt = time + 2500 + Math.random() * 3500;
-      const blink = !reducedMotion && time > blinkAt ? " scaleY(0.1)" : "";
-      if (eyes) eyes.style.transform = `translateY(${down}px)${blink}`;
+      moveFace(face.current, { mouth, level, writing, blinking: time > blinkAt });
       if (writing) writeNotes(pad.current, time - writeStart);
 
       waves.current.forEach((wave, i) => {
@@ -262,6 +255,20 @@ function SpeakerAvatar({
       <Notepad parts={pad} visible={writing} />
     </div>
   );
+}
+
+/** The face: mouth open with the voice, eyebrows up a little, eyes closed while blinking. */
+function moveFace(
+  { mouth: lips, eyes, brows }: FaceParts,
+  { mouth, level, writing, blinking }: { mouth: number; level: number; writing: boolean; blinking: boolean },
+) {
+  lips?.setAttribute("ry", String(mouth * 3.6));
+  lips?.setAttribute("rx", String(4 - mouth * 0.8));
+  // While writing, eyes and eyebrows go down a little: the face looks at the notepad
+  const down = writing ? 1.5 : 0;
+  if (brows) brows.style.transform = `translateY(${down + (reducedMotion ? 0 : -level * 1.6)}px)`;
+  const blink = !reducedMotion && blinking ? " scaleY(0.1)" : "";
+  if (eyes) eyes.style.transform = `translateY(${down}px)${blink}`;
 }
 
 type NotepadParts = { lines: (SVGPathElement | null)[]; pen: SVGGElement | null };

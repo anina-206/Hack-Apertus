@@ -92,7 +92,9 @@ async def chat_completion(messages: list[dict], purpose: str = "chat", **kwargs)
     try:
         response = await client.chat.completions.create(model=model, messages=messages, **kwargs)
         usage = response.usage
-        return fix_mojibake(response.choices[0].message.content or "")
+        # Swiss Standard German and Mundart never use "ß" (FR/IT have none). The prompt asks for "ss",
+        # but the 8B model forgets it, so it is replaced here once for every LLM text.
+        return fix_mojibake(response.choices[0].message.content or "").replace("ß", "ss")
     except Exception as exc:
         status = f"error: {type(exc).__name__}"
         raise

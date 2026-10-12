@@ -27,12 +27,11 @@ from langgraph.graph import END, START, StateGraph
 from backend import config, llm
 from backend.interview import dialect as swiss_german
 from backend.interview import examples as calibration
-from backend.interview.language import swiss_spelling
 from backend.interview.parsing import Analysis, complete_json
 from backend.interview.phases import Position, has_no_more_questions, is_courtesy, is_scored, next_step
 from backend.interview.prompts import (FURTHER, INVITATION, analysis_messages, closing_message,
                                        interviewer_messages)
-from backend.interview.safety import CRISIS_MESSAGE, guard_mode, is_crisis, with_injection, with_meta
+from backend.interview.safety import CRISIS_MESSAGE, answer_flags, guard_mode, is_crisis
 
 # An answer with fewer words than this always gets a follow-up question (at most one per phase, see phases.py).
 # The model asked for one in only about 60 % of the cases where the FHGR experts probe; very short answers are
@@ -130,9 +129,8 @@ async def run_analysis(occupation: dict, language: str, phase: str, question: st
         entry.update(parse_failed=True, error=error)
     else:
         entry.update(result.model_dump())
-        entry["problem_flags"] = with_meta(with_injection(entry.get("problem_flags", []), answer), answer)
+        entry["problem_flags"] = answer_flags(entry.get("problem_flags", []), answer)
         entry["follow_up"] = bool(entry.get("follow_up")) or len(answer.split()) < SHORT_ANSWER_WORDS
-        entry["short_tip"] = swiss_spelling(entry.get("short_tip", ""), language)
         if "unclear_or_meta" in entry["problem_flags"]:
             # Nothing to judge: no scores (they would pull the report down) and no tip
             entry.update(scores={key: None for key in entry["scores"]}, short_tip="", follow_up=False)
@@ -195,18 +193,23 @@ def _drop_praise(text: str, language: str, turn: int) -> str:
     return f"{words[turn % len(words)]} {rest[0].upper()}{rest[1:]}"
 
 
-# Goodbye sentences: in answer_and_close the fixed goodbye is appended in code, the model's own came on top.
+# Goodbye sentences at the end of the reply: in answer_and_close the fixed goodbye is appended in code,
+# the model's own came on top. Only the end is checked, so "Wir melden uns bis Ende Monat." in the answer stays.
 _GOODBYE_SENTENCE = re.compile(
     r"[^.!?]*\b(bis bald|alles gute|auf wiedersehen|tschüss|freude,? dich kennenzulernen|gefreut|"
     r"dank\w* (dir )?für (dein kommen|das gespräch|deine zeit|die offenen fragen)|melden uns|"
     r"au revoir|à bientôt|bonne (chance|continuation)|ravi\w* de|merci (pour|d'être)|"
-    r"arrivederci|a presto|in bocca al lupo|piacere (di )?conoscerti|grazie (per|di essere))\b[^.!?]*[.!?]\s*",
+    r"arrivederci|a presto|in bocca al lupo|piacere (di )?conoscerti|grazie (per|di essere))\b[^.!?]*[.!?]\s*$",
     re.IGNORECASE,
 )
 
 
 def _drop_goodbye(text: str) -> str:
-    return _GOODBYE_SENTENCE.sub("", text).strip() or text
+    """Remove goodbye sentences from the end of the text, one after the other."""
+    rest = text.strip()
+    while (cut := _GOODBYE_SENTENCE.sub("", rest).strip()) != rest:
+        rest = cut
+    return rest or text
 
 
 def _drop_trailing_question(text: str) -> str:
@@ -224,8 +227,7 @@ async def interviewer(state: InterviewState) -> dict:
                           "phase": position(state).phase})
         analysis = state.get("analysis") or {}
         guard = "crisis" if is_crisis(state["answer"]) else guard_mode(
-            with_meta(with_injection(analysis.get("problem_flags", []), state["answer"]), state["answer"]),
-            state["current_question"])
+            answer_flags(analysis.get("problem_flags", []), state["answer"]), state["current_question"])
         if guard:  # stay at the same point of the interview
             pos, mode = position(state), guard
         else:
@@ -270,7 +272,6 @@ async def interviewer(state: InterviewState) -> dict:
         if state["language"] == "gsw":
             text = await swiss_german.to_dialect(text, state.get("dialect") or swiss_german.DEFAULT_DIALECT,
                                                  style["formal"])
-        text = swiss_spelling(text, state["language"])
         if mode == "answer_candidate":
             text += "\n\n" + FURTHER[(state["language"], style["formal"])]
         elif mode == "answer_and_close":

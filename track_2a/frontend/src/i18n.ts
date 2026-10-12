@@ -125,7 +125,6 @@ const texts = {
     endConfirmYes: "Pausieren",
     endConfirmNo: "Weiter üben",
     interviewerName: "Frau Meier",
-    interviewerInitials: "FM",
     interviewerRole: "Berufsbildnerin",
     readAloud: "Vorlesen",
     stopReading: "Stopp",
@@ -305,7 +304,6 @@ const texts = {
     endConfirmYes: "Mettre en pause",
     endConfirmNo: "Continuer",
     interviewerName: "Mme Meier",
-    interviewerInitials: "MM",
     interviewerRole: "Formatrice",
     readAloud: "Écouter",
     stopReading: "Stop",
@@ -484,7 +482,6 @@ const texts = {
     endConfirmYes: "Metti in pausa",
     endConfirmNo: "Continua",
     interviewerName: "Sig.ra Meier",
-    interviewerInitials: "SM",
     interviewerRole: "Formatrice",
     readAloud: "Ascolta",
     stopReading: "Stop",
@@ -564,6 +561,11 @@ function uiLanguage(lang: LanguageCode): UiLanguage {
 /** All UI texts for the chosen interview language. */
 export function t(lang: LanguageCode): UiTexts {
   return texts[uiLanguage(lang)];
+}
+
+/** Locale for dates, numbers and <html lang>: Mundart counts as Swiss German. */
+export function locale(lang: LanguageCode): string {
+  return lang === "gsw" ? "de-CH" : lang;
 }
 
 /** Pick the right text from a backend label like { de: "...", fr: "..." }. */

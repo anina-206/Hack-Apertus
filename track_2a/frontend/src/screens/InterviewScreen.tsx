@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, ApiError, PHASES, type Phase } from "../api";
+import { api, ApiError, PHASES, type Interviewer, type Phase } from "../api";
 import Alert from "../components/Alert";
 import Card from "../components/Card";
 import CallView, { type CallStatus } from "../components/CallView";
@@ -34,9 +34,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
   const headingRef = useFocusHeading<HTMLHeadingElement>();
 
   // The posting's interviewer (real backend) or the default persona from the UI texts (mock)
-  const interviewer: Interviewer = entry.interviewer
-    ? { ...entry.interviewer, initials: initialsOf(entry.interviewer.name) }
-    : { name: text.interviewerName, role: text.interviewerRole, initials: text.interviewerInitials };
+  const interviewer: Interviewer = entry.interviewer ?? { name: text.interviewerName, role: text.interviewerRole };
 
   const [messages, setMessages] = useState<ChatMessage[]>(entry.messages);
   // Messages that were already there when the screen opened appear at once; only new ones slide in
@@ -608,18 +606,6 @@ function Avatar({ interviewer }: { interviewer: Interviewer }) {
       <Face seed={interviewer.name} voice={interviewer.voice} className="h-full w-full" />
     </div>
   );
-}
-
-type Interviewer = { name: string; role: string; initials: string; voice?: "female" | "male" };
-
-/** "Stefan Keller" -> "SK" */
-function initialsOf(name: string) {
-  return name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 function Message({

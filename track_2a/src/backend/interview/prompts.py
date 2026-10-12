@@ -242,8 +242,9 @@ def _task(mode: str, phase: str, question_number: int, posting: Optional[dict] =
     else:
         answer_question = ("The candidate asked a question. Answer it briefly and concretely, like a real "
                            "vocational trainer would. Use the general facts below. For details only this company could "
-                           "know (e.g. how many apprentices it has), give a plausible answer that fits a typical Swiss "
-                           "company of this kind; never tell the candidate to ask somewhere else. If they asked "
+                           "know (e.g. how many apprentices it has), say what is usual in Swiss companies of this kind, as "
+                           "general information without exact numbers or names; never invent facts about this "
+                           "company and never tell the candidate to ask somewhere else. If they asked "
                            f"several things at once, answer each one in a few words.\n{_APPRENTICESHIP_FACTS}")
     tasks = {
         "opening": f"Greet the candidate briefly and ask your first question. Goal: {goal}",

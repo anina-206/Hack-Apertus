@@ -123,6 +123,11 @@ def with_meta(flags: list[str], answer: Optional[str]) -> list[str]:
     return flags
 
 
+def answer_flags(flags: list[str], answer: Optional[str]) -> list[str]:
+    """The analysis flags plus the ones the code detects itself in the answer (takeover phrase, meta question)."""
+    return with_meta(with_injection(flags, answer), answer)
+
+
 def guard_mode(flags: list[str], current_question: Optional[dict]) -> Optional[str]:
     """'support', 'redirect' or 'clarify' for a flagged answer, else None. Never twice in a row for one question."""
     if (current_question or {}).get("guard"):
