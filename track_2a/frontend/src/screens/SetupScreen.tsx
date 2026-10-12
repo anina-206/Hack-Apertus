@@ -23,7 +23,7 @@ import TextButton from "../components/TextButton";
 import { unlockAudio } from "../audio";
 import { errorText } from "../errors";
 import { fromServer, type SavedInterview } from "../history";
-import { label, languageNames, t } from "../i18n";
+import { label, languageNames, locale, t } from "../i18n";
 import { occupationLabel } from "../occupation";
 import { useFocusHeading } from "../useFocusHeading";
 
@@ -488,7 +488,7 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
                       {item.overall_score !== null && " · Ø " + item.overall_score}
                     </p>
                     <p className="text-sm text-charcoal-soft">
-                      {new Date(item.created_at).toLocaleString(language === "gsw" ? "de-CH" : language)}
+                      {new Date(item.created_at).toLocaleString(locale(language))}
                       {!item.done && " · " + text.inProgress}
                     </p>
                   </button>

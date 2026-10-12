@@ -264,7 +264,7 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
     setSpeakingKey(key);
     const { tts } = await loadServerVoice();
     // Sentence by sentence: the first one plays while the server makes the next one
-    const chunks = tts ? speechChunks(text) : [];
+    const chunks = speechChunks(text);
     let done = 0; // chunks already played
     const load = (i: number) => {
       const audio = api.speech(chunks[i], latest.current.language, latest.current.voice);
@@ -272,7 +272,7 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
       return audio;
     };
     try {
-      let next = chunks.length ? load(0) : null;
+      let next = tts && chunks.length ? load(0) : null;
       while (next) {
         const audio = await next;
         if (reading.current !== current) return;
@@ -285,9 +285,9 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
     } catch {
       // server voice failed: the browser reads the rest instead
     }
-    if ((done < chunks.length || !tts) && reading.current === current) {
-      const rest = tts ? chunks.slice(done).join(" ") : text;
-      await new Promise<void>((resolve) => speak(rest, latest.current.language, resolve));
+    // Without a server voice (or after it failed) the browser reads what is left
+    if (done < chunks.length && reading.current === current) {
+      await new Promise<void>((resolve) => speak(chunks.slice(done).join(" "), latest.current.language, resolve));
     }
     if (reading.current !== current) return; // stopped or replaced by a newer reading
     playback.current = null;

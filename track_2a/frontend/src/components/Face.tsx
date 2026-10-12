@@ -2,7 +2,8 @@
 // from the name, so each interviewer always looks the same; the hair style follows the voice.
 // Mouth, eyes and eyebrows can be moved from outside (see SpeakerAvatar in CallView) through `parts`.
 
-import type { RefObject } from "react";
+import { memo, type RefObject } from "react";
+import type { Voice } from "../api";
 
 export type FaceParts = {
   mouth: SVGEllipseElement | null;
@@ -20,14 +21,14 @@ function hash(text: string) {
   return h;
 }
 
-export default function Face({
+function Face({
   seed,
   voice = "female",
   parts,
   className,
 }: {
   seed: string;
-  voice?: "female" | "male";
+  voice?: Voice;
   parts?: RefObject<FaceParts>;
   className?: string;
 }) {
@@ -95,3 +96,6 @@ export default function Face({
     </svg>
   );
 }
+
+// One face per chat message: memo keeps typing in the answer field from redrawing all of them.
+export default memo(Face);

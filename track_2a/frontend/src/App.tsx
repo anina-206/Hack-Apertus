@@ -10,6 +10,7 @@ import {
   type User,
 } from "./api";
 import { clearLogin, getStoredUser } from "./auth";
+import { locale } from "./i18n";
 import type { SavedInterview } from "./history";
 import AuthScreen from "./screens/AuthScreen";
 import InterviewScreen from "./screens/InterviewScreen";
@@ -44,7 +45,7 @@ export default function App() {
 
   // Screen readers pronounce the page in this language (Mundart: Swiss German)
   useEffect(() => {
-    document.documentElement.lang = language === "gsw" ? "de-CH" : language;
+    document.documentElement.lang = locale(language);
   }, [language]);
 
   // While the candidate answers, get the feedback screen ready, so it opens without waiting

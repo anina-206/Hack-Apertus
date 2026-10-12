@@ -6,7 +6,7 @@ import Card from "../components/Card";
 import { ArrowRight, Chart, Check, ChevronLeft, Lightbulb } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
 import TextButton from "../components/TextButton";
-import { t, type UiTexts } from "../i18n";
+import { locale, t, type UiTexts } from "../i18n";
 import { errorText, isSessionGone } from "../errors";
 import { useFocusHeading } from "../useFocusHeading";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
@@ -256,7 +256,7 @@ export default function FeedbackScreen({
                           <LevelPill score={overall} text={text} />
                           <span className="text-charcoal-soft">
                             {" "}
-                            · {report.overall_score?.toLocaleString(language === "gsw" ? "de-CH" : language)} {text.outOf}
+                            · {report.overall_score?.toLocaleString(locale(language))} {text.outOf}
                           </span>
                         </span>
                       </span>

@@ -60,6 +60,8 @@ export type AppConfig = {
 
 export type Voice = "female" | "male";
 
+export type Interviewer = { name: string; role: string; voice?: Voice };
+
 // ---------- POST /transcribe ----------
 
 export type TranscribeResponse = { text: string; language: LanguageCode; duration_ms: number; model: string };
@@ -110,7 +112,7 @@ export type CreateSessionResponse = {
   question: Question;
   /** The FHGR posting's company and interviewer (null in the mock) */
   company?: { name: string; place: string } | null;
-  interviewer?: { name: string; role: string; voice?: Voice } | null;
+  interviewer?: Interviewer | null;
   /** Bullet points from the uploaded application (null if none, or if it could not be read) */
   application_summary?: string | null;
 };

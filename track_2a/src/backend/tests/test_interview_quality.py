@@ -3,12 +3,14 @@
 The sentences below are taken from that interview's transcript.
 """
 
+import asyncio
 import json
+from types import SimpleNamespace
 
 import pytest
 
 from backend.interview.graph import _drop_goodbye, _drop_praise
-from backend.interview.language import swiss_spelling
+from backend import llm
 from backend.interview.parsing import ReportDraft
 from backend.interview.prompts import CRITERIA, analysis_messages, interviewer_messages
 from backend.interview.report import _FIRST_PERSON, _in_third_person
@@ -19,19 +21,18 @@ from backend.tests.test_graph import SETUP, api, fake, report_json, run_until, s
 
 # --- Praise before every question --------------------------------------------------------------------
 
-@pytest.mark.parametrize("text, expected", [
+@pytest.mark.parametrize("text, language, expected", [
     ("Das klingt super! Sport und Kultur sind tolle Hobbys. Was genau interessiert dich am meisten an deinen Hobbys?",
-     "Danke. Sport und Kultur sind tolle Hobbys. Was genau interessiert dich am meisten an deinen Hobbys?"),
+     "de", "Danke. Sport und Kultur sind tolle Hobbys. Was genau interessiert dich am meisten an deinen Hobbys?"),
     ("Das hört sich wirklich nach einer tollen Entscheidung an! Es ist schön, dass du den Beruf schon dreimal "
      "geschnuppert hast. Was genau hat dir am meisten gefallen?",
-     "Danke. Was genau hat dir am meisten gefallen?"),
+     "de", "Danke. Was genau hat dir am meisten gefallen?"),
     ("Das ist korrekt, in der Schweiz sagt man \"auswühlen\". Was macht dir am meisten Spass?",
-     "Danke. Was macht dir am meisten Spass?"),
-    ("C'est super ! Qu'est-ce qui t'intéresse le plus ?", "Merci. Qu'est-ce qui t'intéresse le plus ?"),
-    ("Che bello! Cosa ti piace di più?", "Grazie. Cosa ti piace di più?"),
+     "de", "Danke. Was macht dir am meisten Spass?"),
+    ("C'est super ! Qu'est-ce qui t'intéresse le plus ?", "fr", "Merci. Qu'est-ce qui t'intéresse le plus ?"),
+    ("Che bello! Cosa ti piace di più?", "it", "Grazie. Cosa ti piace di più?"),
 ])
-def test_praise_at_the_start_is_cut(text, expected):
-    language = "fr" if "C'est" in text else "it" if "Che" in text else "de"
+def test_praise_at_the_start_is_cut(text, language, expected):
     assert _drop_praise(text, language, 0) == expected
 
 
@@ -64,6 +65,9 @@ def test_the_models_own_goodbye_is_cut_before_the_fixed_one():
             "offenen Fragen! Es war eine Freude, dich kennenzulernen. Bis bald!")
     assert _drop_goodbye(text) == "Bei uns steht die Unterstützung der Lernenden im Vordergrund."
     assert _drop_goodbye("Bis bald!") == "Bis bald!"  # never empty
+    # A goodbye-like sentence inside the answer is part of the answer
+    answer = "Wir melden uns bis Ende Monat. Die Lehre dauert vier Jahre."
+    assert _drop_goodbye(answer) == answer
 
 
 def test_a_long_spoken_no_ends_the_interview_without_analysis_and_with_one_goodbye(fake, api):
@@ -81,10 +85,13 @@ def test_a_long_spoken_no_ends_the_interview_without_analysis_and_with_one_goodb
 
 # --- Swiss spelling ------------------------------------------------------------------------------------
 
-def test_no_sharp_s_in_swiss_texts():
-    assert swiss_spelling("Das macht Spaß, weißt du?", "de") == "Das macht Spass, weisst du?"
-    assert swiss_spelling("Spaß", "gsw") == "Spass"
-    assert swiss_spelling("", "de") == ""
+def test_no_sharp_s_in_llm_texts(monkeypatch):
+    async def create(**_):
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="Das macht Spaß, weißt du?"))],
+                               usage=None)
+    client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    monkeypatch.setattr(llm, "_get_client", lambda: (client, "fake-model"))
+    assert asyncio.run(llm.chat_completion([])) == "Das macht Spass, weisst du?"
 
 
 # --- Questions about the interview itself / garbled speech -----------------------------------------------
@@ -130,6 +137,7 @@ def test_without_a_posting_candidate_questions_get_general_apprenticeship_facts(
     system = interviewer_messages(OCCUPATION, STYLE, "de", None, "candidate_questions", "answer_candidate", 1,
                                   [])[0]["content"]
     assert "5 weeks" in system and "never tell the candidate to ask somewhere else" in system
+    assert "never invent facts about this company" in system
 
 
 def test_the_analysis_sees_earlier_tips_and_the_calibration():
@@ -154,6 +162,17 @@ def test_third_person_is_recognised():
 def test_example_answers_must_be_in_the_first_person():
     assert _FIRST_PERSON.search("Beim Messen der Bratpfanne war der Henkel schief, daran arbeite ich.")
     assert not _FIRST_PERSON.search("Dein aktueller Handwerkunterricht wird nicht näher ausgeführt.")
+
+
+def test_an_italian_example_answer_without_pronoun_is_kept(fake, api):
+    report = json.loads(report_json())
+    report["improvements"] = [{"tip": "Racconta di più.", "example_answer": "Ho fatto uno stage di tre giorni."}]
+    fake(report_outputs=[json.dumps(report)])
+    session = start(api, language="it")
+    turn = run_until(api, session, "candidate_questions", "Mi piace montare i computer.")
+    send(api, session["session_id"], turn["question"]["id"], "No, grazie.")
+    feedback = api.get(f"/api/v1/sessions/{session['session_id']}/report").json()
+    assert feedback["improvements"][0]["example_answer"] == "Ho fatto uno stage di tre giorni."
 
 
 def test_a_third_person_report_is_written_again(fake, api):
