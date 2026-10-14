@@ -76,21 +76,14 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  // Hands-free: read each new interviewer message aloud (in training mode with the tip first),
-  // then listen for the answer.
+  // Hands-free: read each new interviewer message aloud, then listen for the answer.
+  // The tip is only shown, not read: it interrupted the conversation.
   const lastInterviewerIndex = messages.findLastIndex((m) => m.role === "interviewer");
   useEffect(() => {
-    if (voice.handsFree && lastInterviewerIndex >= 0) voice.say(lastInterviewerIndex, spokenText(), !done);
+    if (voice.handsFree && lastInterviewerIndex >= 0) voice.say(lastInterviewerIndex, messages[lastInterviewerIndex].text, !done);
     // Only when a new message arrives, not on every render
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastInterviewerIndex]);
-
-  /** The newest interviewer message as it is read aloud: the tip of the last answer, then the question. */
-  function spokenText() {
-    const question = messages[lastInterviewerIndex].text;
-    const tip = messages[lastInterviewerIndex - 1]?.tip;
-    return tip ? `${text.tip}: ${withFullStop(tip)} ${question}` : question;
-  }
 
   async function send(answerText = draft) {
     const answer = answerText.trim().slice(0, MAX_ANSWER);
@@ -167,7 +160,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
 
   function toggleHandsFree() {
     setShowCall(true);
-    if (voice.toggleHandsFree() && !done) voice.say(lastInterviewerIndex, spokenText(), true);
+    if (voice.toggleHandsFree() && !done) voice.say(lastInterviewerIndex, messages[lastInterviewerIndex].text, true);
   }
 
   const callStatus: CallStatus =
@@ -676,11 +669,6 @@ function Message({
   );
 }
 
-
-/** "Gut gemacht" -> "Gut gemacht." so that reading aloud pauses before the question. */
-function withFullStop(sentence: string) {
-  return /[.!?…]$/.test(sentence.trim()) ? sentence.trim() : `${sentence.trim()}.`;
-}
 
 /** Hands-free status above the input: who speaks, listening, or the countdown before sending. */
 function HandsFreeBar({

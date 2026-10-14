@@ -119,12 +119,29 @@ def _piper_voice(name: str):
 def _piper_speech(text: str, language: str, voice: str) -> bytes:
     from piper import SynthesisConfig
 
-    buffer = io.BytesIO()
-    with wave.open(buffer, "wb") as wav:
-        # length_scale > 1 speaks a little slower: easier to follow for the candidate
+    speech = io.BytesIO()
+    with wave.open(speech, "wb") as wav:
+        # length_scale 1.0: normal speed (slower sounded tired). noise_scale / noise_w_scale stay at the voices'
+        # defaults: higher values gave more melody but swallowed letters of short words ("Danke", "Okay").
         _piper_voice(PIPER_VOICES[(_base(language), voice)]).synthesize_wav(
-            text, wav, syn_config=SynthesisConfig(length_scale=1.08))
-    return buffer.getvalue()
+            text, wav, syn_config=SynthesisConfig(length_scale=1.0))
+    return _with_lead_in(speech.getvalue())
+
+
+LEAD_IN_SECONDS = 0.25
+
+
+def _with_lead_in(wav_bytes: bytes) -> bytes:
+    """Put a short silence before the speech: browsers and Bluetooth speakers often cut off the first
+    syllable while the audio starts ("anke" instead of "Danke")."""
+    with wave.open(io.BytesIO(wav_bytes), "rb") as source:
+        params, frames = source.getparams(), source.readframes(source.getnframes())
+    silence = b"\0" * int(params.framerate * LEAD_IN_SECONDS) * params.sampwidth * params.nchannels
+    out = io.BytesIO()
+    with wave.open(out, "wb") as wav:
+        wav.setparams(params)
+        wav.writeframes(silence + frames)
+    return out.getvalue()
 
 
 # ---------- Azure ----------
@@ -133,7 +150,7 @@ def _azure_speech(text: str, language: str, voice: str) -> bytes:
     name = AZURE_VOICES[(_base(language), voice)]
     region = os.environ.get("AZURE_SPEECH_REGION") or "switzerlandnorth"
     ssml = (f"<speak version='1.0' xml:lang='{name[:5]}'><voice name='{name}'>"
-            f"<prosody rate='-5%'>{escape(text)}</prosody></voice></speak>")
+            f"<prosody rate='0%' pitch='+5%'>{escape(text)}</prosody></voice></speak>")
     try:
         response = httpx.post(
             f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1",

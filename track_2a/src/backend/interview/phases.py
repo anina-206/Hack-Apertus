@@ -94,6 +94,8 @@ def has_no_more_questions(answer: str) -> bool:
     text = answer.strip()
     if "?" in text or _QUESTION_WORD.search(text):
         return False
+    if is_courtesy(text):  # "Danke!" at this point means "no, thanks"
+        return True
     if _STARTS_WITH_NO.search(text):
         return len(text.split()) <= 30
     return len(text.split()) <= 8 and bool(_NO_MORE_QUESTIONS.search(text))

@@ -51,6 +51,8 @@ def test_candidate_questions(answer, pos, mode):
     # Spoken questions come without "?"
     ("nein aber wie viele Ferien habe ich im ersten Lehrjahr", False),
     ("wie sieht bei euch die lehrlingsunterstützung aus", False),
+    # Only thanks: no question, so the interview can close (it used to answer "Danke" with "Danke")
+    ("Danke!", True), ("Okay, danke vielmal", True),
 ])
 def test_has_no_more_questions(answer, expected):
     assert has_no_more_questions(answer) is expected

@@ -13,6 +13,7 @@ Calls per answer (JSON retries count as calls):
 - candidate_questions: the candidate's question is analysed too (initiative), so also normally 2;
   0 if the candidate has no (more) questions
 If all analysis attempts fail, the turn continues without an analysis instead of erroring.
+The interviewer call is repeated once (rare) if its reply was only 'Danke.' or 'Okay.' without a question.
 """
 
 import json
@@ -55,6 +56,7 @@ class InterviewState(TypedDict, total=False):
     interviewer_style: str
     posting_id: Optional[str]  # FHGR posting: the company the interviewer works for
     company: Optional[dict]  # company details typed in by the candidate (replaces the posting)
+    persona: Optional[dict]  # {"name", "role"} of the interviewer when the posting has no contact person
     dialect: Optional[str]  # for language gsw: the dialect the interviewer writes in (zh, be, bs, gr, vs)
     application_summary: Optional[str]  # bullet points from the uploaded application (the text itself is not kept)
     application_asks: list[str]  # points of the application worth asking about, in interview order
@@ -220,6 +222,29 @@ def _drop_trailing_question(text: str) -> str:
     return text[:cut + 1].strip() if cut > 0 else text
 
 
+# The interviewer says at most 3 sentences; the limit only stops a reply that repeats itself endlessly.
+INTERVIEWER_MAX_TOKENS = 250
+
+
+def _drop_repeats(text: str) -> str:
+    """Remove sentences that already came earlier in the text ("Danke. Danke. Danke. ...")."""
+    seen, kept = set(), []
+    for sentence in re.findall(r"[^.!?]+[.!?]*\s*", text):
+        key = re.sub(r"\W+", " ", sentence).strip().lower()
+        if key and key in seen:
+            continue
+        seen.add(key)
+        kept.append(sentence)
+    return "".join(kept).strip() or text
+
+
+async def _interviewer_reply(messages: list[dict]) -> str:
+    # frequency_penalty: the 8B model sometimes got stuck repeating "Danke." until the token limit
+    text = await llm.chat_completion(messages, purpose="interviewer", temperature=0.7,
+                                     max_tokens=INTERVIEWER_MAX_TOKENS, frequency_penalty=0.4)
+    return _drop_repeats(text.strip())
+
+
 async def interviewer(state: InterviewState) -> dict:
     new_turns = []
     if state.get("answer"):
@@ -254,14 +279,13 @@ async def interviewer(state: InterviewState) -> dict:
                  and pos.questions_in_phase <= per_phase and used < len(asks) else None)
         # Mundart: the interviewer writes Standard German (reliable), a second call turns it into dialect below
         written_in = "de" if state["language"] == "gsw" else state["language"]
-        text = (await llm.chat_completion(
-            interviewer_messages(occupation(state), style, written_in,
-                                 state.get("candidate"), phase, mode, pos.questions_in_phase,
-                                 state.get("transcript", []) + new_turns, posting(state), state.get("focus"),
-                                 state.get("application_summary"), point),
-            purpose="interviewer",
-            temperature=0.7,
-        )).strip()
+        messages = interviewer_messages(occupation(state), style, written_in,
+                                        state.get("candidate"), phase, mode, pos.questions_in_phase,
+                                        state.get("transcript", []) + new_turns, posting(state), state.get("focus"),
+                                        state.get("application_summary"), point, state.get("persona"))
+        text = await _interviewer_reply(messages)
+        if is_courtesy(text):  # only "Danke." or "Okay.": no question to answer, ask the model once more
+            text = await _interviewer_reply(messages)
         # The model tended to ask a new question or forget the goodbye, so both are added in code.
         if mode in ("answer_candidate", "answer_and_close"):
             text = _drop_goodbye(_drop_trailing_question(text))
