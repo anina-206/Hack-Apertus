@@ -401,14 +401,21 @@ def interviewer_messages(occupation: dict, style: dict, language: str, candidate
 
 
 # The short, most important parts come first, so a cut-off answer loses the least.
-_REPORT_EXAMPLE = {
-    "strengths": ["Du hast ... (a strength, addressed to the candidate)", "Du ..."],
-    "improvements": [{"tip": "A concrete tip, addressed to the candidate.",
-                      "example_answer": "Ich ... (what the candidate could say, in the first person)"}],
-    "closing": "One encouraging sentence.",
-    "criteria": {key: {"comment": "One sentence that explains the score.", "evidence": "Exact quote from the candidate."}
-                 for key in ("clarity", "motivation")},
-}
+def _report_example(criteria: list[str]) -> dict:
+    """The JSON shape of the report, with one entry for every observed criterion.
+
+    With only two example criteria the 8B model wrote comments for just those two (bench_transcripts:
+    every report had empty comments). The evidence placeholder is not a sentence the model could copy as is.
+    """
+    return {
+        "strengths": ["Du hast ... (a strength, addressed to the candidate)", "Du ..."],
+        "improvements": [{"tip": "A concrete tip, addressed to the candidate.",
+                          "example_answer": "Ich ... (what the candidate could say, in the first person)"}],
+        "closing": "One encouraging sentence.",
+        "criteria": {key: {"comment": "One sentence that explains the score.", "evidence": "<words the candidate said>"}
+                     for key in criteria or ("clarity", "motivation")},
+    }
+
 
 # The FHGR feedback rules (datasets/rubric/feedback_guidelines.json), condensed for an 8B model.
 _FEEDBACK_RULES = (
@@ -446,7 +453,7 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
         f"{_FEEDBACK_RULES}\n"
         "Base everything on the scores, tips and transcript below. Do not invent facts.\n\n"
         "Respond with ONLY a JSON object, no other text, in this shape:\n"
-        f"{json.dumps(_REPORT_EXAMPLE, ensure_ascii=False)}"
+        f"{json.dumps(_report_example(list(scores)), ensure_ascii=False)}"
     )
     user = f"Scores:\n{score_lines or '(none)'}\n\nTips per answer:\n{tips or '(none)'}\n\nTranscript:\n{dialogue}"
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]

@@ -877,3 +877,20 @@ def test_long_school_levels_from_the_fhgr_profiles_are_accepted(fake, api):
     fake()
     level = "École obligatoire terminée (11H, niveau 1 en mathématiques et en allemand); actuellement semestre de motivation (SeMo)"
     start(api, candidate={"first_name": "Léa", "school_level": level})
+
+
+def test_report_prompt_asks_for_a_comment_on_every_observed_criterion():
+    from backend.interview.prompts import report_messages
+    scores = {"clarity": 3, "preparation": 2, "initiative": 1}
+    system = report_messages({"label": {"de": "Informatiker/in EFZ"}, "description": ""}, "de", scores, [], [])[0]["content"]
+    example = json.loads(system[system.index('{"strengths"'):])
+    assert list(example["criteria"]) == list(scores)
+
+
+def test_report_keeps_a_loose_quote_as_the_words_the_candidate_really_said():
+    from backend.interview.report import _verified_evidence
+    said = ["Also, ich mag Mathe schon, weil man dort immer ein klares Resultat sieht."]
+    assert _verified_evidence("Ich mag Mathe, weil man immer ein klares Resultat sieht", said) == \
+        "ich mag Mathe schon, weil man dort immer ein klares Resultat sieht"
+    assert _verified_evidence("Ich liebe Physik", said) == ""
+    assert _verified_evidence("<words the candidate said>", said) == ""
