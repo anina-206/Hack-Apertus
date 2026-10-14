@@ -78,6 +78,16 @@ INVITATION = {
     ("gsw", False): "Das sind mini Frage gsi. Hesch du na Frage a mich oder zum Betrieb?",
     ("gsw", True): "Das sind mini Frage gsi. Händ Sie na Frage a mich oder zum Betrieb?",
 }
+# Stands in for a follow-up question when the model's reply asked nothing (graph.interviewer)
+FOLLOW_UP_FALLBACK = {
+    ("de", False): "Kannst du mir dazu ein konkretes Beispiel erzählen?",
+    ("de", True): "Können Sie mir dazu ein konkretes Beispiel erzählen?",
+    ("fr", False): "Peux-tu me donner un exemple concret ?",
+    ("fr", True): "Pouvez-vous me donner un exemple concret ?",
+    ("it", False): "Puoi farmi un esempio concreto?",
+    ("it", True): "Può farmi un esempio concreto?",
+}
+
 FURTHER = {
     ("de", False): "Hast du noch weitere Fragen?",
     ("de", True): "Haben Sie noch weitere Fragen?",

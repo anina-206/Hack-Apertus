@@ -43,9 +43,10 @@ COMPANY_OUTPUT = (
 class FakeLLM:
     """Stands in for the OpenAI client; answers by prompt type from scripted queues."""
 
-    def __init__(self, analysis_outputs=(), report_outputs=()):
+    def __init__(self, analysis_outputs=(), report_outputs=(), interviewer_outputs=()):
         self.analysis_outputs = list(analysis_outputs)
         self.report_outputs = list(report_outputs)
+        self.interviewer_outputs = list(interviewer_outputs)
         self.calls = []
         self.application_output = APPLICATION_OUTPUT
         self.company_output = COMPANY_OUTPUT
@@ -76,7 +77,7 @@ class FakeLLM:
         else:
             self.calls.append("interviewer")
             self.last_interviewer_system = system
-            content = f"Frage {len(self.calls)}?"
+            content = self.interviewer_outputs.pop(0) if self.interviewer_outputs else f"Frage {len(self.calls)}?"
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))], usage=None)
 
 
@@ -844,3 +845,35 @@ def test_knowledge_reaches_the_prompts_and_situations_are_based_on_tasks(fake, a
     assert "base it on one of these tasks" in situational
     intro = interviewer_messages(occupation, style, "de", None, "intro", "next_question", 1, [])[0]["content"]
     assert "base it on one of these tasks" not in intro
+
+
+def test_a_question_turn_that_says_goodbye_is_asked_again(fake, api):
+    client = fake(interviewer_outputs=["Frage 1?", "Danke, Lara. Wir melden uns in zwei Wochen bei dir.",
+                                       "Was machst du gerne in deiner Freizeit?"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Was machst du gerne in deiner Freizeit?"
+    assert "IMPORTANT: The interview is NOT over" in client.last_interviewer_system
+    assert body["meta"]["llm_calls"] == 3
+
+
+def test_a_fixed_question_from_the_fhgr_bank_stands_in_when_the_model_keeps_saying_goodbye(fake, api):
+    fake(interviewer_outputs=["Frage 1?", "Bis in zwei Wochen!", "Okay. Alles Gute!"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    from backend.interview.examples import _bank_questions
+    assert body["question"]["text"] in _bank_questions("intro", "de")
+
+
+def test_an_imperative_question_needs_no_second_call(fake, api):
+    client = fake(interviewer_outputs=["Frage 1?", "Okay. Erzähl mir von deiner Schnupperlehre."])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Okay. Erzähl mir von deiner Schnupperlehre."
+    assert client.calls.count("interviewer") == 2
+
+
+def test_long_school_levels_from_the_fhgr_profiles_are_accepted(fake, api):
+    fake()
+    level = "École obligatoire terminée (11H, niveau 1 en mathématiques et en allemand); actuellement semestre de motivation (SeMo)"
+    start(api, candidate={"first_name": "Léa", "school_level": level})

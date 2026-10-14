@@ -178,7 +178,7 @@ async def _session(session_id: str) -> dict:
 
 class Candidate(BaseModel):
     first_name: Optional[str] = Field(default=None, max_length=50)
-    school_level: Optional[str] = Field(default=None, max_length=50)
+    school_level: Optional[str] = Field(default=None, max_length=200)  # FHGR profiles have up to ~120 chars
     interests: Optional[str] = Field(default=None, max_length=300)
 
 
