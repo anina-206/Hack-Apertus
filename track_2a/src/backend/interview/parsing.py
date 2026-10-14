@@ -178,20 +178,48 @@ def _candidates(text: str):
         yield text[start:] + "}" * depth
 
 
+def _escape_inner_quotes(text: str) -> str:
+    """Escape '"' inside strings that does not end the string (`"evidence": "Ich sagte "Lego""`).
+
+    A quote ends a string only if the next non-space character is , : } ] or the end of the text.
+    """
+    out, in_str, escape = [], False, False
+    for i, ch in enumerate(text):
+        if in_str and escape:
+            escape = False
+        elif in_str and ch == "\\":
+            escape = True
+        elif ch == '"':
+            if not in_str:
+                in_str = True
+            else:
+                rest = text[i + 1:].lstrip()
+                if rest and rest[0] not in ",:}]":
+                    out.append('\\"')
+                    continue
+                in_str = False
+        out.append(ch)
+    return "".join(out)
+
+
+# The last error of _loads, with the text around it, for the log (see complete_json)
+_last_syntax_error = ""
+
+
 def _loads(candidate: str):
-    try:
-        return json.loads(candidate)
-    except json.JSONDecodeError:
-        pass
+    global _last_syntax_error
     fixed = re.sub(r",\s*([}\]])", r"\1", candidate)  # trailing commas
-    try:
-        return json.loads(fixed)
-    except json.JSONDecodeError:
-        pass
+    # strict=False: line breaks inside strings, which the model often writes in longer texts
+    for text in (candidate, fixed, _escape_inner_quotes(fixed)):
+        try:
+            return json.loads(text, strict=False)
+        except json.JSONDecodeError as exc:
+            if text is candidate:
+                _last_syntax_error = f"{exc.msg} at {exc.pos}/{len(text)}: ...{text[max(0, exc.pos - 60):exc.pos + 20]!r}"
     try:  # Python-style dict: single quotes, True/False/None
         pythonic = re.sub(r"\btrue\b", "True", re.sub(r"\bfalse\b", "False", re.sub(r"\bnull\b", "None", fixed)))
         return ast.literal_eval(pythonic)
-    except (ValueError, SyntaxError):
+    except (ValueError, SyntaxError, MemoryError, RecursionError):
         return None
 
 
@@ -245,5 +273,6 @@ async def complete_json(messages: list[dict], model: type[M], purpose: str,
             return parse_json(raw, model), attempt, None
         except JSONParseError as exc:
             error = str(exc)
-            logger.warning(json.dumps({"event": "json_parse_failed", "purpose": purpose, "attempt": attempt, "error": error}))
+            logger.warning(json.dumps({"event": "json_parse_failed", "purpose": purpose, "attempt": attempt, "error": error,
+                                       "detail": _last_syntax_error, "length": len(raw or "")}, ensure_ascii=False))
     return None, MAX_JSON_ATTEMPTS, error

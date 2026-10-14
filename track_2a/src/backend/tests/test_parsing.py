@@ -106,3 +106,11 @@ def test_german_quotation_marks_inside_strings_are_kept():
 
 def test_curly_quotes_used_as_json_quotes_still_parse():
     assert parse_json('{“closing”: “Weiter so.”}', ReportDraft).closing == "Weiter so."
+
+
+def test_unescaped_quotes_and_line_breaks_inside_strings_are_repaired():
+    text = ('{"strengths": ["Du hast gesagt: "Ich baue gerne Lego" und das passt."],\n'
+            ' "closing": "Weiter so.\nDas war ein Training."}')
+    draft = parse_json(text, ReportDraft)
+    assert draft.strengths == ['Du hast gesagt: "Ich baue gerne Lego" und das passt.']
+    assert draft.closing == "Weiter so.\nDas war ein Training."

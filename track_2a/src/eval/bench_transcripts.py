@@ -20,7 +20,7 @@ from typing import Optional
 
 from backend import llm
 from backend.interview.graph import run_analysis
-from backend.interview.report import build_report
+from backend.interview.report import ReportUnavailable, build_report
 from eval import checks, fhgr, judge
 
 
@@ -121,15 +121,20 @@ async def run(only: Optional[list[str]], repeat: int, concurrency: int, use_judg
     if use_judge and not the_judge:
         log("JUDGE_NAME not set: skipping the judge.")
     semaphore = asyncio.Semaphore(concurrency)
-    records = []
+    records, failed = [], []
     for t in transcripts:
         for i in range(repeat):
-            records.append(await run_one(t, semaphore, the_judge))
+            try:
+                records.append(await run_one(t, semaphore, the_judge))
+            except ReportUnavailable as exc:  # counted in the summary, the other transcripts still run
+                failed.append(t["id"])
+                log(f"  {t['id']} run {i + 1}: {exc}")
+                continue
             r = records[-1]
             log(f"  {t['id']} ({t['lang']}, {t['overall_quality']}) run {i + 1}: overall {r['overall_score']}, "
                 f"MAE {fhgr.score_agreement([r]).get('mae')}, checks {r['checks']}")
     return {"bench": "transcripts", "judge_model": the_judge.model if the_judge else None,
-            "summary": summarise(records), "records": records}
+            "summary": {**summarise(records), "reports_failed": len(failed), "failed": failed}, "records": records}
 
 
 def main(argv: Optional[list[str]] = None) -> int:
