@@ -10,8 +10,8 @@ from eval import bench_answers, bench_transcripts, checks, fhgr
 
 
 def test_fhgr_data_loads():
-    assert len(fhgr.answers()) == len(fhgr.annotations()) == 706
-    assert len(fhgr.transcripts()) == 13  # the ones with reference feedback
+    assert len(fhgr.answers()) == len(fhgr.annotations()) == 816
+    assert len(fhgr.transcripts()) == 21  # the ones with reference feedback
     assert fhgr.phase_of("Q-01-01") == "intro" and fhgr.phase_of("Q-SIT-03") == "situational"
     assert fhgr.phase_of(None, 9) == "candidate_questions"
     occupation = fhgr.occupation({"name_de": "Konstrukteur/in EFZ", "occupation_id": "3699"})

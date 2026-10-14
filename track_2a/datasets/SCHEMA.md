@@ -202,7 +202,7 @@ One annotation per answer (`answer_id` is unique).
   "poor_feedback": "...",
   "poor_feedback_violations": ["T3", "B3", "K2"],   // rule ids from rubric/feedback_guidelines.json
   "poor_feedback_notes": "...",              // why it is poor (German)
-  "failure_mode": "harsh",                   // harsh | overpraise | vague | personality_label | jargon | fear | hallucinated_evidence | too_long | no_next_step | comparison | wrong_language | ignores_distress | grading_not_coaching
+  "failure_mode": "harsh",                   // harsh | overpraise | vague | personality_label | jargon | fear | hallucinated_evidence | too_long | no_next_step | comparison | wrong_language | ignores_distress | grading_not_coaching | invented_criticism (an improvement made up for an answer that was already strong)
   "synthetic": true
 }
 ```
@@ -249,3 +249,4 @@ Some generators added fields that are not in the core schemas above. They are op
 | transcripts → turns | `note` | stage direction (e.g. assessment group task, looking at notes) |
 | questions | `translation_review` | review status of the fr/it/gsw texts |
 | answers (source) | `source_features_de`, `source_raw` | FHGR's own characteristics of the answer; the original text before editorial corrections |
+| feedback_examples | `format` | `"short_tip"`: the feedback is the one-or-two-sentence tip shown after each answer in training mode (F-31 onwards), not a full paragraph |

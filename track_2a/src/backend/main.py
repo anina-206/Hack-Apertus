@@ -25,6 +25,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from backend import config, llm
 from backend.accounts import AccountError, Limits, Store
 from backend.interview import application, dialect
+from backend.interview import company as company_generator
 from backend.interview.graph import InterviewEngine, position
 from backend.interview.phases import progress
 from backend.interview.prompts import CRITERIA
@@ -281,12 +282,29 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
         except Exception:
             logger.exception("Application summary failed")  # the interview works without it
     setup["company"] = company or None
-    # Without a company in the letter the default FHGR posting of the occupation is used (an explicit posting_id wins)
-    setup["posting_id"] = req.posting_id or (
-        config.default_posting_id(setup["occupation_id"], req.language)
-        if setup["occupation_id"] and not company else None)
+    # Without a company in the letter an FHGR posting of the occupation is used (an explicit posting_id wins):
+    # the default one of a known occupation, else one found by the apprenticeship's name
+    if req.posting_id or company:
+        setup["posting_id"] = req.posting_id
+    elif setup["occupation_name"]:
+        setup["posting_id"] = config.posting_for_name(setup["occupation_name"], req.language)
+    else:
+        setup["posting_id"] = config.default_posting_id(setup["occupation_id"], req.language)
     setup["application_summary"] = application_summary
     setup["application_asks"] = application_asks  # points the interviewer asks about, one per question
+    # No contact person from a posting or the letter: a random interviewer, so it is not always the same one
+    setup["persona"] = (None if config.interviewer_of(config.posting_for(setup))
+                        else config.random_interviewer(req.language))
+    if not setup["posting_id"] and not setup["company"]:
+        # No FHGR posting for this apprenticeship and no letter: Apertus invents a company (one call), with the
+        # random interviewer as the contact person. Without it the interview simply has no company.
+        try:
+            setup["company"] = await company_generator.generate(
+                config.occupation_for(setup["occupation_id"], None, setup["occupation_name"]), req.language,
+                company_generator.town(req.language, setup["dialect"]),
+                setup["persona"]["name"], setup["persona"]["role"]) or None
+        except Exception:
+            logger.exception("Company generation failed")
     state = await _llm(engine.start(session_id, setup))
     question = state["current_question"]
     posting = config.posting_for(state)
@@ -298,7 +316,7 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
         "progress": progress(position(state)),
         "question": {"id": question["id"], "text": question["text"]},
         "company": config.company_of(posting),
-        "interviewer": config.interviewer_of(posting),
+        "interviewer": config.interviewer_of(posting, state.get("persona")),
         "application_summary": application_summary,
     }
 

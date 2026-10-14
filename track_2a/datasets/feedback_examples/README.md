@@ -1,6 +1,6 @@
 # Good vs poor AI feedback
 
-`feedback_examples.jsonl` (F-01 … F-30): each record pairs a **good** coach feedback with a **poor** one for the same context. Every poor feedback shows one typical LLM failure, labelled with a `failure_mode` and with the violated guideline rules (`poor_feedback_violations`, ids from [`../rubric/feedback_guidelines.json`](../rubric/feedback_guidelines.json)). The notes on both feedbacks are in German.
+`feedback_examples.jsonl` (F-01 … F-60): each record pairs a **good** coach feedback with a **poor** one for the same context. Every poor feedback shows one typical LLM failure, labelled with a `failure_mode` and with the violated guideline rules (`poor_feedback_violations`, ids from [`../rubric/feedback_guidelines.json`](../rubric/feedback_guidelines.json)). The notes on both feedbacks are in German.
 
 | Ids | Scope | Language |
 |---|---|---|
@@ -8,8 +8,9 @@
 | F-25, F-26 | full interview (FHGR Konstrukteur example, strong / weak): the good feedback uses the exact FHGR table format | de |
 | F-27, F-28 | full interview, **spoken** feedback for text-to-speech (about 110 words, no table) vs reading the table aloud or reading out grades | de |
 | F-29, F-30 | full interview (short excerpt) | fr, it |
+| F-31 … F-60 | single answer, **short tip** (`format: "short_tip"`): the one-or-two-sentence tip shown after each answer in training mode. Half of the answers are already strong: the good tip says what exactly was good, the poor one invents an improvement (`invented_criticism`). The other half pair a concrete tip with a generic one («Gib mehr Details», `vague`) | 12 de, 9 fr, 9 it |
 
-**Failure modes covered:** harsh · overpraise · vague · personality_label · jargon · fear · hallucinated_evidence · too_long · no_next_step · comparison · wrong_language · ignores_distress · grading_not_coaching.
+**Failure modes covered:** harsh · overpraise · vague · personality_label · jargon · fear · hallucinated_evidence · too_long · no_next_step · comparison · wrong_language · ignores_distress · grading_not_coaching · invented_criticism.
 
 ## Uses
 

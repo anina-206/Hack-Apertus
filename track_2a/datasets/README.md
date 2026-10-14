@@ -13,7 +13,7 @@ Mapped to the resources listed in the challenge description:
 | Expert/didactic annotations (strong, weak, incomplete, problematic) | [`annotations/`](annotations/) | JSONL, one per answer: criterion scores, strengths/weaknesses, expert comment, coach feedback, follow-up question, improved answer, coach action |
 | Evaluation criteria | [`rubric/`](rubric/) | JSON: the FHGR 11-criterion × 4-level rubric (the 6 challenge criteria flagged as core) and the feedback rules with ids |
 | German examples incl. Swiss German dialect examples | answers with `lang: "gsw"`, `questions[].gsw_variants`, dialect transcripts | — |
-| Synthetic candidate profiles and job/apprenticeship descriptions | [`profiles/`](profiles/) | JSONL: 24 candidates, 30 apprenticeship postings linked to real occupations from berufsberatung.ch |
+| Synthetic candidate profiles and job/apprenticeship descriptions | [`profiles/`](profiles/) | JSONL: 24 candidates, 60 apprenticeship postings (32 de, 15 fr, 13 it) linked to real occupations from berufsberatung.ch |
 | Sample interview scenarios | [`scenarios/`](scenarios/) | JSONL: 28 scenarios (candidate × posting × situation), with planned questions, adaptive hooks and checkable success criteria for an LLM judge |
 | Full example interviews | [`transcripts/`](transcripts/) | JSONL: the FHGR Konstrukteur example (strong and weak) and synthetic interviews in de, fr, it and dialect, each with gold reference feedback |
 | Examples of good vs poor AI feedback | [`feedback_examples/`](feedback_examples/) | JSONL: pairs with violated rules and typical LLM failure modes, for single answers, full interviews and spoken (TTS) feedback |
@@ -117,7 +117,7 @@ The other scripts in [`scripts/`](scripts/) (`build_questions.py`, `build_rubric
 - **Annotation levels are one expert view.** Interview answers are judged somewhat subjectively; neighbouring levels (2 vs 3) can legitimately differ.
 - **Companies, persons and facts in postings are fictional.** Any resemblance to real companies is unintended. Occupation data (activities, requirements, duration) comes from berufsberatung.ch and can change (e.g. revised training ordinances).
 - **Written, not spoken, language.** Real spoken answers contain more disfluencies. For text-to-speech or speech-to-text scenarios, see the spoken feedback examples (F-27, F-28).
-- **Coverage**: 30 of the 259 apprenticeships in `occupations.csv` have postings; answers cover all 22 occupational fields, but with few examples per field.
+- **Coverage**: 34 of the 259 apprenticeships in `occupations.csv` have postings (most common ones in several languages); answers cover all 22 occupational fields, but with few examples per field.
 
 ## Licence and attribution
 

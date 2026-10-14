@@ -229,7 +229,7 @@ benchmark). They call Apertus through the backend code, so run them in the backe
 Results are saved as JSON in `data/eval/bench/`.
 
 ```bash
-# 1. Analysis call vs. 706 expert-annotated answers (MAE, agreement, follow-up precision/recall)
+# 1. Analysis call vs. 816 expert-annotated answers (MAE, agreement, follow-up precision/recall)
 docker compose exec backend python -m eval.bench_answers --sample 120
 docker compose exec backend python -m eval.bench_answers --sample 120 --variant baseline   # naive prompt
 
