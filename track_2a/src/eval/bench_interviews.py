@@ -72,6 +72,8 @@ class ProfileCandidate:
         self.history.append({"role": "user", "content": question})
         response = self.client.chat.completions.create(
             model=self.model, messages=[{"role": "system", "content": self.system}] + self.history, temperature=0.8,
+            # Without a limit the 8B model sometimes loops ("das isch ja ja ja ...") until the request hangs
+            max_tokens=300, frequency_penalty=0.5, timeout=90,
         )
         text = (response.choices[0].message.content or "").strip() or "..."
         self.history.append({"role": "assistant", "content": text})
