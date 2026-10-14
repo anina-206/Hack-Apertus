@@ -97,3 +97,12 @@ def test_report_draft_tolerates_missing_lists():
     # A cut-off answer may lack strengths or improvements: the report then falls back to the per-answer tips
     draft = parse_json(json.dumps({"criteria": {}}), ReportDraft)
     assert draft.strengths == [] and draft.improvements == []
+
+
+def test_german_quotation_marks_inside_strings_are_kept():
+    text = json.dumps({"strengths": ["Du hast „Lego Technic“ erwähnt."], "closing": "Weiter so."}, ensure_ascii=False)
+    assert parse_json(text, ReportDraft).strengths == ["Du hast „Lego Technic“ erwähnt."]
+
+
+def test_curly_quotes_used_as_json_quotes_still_parse():
+    assert parse_json('{“closing”: “Weiter so.”}', ReportDraft).closing == "Weiter so."

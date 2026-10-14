@@ -14,6 +14,7 @@ Both run on the CPU (int8) and stay in memory after the first use. Settings (env
 import io
 import logging
 import os
+import re
 import threading
 import time
 
@@ -113,6 +114,25 @@ def vocabulary_hint(language: str, occupation: str, company: str = "") -> str:
     return _HINT[lang].format(occupation=occupation, company=_AT[lang].format(company) if company else "")
 
 
+# Whisper was trained on subtitles: on silence or noise it "hears" their typical last lines. In hands-free mode a
+# silent recording became the answer "Danke.", the interviewer went on, the next silence gave "Danke." again: a loop.
+_SUBTITLE_CREDITS = re.compile(
+    # from the keyword to the end of the sentence; a dot inside a word ("Amara.org") does not end it
+    r"(untertitel|copyright|sous-titr|sottotitol|amara\.org)([^.!?]|\.(?=\w))*[.!?]?",
+    re.IGNORECASE)
+_PHANTOM_WORDS = set(
+    "danke dankeschön schön vielen dank fürs für zuschauen zuhören bis zum nächsten mal tschüss ciao "
+    "merci beaucoup d'avoir regardé au revoir grazie mille per la visione arrivederci".split())
+
+
+def drop_hallucinations(text: str) -> str:
+    """The text without subtitle credits; "" if only a typical phantom line ("Danke.", "Vielen Dank fürs Zuschauen!")
+    is left. A candidate who really only says "Danke." then has to say it again, which is harmless."""
+    text = _SUBTITLE_CREDITS.sub("", text).strip()
+    words = re.findall(r"[\w']+", text.lower())
+    return "" if all(word in _PHANTOM_WORDS for word in words) else text
+
+
 def transcribe(data: bytes, language: str, hint: str = "") -> dict:
     """The spoken text of a recording. Blocking (seconds on a CPU): call it in a thread.
 
@@ -134,6 +154,6 @@ def transcribe(data: bytes, language: str, hint: str = "") -> dict:
         condition_on_previous_text=False,
         initial_prompt=hint or None,
     )
-    text = " ".join(s.text.strip() for s in segments).strip()
+    text = drop_hallucinations(" ".join(s.text.strip() for s in segments).strip())
     logger.info("transcribed %.1f s of %s in %.1f s", seconds, language, time.monotonic() - started)
     return {"text": text, "language": language, "duration_ms": round(seconds * 1000), "model": name.split("/")[-1]}

@@ -14,7 +14,7 @@ this graph only translates between chat messages and the interview state:
 
 Setup comes from the run's config.configurable (all optional): language, occupation_id,
 posting_id, interviewer_style, mode, candidate, focus. Without them, the language is guessed
-from the first message and the occupation is matched against the 30 FHGR postings.
+from the first message and the occupation is matched against the FHGR postings.
 Aegra provides the checkpointer (Postgres), so the graph is compiled without one.
 """
 

@@ -11,8 +11,8 @@
 | `A-DE1-*`, `A-DE2-*`, `A-DE3-*` | General questions, phases 1–3, 4–5 and 6–10 | de |
 | `A-SIT-*`, `A-DIF-*` | Situational and difficult questions | de |
 | `A-OCC1-*`, `A-OCC2-*` | Occupation-specific questions (22 Berufsfelder) and other application situations | de (a few gsw) |
-| `A-FR-*`, `A-IT-*` | The same 14 anchor questions in French and Italian (Q-01-01, Q-02-01, Q-03-01, Q-03-04, Q-04-04, Q-05-01, Q-05-03, Q-05-05, Q-06-07, Q-07-04, Q-08-02, Q-09-09, Q-SIT-02, Q-DIF-01) | fr / it |
-| `A-GSW-*` | Swiss German dialects (zh, be, bs, lu, sg, gr, vs, ag), with a Standard German version in `normalized_de` | gsw |
+| `A-FR-*`, `A-IT-*` | 0001–0060: the same 14 anchor questions in French and Italian (Q-01-01, Q-02-01, Q-03-01, Q-03-04, Q-04-04, Q-05-01, Q-05-03, Q-05-05, Q-06-07, Q-07-04, Q-08-02, Q-09-09, Q-SIT-02, Q-DIF-01). 0061–0100: about 25 further questions (school subjects, mistakes, learning, teamwork, goals, situations, difficult questions, closing), linked to the occupations of the French and Italian postings | fr / it |
+| `A-GSW-*` | Swiss German dialects (zh, be, bs, lu, sg, gr, vs, ag), with a Standard German version in `normalized_de`; 0049–0078 are linked to the occupations of the postings P-31 … P-40 | gsw |
 
 ## Quality levels and classes
 

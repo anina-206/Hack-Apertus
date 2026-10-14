@@ -152,9 +152,6 @@ def _to_score(value) -> Optional[int]:
 
 def _candidates(text: str):
     """Yield substrings that may contain the JSON object, best guesses first."""
-    if "</think>" in text:
-        text = text.rsplit("</think>", 1)[1]
-    text = text.replace("“", '"').replace("”", '"')
     for fenced in re.findall(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL):
         yield fenced.strip()
     # Balanced {...} spans, scanning while respecting string literals.
@@ -200,7 +197,13 @@ def _loads(candidate: str):
 
 def parse_json(text: str, model: type[M]) -> M:
     last_error = "no JSON object found"
-    for candidate in _candidates(text or ""):
+    text = text or ""
+    if "</think>" in text:
+        text = text.rsplit("</think>", 1)[1]
+    # Curly quotes are usually German quotation marks inside a string („Lego“), which are valid JSON.
+    # Only if that fails, read them as JSON quotes (some outputs use “key”: “value”).
+    variants = [text] + ([text.replace("“", '"').replace("”", '"')] if "“" in text or "”" in text else [])
+    for candidate in (c for variant in variants for c in _candidates(variant)):
         data = _loads(candidate)
         if not isinstance(data, dict):
             last_error = "invalid JSON syntax"

@@ -76,7 +76,9 @@ export function speak(text: string, language: LanguageCode, onEnd?: () => void) 
     const utterance = new SpeechSynthesisUtterance(part);
     utterance.lang = voice?.lang ?? speechLang[language];
     if (voice) utterance.voice = voice;
-    utterance.rate = 0.95; // a little slower than normal, easier to follow
+    // normal speed and a slightly higher voice sound friendlier and less monotone
+    utterance.rate = 1.0;
+    utterance.pitch = 1.1;
     if (i === parts.length - 1) {
       utterance.onend = () => onEnd?.();
       utterance.onerror = () => onEnd?.();

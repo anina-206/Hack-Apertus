@@ -2,11 +2,12 @@
 
 These files are for personalised interviews. The interviewer adapts its questions to the posting and the candidate, and a simulator can play the candidate. Field reference: [../SCHEMA.md](../SCHEMA.md#profilescandidatesjsonl).
 
-## `postings.jsonl` (P-01 … P-30)
+## `postings.jsonl` (P-01 … P-60)
 
 Fictional companies, each linked to a **real apprenticeship** from berufsberatung.ch (`occupation.occupation_id` → [`occupations.csv`](../occupations.csv)). Requirements, duration, EFZ/EBA and whether the vocational baccalaureate (BM) is possible come from that data.
 
-- **Languages**: 22 German, 5 French (Romandie) and 3 Italian (Ticino). All 22 *Berufsfelder* are covered, plus two EBA apprenticeships.
+- **Languages**: 32 German, 15 French (Romandie) and 13 Italian (Ticino). All 22 *Berufsfelder* are covered, plus two EBA apprenticeships.
+- **P-31 … P-60** (added later): ten German, ten French and ten Italian postings for frequently chosen apprenticeships (e.g. Informatiker/in, Detailhandel, FaGe, Koch/Köchin, Elektroinstallateur/in), so that these can be practised in each language with a company and a named interviewer.
 - **`posting_text`**: a realistic apprenticeship ad in the posting language.
 - **`interviewer`**: persona (name, role, style, notes). Use it for the interviewer's voice.
 - **`insider_facts`**: facts a well-prepared candidate could know. The coach uses them to evaluate *preparation* and to answer the candidate's questions.

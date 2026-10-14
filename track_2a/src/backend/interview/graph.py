@@ -13,6 +13,8 @@ Calls per answer (JSON retries count as calls):
 - candidate_questions: the candidate's question is analysed too (initiative), so also normally 2;
   0 if the candidate has no (more) questions
 If all analysis attempts fail, the turn continues without an analysis instead of erroring.
+The interviewer call is repeated once (rare) if its reply was only 'Danke.' or 'Okay.', or if a question turn
+asked nothing (then a fixed question stands in if the second reply asks nothing either).
 """
 
 import json
@@ -29,8 +31,8 @@ from backend.interview import dialect as swiss_german
 from backend.interview import examples as calibration
 from backend.interview.parsing import Analysis, complete_json
 from backend.interview.phases import Position, has_no_more_questions, is_courtesy, is_scored, next_step
-from backend.interview.prompts import (FURTHER, INVITATION, analysis_messages, closing_message,
-                                       interviewer_messages)
+from backend.interview.prompts import (FOLLOW_UP_FALLBACK, FURTHER, INVITATION, analysis_messages,
+                                       closing_message, interviewer_messages)
 from backend.interview.safety import CRISIS_MESSAGE, answer_flags, guard_mode, is_crisis
 
 # An answer with fewer words than this always gets a follow-up question (at most one per phase, see phases.py).
@@ -55,6 +57,7 @@ class InterviewState(TypedDict, total=False):
     interviewer_style: str
     posting_id: Optional[str]  # FHGR posting: the company the interviewer works for
     company: Optional[dict]  # company details typed in by the candidate (replaces the posting)
+    persona: Optional[dict]  # {"name", "role"} of the interviewer when the posting has no contact person
     dialect: Optional[str]  # for language gsw: the dialect the interviewer writes in (zh, be, bs, gr, vs)
     application_summary: Optional[str]  # bullet points from the uploaded application (the text itself is not kept)
     application_asks: list[str]  # points of the application worth asking about, in interview order
@@ -220,6 +223,57 @@ def _drop_trailing_question(text: str) -> str:
     return text[:cut + 1].strip() if cut > 0 else text
 
 
+# The interviewer says at most 3 sentences; the limit only stops a reply that repeats itself endlessly.
+INTERVIEWER_MAX_TOKENS = 250
+
+
+def _drop_repeats(text: str) -> str:
+    """Remove sentences that already came earlier in the text ("Danke. Danke. Danke. ...")."""
+    seen, kept = set(), []
+    for sentence in re.findall(r"[^.!?]+[.!?]*\s*", text):
+        key = re.sub(r"\W+", " ", sentence).strip().lower()
+        if key and key in seen:
+            continue
+        seen.add(key)
+        kept.append(sentence)
+    return "".join(kept).strip() or text
+
+
+async def _interviewer_reply(messages: list[dict]) -> str:
+    # frequency_penalty: the 8B model sometimes got stuck repeating "Danke." until the token limit
+    text = await llm.chat_completion(messages, purpose="interviewer", temperature=0.7,
+                                     max_tokens=INTERVIEWER_MAX_TOKENS, frequency_penalty=0.4)
+    return _drop_repeats(text.strip())
+
+
+# A question turn must ask something. The 8B model sometimes ended the interview on its own in the middle
+# ("Wir melden uns in zwei Wochen."); the rest of the interview then only traded goodbyes ("Bis in zwei Wochen!").
+_QUESTION_MODES = ("next_question", "new_phase", "follow_up")
+_ASKS = re.compile(r"\?|\b(erzähl|beschreib|schilder|nenn|raconte|décris|parle-moi|cite|racconta|descrivi|parlami|"
+                   r"dimmi)", re.IGNORECASE)
+_MUST_ASK = ("\nIMPORTANT: The interview is NOT over. Do not say goodbye and do not talk about the next steps. "
+             "End your reply with ONE question to the candidate.")
+
+
+def _asks_something(text: str) -> bool:
+    return bool(_ASKS.search(text))
+
+
+async def _question_reply(messages: list[dict], text: str, phase: str, mode: str, language: str, formal: bool,
+                          transcript: list[dict]) -> str:
+    """The reply asked nothing: ask the model once more, then fall back to a fixed question (FHGR question bank)."""
+    retry = [{**messages[0], "content": messages[0]["content"] + _MUST_ASK}, *messages[1:]]
+    text = await _interviewer_reply(retry)
+    if _asks_something(text):
+        return text
+    if mode == "follow_up":
+        fallback = FOLLOW_UP_FALLBACK[(language, formal)]
+    else:
+        fallback = calibration.bank_question(phase, language, [t["text"] for t in transcript])
+    logger.warning(json.dumps({"event": "interviewer_asked_nothing", "mode": mode, "fallback": bool(fallback)}))
+    return fallback or text
+
+
 async def interviewer(state: InterviewState) -> dict:
     new_turns = []
     if state.get("answer"):
@@ -254,14 +308,16 @@ async def interviewer(state: InterviewState) -> dict:
                  and pos.questions_in_phase <= per_phase and used < len(asks) else None)
         # Mundart: the interviewer writes Standard German (reliable), a second call turns it into dialect below
         written_in = "de" if state["language"] == "gsw" else state["language"]
-        text = (await llm.chat_completion(
-            interviewer_messages(occupation(state), style, written_in,
-                                 state.get("candidate"), phase, mode, pos.questions_in_phase,
-                                 state.get("transcript", []) + new_turns, posting(state), state.get("focus"),
-                                 state.get("application_summary"), point),
-            purpose="interviewer",
-            temperature=0.7,
-        )).strip()
+        messages = interviewer_messages(occupation(state), style, written_in,
+                                        state.get("candidate"), phase, mode, pos.questions_in_phase,
+                                        state.get("transcript", []) + new_turns, posting(state), state.get("focus"),
+                                        state.get("application_summary"), point, state.get("persona"))
+        text = await _interviewer_reply(messages)
+        if mode in _QUESTION_MODES and not _asks_something(text):
+            text = await _question_reply(messages, text, phase, mode, written_in, style["formal"],
+                                         state.get("transcript", []))
+        elif is_courtesy(text):  # only "Danke." or "Okay.": no question to answer, ask the model once more
+            text = await _interviewer_reply(messages)
         # The model tended to ask a new question or forget the goodbye, so both are added in code.
         if mode in ("answer_candidate", "answer_and_close"):
             text = _drop_goodbye(_drop_trailing_question(text))
