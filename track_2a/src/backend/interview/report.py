@@ -150,6 +150,12 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
         if language != "it" and not _FIRST_PERSON.search(item["example_answer"]):
             item["example_answer"] = ""
 
+    rejected = {key: note.evidence for key, note in draft.criteria.items()
+                if key in scores and note.evidence.strip() and not _verified_evidence(note.evidence, candidate_texts)}
+    if rejected:  # quotes the candidate did not say (to tune _verified_evidence)
+        logger.warning(json.dumps({"event": "evidence_rejected", "session_id": session_id, "quotes": rejected},
+                               ensure_ascii=False))
+
     criteria = []
     for key in CRITERIA:  # all 11 in rubric order; not observed ones have score None
         note = draft.criteria.get(key) if key in scores else None

@@ -14,7 +14,7 @@ import re
 from typing import Optional, TypeVar
 
 from json_repair import repair_json
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 from backend import llm
 from backend.interview import rubric, safety
@@ -105,6 +105,20 @@ class ReportDraft(BaseModel):
     improvements: list[Improvement] = []
     closing: str = ""
 
+    @model_validator(mode="before")
+    @classmethod
+    def _stray_criteria(cls, raw):
+        # The model often closes "criteria" one brace too early ('..."evidence": "..."}}, "relevance": {...}').
+        # The criteria after it then end up at the top level; move them back.
+        if not isinstance(raw, dict):
+            return raw
+        stray = {k: v for k, v in raw.items() if k not in cls.model_fields and _CRITERION_ALIASES.get(_norm_key(k))}
+        if not stray:
+            return raw
+        criteria = raw.get("criteria") if isinstance(raw.get("criteria"), dict) else {}
+        rest = {k: v for k, v in raw.items() if k not in stray}
+        return {**rest, "criteria": {**stray, **criteria}}
+
     @field_validator("closing", mode="before")
     @classmethod
     def _text_only(cls, raw):
@@ -155,6 +169,11 @@ def _candidates(text: str):
     """Yield substrings that may contain the JSON object, best guesses first."""
     for fenced in re.findall(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL):
         yield fenced.strip()
+    # From the first "{" to the last "}": with one "}" too many, the first balanced span below
+    # ends too early and drops the rest of the object (bench_transcripts: most criterion comments lost).
+    first, last = text.find("{"), text.rfind("}")
+    if 0 <= first < last:
+        yield text[first:last + 1]
     # Balanced {...} spans, scanning while respecting string literals.
     depth, start, in_str, escape = 0, None, False, False
     for i, ch in enumerate(text):
