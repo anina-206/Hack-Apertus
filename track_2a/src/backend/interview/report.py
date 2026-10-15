@@ -136,6 +136,10 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
             draft = retry
 
     missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
+    if missing:  # read them from the raw text, where the JSON repair lost them
+        rescued = parsing.criteria_from_raw(parsing.last_raw)
+        draft.criteria.update({key: rescued[key] for key in missing if key in rescued})
+        missing = [key for key in missing if key not in rescued]
     if missing:
         # With the raw output, to see whether the model left them out or the parser lost them
         logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing,

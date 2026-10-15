@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from backend.interview.parsing import JSONParseError, ReportDraft, parse_analysis, parse_json
+from backend.interview.parsing import JSONParseError, ReportDraft, criteria_from_raw, parse_analysis, parse_json
 from backend.interview.prompts import CRITERIA
 
 SCORES = {key: 4 for key in CRITERIA}
@@ -156,3 +156,16 @@ def test_criteria_without_their_opening_brace_are_kept():
     assert all(note.comment for note in draft.criteria.values())
     assert draft.criteria["clarity"].evidence == "Geht so."
     assert draft.closing == "Das war nur eine Probe."
+
+
+def test_criteria_without_any_braces_are_read_from_the_raw_text():
+    # Real 8B output (shortened, bench_transcripts T-05): no criterion has braces, and a strength is
+    # closed with \" so the JSON repair kept no criterion at all.
+    raw = (r'{"strengths": ["z.B. “Ich mag es.\", "Du ..."], "criteria": {"clarity": "Verständlich.", '
+           r'"evidence": "Ja, ich bin mit dem Bus gekommen.", "relevance": "Passt zur \"Logistik\".", '
+           r'"evidence": "Ich habe kommissioniert.", "initiative": "Du hast eine Frage gestellt."}}')
+    notes = criteria_from_raw(raw)
+    assert {k: n.comment for k, n in notes.items()} == {
+        "clarity": "Verständlich.", "relevance": 'Passt zur "Logistik".', "initiative": "Du hast eine Frage gestellt."}
+    assert notes["clarity"].evidence == "Ja, ich bin mit dem Bus gekommen."
+    assert notes["initiative"].evidence == ""
