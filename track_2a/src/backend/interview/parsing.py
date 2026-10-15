@@ -247,6 +247,31 @@ def _nest_flat_criteria(text: str) -> str:
     return _FLAT_CRITERION.sub(lambda m: f'"{m[1]}": {{"comment": "{m[2]}", "evidence":', text)
 
 
+# '"clarity": {"comment": "...", "evidence": "..."' with or without the braces and the "comment" key
+_RAW_CRITERION = re.compile(r'"(' + "|".join(CRITERIA) + r')"\s*:\s*\{?\s*(?:"comment"\s*:\s*)?' + _JSON_STRING
+                            + r'(?:\s*,\s*"evidence"\s*:\s*' + _JSON_STRING + r')?')
+
+
+def _unescape(text: str) -> str:
+    try:
+        return json.loads(f'"{text}"', strict=False)
+    except json.JSONDecodeError:
+        return text.replace('\\"', '"')
+
+
+def criteria_from_raw(text: str) -> dict[str, CriterionNote]:
+    """Criterion comments read straight from the raw text, however its braces are broken.
+
+    bench_transcripts: some reports wrote all criteria without braces ('"clarity": "...", "evidence": "...",
+    "relevance": ...'), so not a single comment survived the JSON repair.
+    """
+    notes = {}
+    for match in _RAW_CRITERION.finditer(text or ""):
+        if match[1] not in notes and match[2].strip():
+            notes[match[1]] = CriterionNote(comment=_unescape(match[2]), evidence=_unescape(match[3] or ""))
+    return notes
+
+
 # The last error of _loads, with the text around it, for the log (see complete_json)
 _last_syntax_error = ""
 # The raw text of the last complete_json call, for the log when a parsed result looks incomplete (see report.py)
