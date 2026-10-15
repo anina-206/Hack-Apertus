@@ -1072,3 +1072,14 @@ def test_report_prompt_gives_the_comment_phrases_in_the_report_language():
     occupation = {"label": {"de": "Kaufmann/Kauffrau EFZ", "fr": "Employé/e de commerce CFC"}, "description": ""}
     system = report_messages(occupation, "fr", {"clarity": 3}, [], [])[0]["content"]
     assert "La prochaine fois, tu peux" in system and "Nächstes Mal" not in system
+
+
+def test_report_prompt_matches_each_comment_tone_to_its_score():
+    # A "Gut" (3) came with a comment that only listed what was missing: the tone now follows the score
+    from backend.interview.prompts import report_messages
+    scores = {"clarity": 4, "relevance": 3, "initiative": 1}
+    user = report_messages({"label": {"de": "Koch/Köchin EFZ"}, "description": ""}, "de", scores, [], [])[1]["content"]
+    lines = {line.split(":")[0].strip("- "): line for line in user.splitlines() if line.startswith("- ")}
+    assert "no next step" in lines["clarity"]
+    assert "must not read like criticism" in lines["relevance"]
+    assert "clear, simple next step" in lines["initiative"]
