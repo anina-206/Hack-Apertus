@@ -161,6 +161,7 @@ export default function App() {
           entry={entry}
           onRestart={handleRestart}
           onFinished={() => setScreen("feedback")}
+          guest={!user}
         />
       )}
 
@@ -175,6 +176,7 @@ export default function App() {
           onRestart={handleRestart}
           onPracticeAgain={lastRequest ? handlePracticeAgain : undefined}
           previousReport={previousReport ?? undefined}
+          guest={!user}
           onCreateAccount={
             user
               ? undefined

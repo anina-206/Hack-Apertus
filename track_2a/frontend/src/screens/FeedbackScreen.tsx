@@ -3,7 +3,7 @@ import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, XAxis, YAxis } fro
 import { api, type CriterionId, type LanguageCode, type Report } from "../api";
 import Alert from "../components/Alert";
 import Card from "../components/Card";
-import { ArrowRight, Chart, Check, ChevronLeft, Lightbulb } from "../components/icons";
+import { ArrowRight, Chart, Check, ChevronDown, ChevronLeft, Lightbulb } from "../components/icons";
 import PrimaryButton from "../components/PrimaryButton";
 import TextButton from "../components/TextButton";
 import { locale, t, type UiTexts } from "../i18n";
@@ -25,13 +25,15 @@ type Props = {
   previousReport?: Report;
   /** Guests only: this interview was not saved, offer an account for the next ones */
   onCreateAccount?: () => void;
+  /** No account: nothing is saved, so there is no back arrow that would quietly throw the report away */
+  guest?: boolean;
 };
 
-/** Bar colour by FHGR level (1-4): 3-4 Gut/Sehr gut = teal, 2 Ausbaufähig = yellow, 1 Ungenügend = red. */
+/** Bar colour by FHGR level (1-4): 3-4 Gut/Sehr gut = teal, 2 Auf dem Weg = yellow, 1 Noch am Anfang = amber (no red: it is a start, not a fail). */
 function scoreColor(score: number) {
   if (score >= 3) return "var(--color-logo-teal)";
   if (score >= 2) return "var(--color-logo-yellow)";
-  return "var(--color-logo-red)";
+  return "var(--color-amber)";
 }
 
 /** A score as a whole FHGR level 1-4 (the levels have names, so 2.6 or 7 cannot be shown as they are). */
@@ -40,9 +42,9 @@ function toLevel(score: number, max: number) {
 }
 
 /**
- * Order of the screen (coach first, numbers second):
- * 1. closing sentence + strengths, 2. overall level, 3. each criterion with its comment,
- * 4. tips, 5. what to practise next.
+ * Order of the screen (coach first, numbers last):
+ * 1. closing sentence + strengths, 2. tips, 3. what to practise next and the way on (new interview),
+ * 4. the full rubric (overall level, chart, each criterion), folded away until opened: last, for teachers.
  */
 export default function FeedbackScreen({
   sessionId,
@@ -53,10 +55,13 @@ export default function FeedbackScreen({
   onPracticeAgain,
   previousReport,
   onCreateAccount,
+  guest = false,
 }: Props) {
   const text = t(language);
   const headingRef = useFocusHeading<HTMLHeadingElement>();
   const [starting, setStarting] = useState(false);
+  /** The full rubric with all criteria is closed at first: the plan comes before the numbers */
+  const [showCriteria, setShowCriteria] = useState(false);
 
   async function practiceAgain(focus: CriterionId[]) {
     setStarting(true);
@@ -128,13 +133,17 @@ export default function FeedbackScreen({
     <div className="flex min-h-dvh flex-col bg-page">
       <header className="bg-brand px-4 pt-safe-5 pb-12 text-white">
         <div className="mx-auto flex max-w-lg items-center gap-2 lg:max-w-5xl">
-          <button
-            onClick={onRestart}
-            aria-label={text.back}
-            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full hover:bg-brand-dark"
-          >
-            <ChevronLeft />
-          </button>
+          {/* Guests have nothing saved: a back arrow would silently throw the report away.
+              They leave with "Neues Interview" at the end, right under the note that it is not saved. */}
+          {!guest && (
+            <button
+              onClick={onRestart}
+              aria-label={text.back}
+              className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full hover:bg-brand-dark"
+            >
+              <ChevronLeft />
+            </button>
+          )}
           <h1 ref={headingRef} tabIndex={-1} className="flex-1 text-3xl font-bold tracking-tight outline-none">
             {text.feedbackScreenTitle}
             <span className="text-logo-yellow">.</span>
@@ -178,7 +187,8 @@ export default function FeedbackScreen({
 
         {report && (
           <>
-            {/* Left on wide screens: the coach. On phones these wrappers vanish (contents) and `order` sorts the cards. */}
+            {/* Left on wide screens: the coach and the tips. On phones the wrappers vanish (contents) and the cards
+                simply follow each other: what went well, what to try next, then the full rubric folded away. */}
             <div className="contents lg:flex lg:flex-col lg:gap-4">
               {/* Where to get help (FHGR rule L3), only when the interview showed distress */}
               {report.support_note && (
@@ -195,8 +205,8 @@ export default function FeedbackScreen({
                 </Card>
               )}
 
-              {/* 1 + 2: the coach speaks first, the overall level comes after the strengths */}
-              {(report.closing || report.strengths.length > 0 || overall !== null) && (
+              {/* 1: the coach speaks first. No overall grade here: it sits with the full rubric further down. */}
+              {(report.closing || report.strengths.length > 0 || improved.length > 0) && (
                 <Card step={0}>
                   {report.closing && <p className="text-xl leading-snug font-bold text-balance">{report.closing}</p>}
 
@@ -246,28 +256,12 @@ export default function FeedbackScreen({
                       </ul>
                     </>
                   )}
-
-                  {overall !== null && (
-                    <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line pt-4">
-                      <span className="text-charcoal-soft">{text.overall}</span>
-                      <span className="flex items-center gap-3">
-                        <LevelMeter score={overall} max={scaleMax} />
-                        <span className="whitespace-nowrap">
-                          <LevelPill score={overall} text={text} />
-                          <span className="text-charcoal-soft">
-                            {" "}
-                            · {report.overall_score?.toLocaleString(locale(language))} {text.outOf}
-                          </span>
-                        </span>
-                      </span>
-                    </div>
-                  )}
                 </Card>
               )}
 
-              {/* 4: tips */}
+              {/* 2: tips with example answers */}
               {report.improvements.length > 0 && (
-                <Card step={2} className="order-2">
+                <Card step={1}>
                   <SectionTitle chip="yellow" icon={<Lightbulb className="h-4 w-4" />}>
                     {text.improvementsTitle}
                   </SectionTitle>
@@ -288,7 +282,7 @@ export default function FeedbackScreen({
 
               {/* Feedback on the uploaded application letter */}
               {report.application_feedback && (
-                <Card step={3} className="order-2">
+                <Card step={2}>
                   <SectionTitle chip="teal" icon={<Check className="h-4 w-4" />}>
                     {text.letterFeedbackTitle}
                   </SectionTitle>
@@ -344,10 +338,13 @@ export default function FeedbackScreen({
                   )}
                 </Card>
               )}
+            </div>
 
-              {/* 5: next practice */}
+            {/* Right on wide screens: what to do next, then the full rubric */}
+            <div className="contents lg:flex lg:flex-col lg:gap-4">
+              {/* 3: next practice */}
               {report.next_practice.length > 0 && (
-                <Card step={3} className="order-2">
+                <Card step={3}>
                   <SectionTitle chip="red" icon={<ArrowRight className="h-4 w-4" />}>
                     {text.nextPracticeTitle}
                   </SectionTitle>
@@ -369,8 +366,8 @@ export default function FeedbackScreen({
               )}
 
               {/* Guests: honest about saving, and one tap to an account */}
-              {onCreateAccount && (
-                <Card step={4} className="order-2">
+              {guest && onCreateAccount && (
+                <Card step={4}>
                   <h2 className="text-lg font-bold">{text.guestSaveTitle}</h2>
                   <p className="mt-1 text-charcoal-soft">{text.guestSaveText}</p>
                   <button
@@ -383,103 +380,135 @@ export default function FeedbackScreen({
               )}
 
               {/* With "practise this" there is already a main button; then a new interview is the quieter choice */}
-              <div className="order-2 animate-rise-in text-center" style={{ animationDelay: "320ms" }}>
+              <div className="animate-rise-in text-center" style={{ animationDelay: "320ms" }}>
                 {onPracticeAgain && report.next_practice.length > 0 ? (
                   <TextButton onClick={onRestart}>{text.newInterview}</TextButton>
                 ) : (
                   <PrimaryButton onClick={onRestart}>{text.newInterview}</PrimaryButton>
                 )}
               </div>
-            </div>
 
-            {/* Right on wide screens: the values */}
-            <div className="contents lg:block">
-              {/* 3: each criterion with its level, comment and the quote it is based on */}
+              {/* 4: the full rubric (overall level, chart, every criterion), folded away: for teachers and the curious */}
               {observed.length > 0 && (
-                <Card step={1} className="order-1">
+                <Card step={5}>
                   <SectionTitle chip="blue" icon={<Chart className="h-4 w-4" />} className="">
                     {text.scoresTitle}
                   </SectionTitle>
-                  <p className="mt-1 text-sm text-charcoal-soft">
-                    {text.scale}: {text.levels.map((l, i) => `${i + 1} ${l}`).join(" · ")}
-                  </p>
-                  {/* Overview: one coloured bar per criterion. Screen readers get the same in the list below. */}
-                  <div className="mt-4" style={{ height: chartData.length * 34 + 16 }} aria-hidden="true">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={chartData}
-                        layout="vertical"
-                        margin={{ top: 0, right: 24, bottom: 0, left: 0 }}
-                        accessibilityLayer={false} // decorative: no tab stop, the list below says the same
-                      >
-                        <XAxis type="number" domain={[0, scaleMax]} hide />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          width={165}
-                          tickLine={false}
-                          axisLine={false}
-                          tick={{ fontSize: 12, fill: "var(--color-charcoal)" }}
-                        />
-                        {/* The bars grow once the card has arrived */}
-                        <Bar
-                          dataKey="score"
-                          radius={6}
-                          barSize={18}
-                          background={{ fill: "var(--color-line)", radius: 6 }}
-                          isAnimationActive={!reducedMotion}
-                          animationBegin={350}
-                          animationDuration={900}
-                          animationEasing="ease-out"
-                        >
-                          {chartData.map((d) => (
-                            <Cell key={d.name} fill={scoreColor(d.score)} />
-                          ))}
-                          <LabelList dataKey="score" position="right" fontSize={13} fontWeight={700} fill="var(--color-charcoal)" />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <ul className="mt-5 divide-y divide-line border-t border-line">
-                    {observed.map((c) => (
-                      <li key={c.id} className="py-4 wrap-anywhere last:pb-0">
-                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                          <h3 className="font-bold">{text.criteria[c.id] ?? c.label}</h3>
-                          <span className="flex items-center gap-2 text-sm">
-                            <LevelPill score={c.score} text={text} />
-                            <span className="sr-only">
-                              ({c.score} {text.outOf})
-                            </span>
-                            {improved.includes(c) && (
+                  <p className="mt-1 text-sm text-charcoal-soft">{text.criteriaIntro}</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCriteria(!showCriteria)}
+                    aria-expanded={showCriteria}
+                    aria-controls="all-criteria"
+                    className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-line px-5 font-bold text-brand-dark transition hover:border-brand-light active:scale-[0.97]"
+                  >
+                    {showCriteria
+                      ? text.hideAllCriteria
+                      : text.showAllCriteria.replace("{count}", String(observed.length + notObserved.length))}
+                    <ChevronDown className={`h-5 w-5 transition-transform ${showCriteria ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {showCriteria && (
+                    <div id="all-criteria" className="mt-5 animate-rise-in">
+                      {overall !== null && (
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line pb-4">
+                          <span className="text-charcoal-soft">{text.overall}</span>
+                          <span className="flex items-center gap-3">
+                            <LevelMeter score={overall} max={scaleMax} />
+                            <span className="whitespace-nowrap">
+                              <LevelPill score={overall} text={text} />
                               <span className="text-charcoal-soft">
-                                ({text.improvedFrom}: {text.levels[(before.get(c.id) ?? 1) - 1]})
+                                {" "}
+                                · {report.overall_score?.toLocaleString(locale(language))} {text.outOf}
                               </span>
-                            )}
+                            </span>
                           </span>
                         </div>
-                        {/* The backend can leave a comment empty; then only the level is shown */}
-                        {c.comment?.trim() && <p className="mt-1.5 hyphens-auto">{c.comment}</p>}
-                        {/* The quote the score is based on (FHGR rule K1), only real quotes come from the backend */}
-                        {c.evidence && (
-                          <p className="mt-2 rounded-lg bg-brand-lighter px-3 py-2 text-sm text-charcoal">
-                            <span className="font-bold">{text.youSaid}:</span> «{c.evidence}»
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  {notObserved.length > 0 && (
-                    <div className="mt-4 rounded-xl bg-page px-4 py-3 text-sm">
-                      <p>
-                        <span className="font-bold">{text.notObserved}:</span>{" "}
-                        {notObserved.map((c) => text.criteria[c.id] ?? c.label).join(", ")}
+                      )}
+                      <p className="text-sm text-charcoal-soft">
+                        {text.scale}: {text.levels.map((l, i) => `${i + 1} ${l}`).join(" · ")}
                       </p>
-                      <p className="mt-1 text-charcoal-soft">{text.notObservedHint}</p>
+                      {/* Overview: one coloured bar per criterion. Screen readers get the same in the list below. */}
+                      <div className="mt-4" style={{ height: chartData.length * 34 + 16 }} aria-hidden="true">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={chartData}
+                            layout="vertical"
+                            margin={{ top: 0, right: 24, bottom: 0, left: 0 }}
+                            accessibilityLayer={false} // decorative: no tab stop, the list below says the same
+                          >
+                            <XAxis type="number" domain={[0, scaleMax]} hide />
+                            <YAxis
+                              type="category"
+                              dataKey="name"
+                              width={165}
+                              // Long FR/IT names ("Gestione delle domande difficili") would run out of the axis on
+                              // phones; the full name is in the list below (the chart is only an overview)
+                              tickFormatter={(name: string) => (name.length > 26 ? `${name.slice(0, 25).trimEnd()}…` : name)}
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fontSize: 12, fill: "var(--color-charcoal)" }}
+                            />
+                            {/* The bars grow once the rubric opens */}
+                            <Bar
+                              dataKey="score"
+                              radius={6}
+                              barSize={18}
+                              background={{ fill: "var(--color-line)", radius: 6 }}
+                              isAnimationActive={!reducedMotion}
+                              animationBegin={150}
+                              animationDuration={900}
+                              animationEasing="ease-out"
+                            >
+                              {chartData.map((d) => (
+                                <Cell key={d.name} fill={scoreColor(d.score)} />
+                              ))}
+                              <LabelList dataKey="score" position="right" fontSize={13} fontWeight={700} fill="var(--color-charcoal)" />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <ul className="mt-5 divide-y divide-line border-t border-line">
+                        {observed.map((c) => (
+                          <li key={c.id} className="py-4 wrap-anywhere last:pb-0">
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                              <h3 className="font-bold">{text.criteria[c.id] ?? c.label}</h3>
+                              <span className="flex items-center gap-2 text-sm">
+                                <LevelPill score={c.score} text={text} />
+                                <span className="sr-only">
+                                  ({c.score} {text.outOf})
+                                </span>
+                                {improved.includes(c) && (
+                                  <span className="text-charcoal-soft">
+                                    ({text.improvedFrom}: {text.levels[(before.get(c.id) ?? 1) - 1]})
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            {/* The backend can leave a comment empty; then only the level is shown */}
+                            {c.comment?.trim() && <p className="mt-1.5 hyphens-auto">{c.comment}</p>}
+                            {/* The quote the score is based on (FHGR rule K1), only real quotes come from the backend */}
+                            {c.evidence && (
+                              <p className="mt-2 rounded-lg bg-brand-lighter px-3 py-2 text-sm text-charcoal">
+                                <span className="font-bold">{text.youSaid}:</span> «{c.evidence}»
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                      {notObserved.length > 0 && (
+                        <div className="mt-4 rounded-xl bg-page px-4 py-3 text-sm">
+                          <p>
+                            <span className="font-bold">{text.notObserved}:</span>{" "}
+                            {notObserved.map((c) => text.criteria[c.id] ?? c.label).join(", ")}
+                          </p>
+                          <p className="mt-1 text-charcoal-soft">{text.notObservedHint}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </Card>
               )}
-
             </div>
           </>
         )}
@@ -558,13 +587,13 @@ function SectionTitle({
   );
 }
 
-/** The level as a word on its colour: good levels green, "Ausbaufähig" yellow, "Ungenügend" red. */
+/** The level as a word on its colour: good levels green, "Auf dem Weg" yellow, "Noch am Anfang" amber. */
 function LevelPill({ score, text }: { score: number; text: UiTexts }) {
   const tint =
     score >= 3
       ? "bg-mint-lighter text-mint-dark"
       : score >= 2
         ? "bg-logo-yellow-lighter text-logo-yellow-dark"
-        : "bg-danger-lighter text-danger";
+        : "bg-amber-lighter text-amber-dark";
   return <span className={`rounded-full px-2.5 py-0.5 text-sm font-bold ${tint}`}>{text.levels[score - 1]}</span>;
 }

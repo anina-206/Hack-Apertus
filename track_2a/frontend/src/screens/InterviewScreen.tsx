@@ -26,9 +26,11 @@ type Props = {
   onRestart: () => void;
   /** Called when the interview is over and the candidate wants to see the feedback report. */
   onFinished: () => void;
+  /** No account: nothing is saved, so "Pausieren" becomes an honest "Beenden" */
+  guest?: boolean;
 };
 
-export default function InterviewScreen({ entry, onRestart, onFinished }: Props) {
+export default function InterviewScreen({ entry, onRestart, onFinished, guest = false }: Props) {
   const { language, summary } = entry;
   const text = t(language);
   const headingRef = useFocusHeading<HTMLHeadingElement>();
@@ -171,6 +173,12 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
     if (voice.toggleHandsFree() && !done) voice.say(lastInterviewerIndex, messages[lastInterviewerIndex].text, true);
   }
 
+  /** From the intro card: switch to hands-free and close the card */
+  function startHandsFree() {
+    dismissIntro();
+    if (!voice.handsFree) toggleHandsFree();
+  }
+
   const callStatus: CallStatus =
     voice.speakingKey !== null
       ? "speaking"
@@ -230,25 +238,30 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             {text.title}
             <span className="text-logo-yellow">.</span>
           </h1>
-          {canSpeak && (
+          {/* After the last question there is nothing to pause or hear: the "Geschafft!" card leads on */}
+          {canSpeak && !done && (
             <button
               onClick={toggleHandsFree}
               aria-pressed={voice.handsFree}
               aria-label={text.voiceMode}
               title={text.voiceMode}
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 transition ${
+              // Phones: icon only (the intro card offers it with words). Wider screens: icon and word.
+              className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border-2 text-sm font-bold transition sm:px-4 ${
                 voice.handsFree ? "border-logo-yellow bg-logo-yellow text-charcoal" : "border-white/80 hover:bg-brand-dark"
               }`}
             >
               <Headphones />
+              <span className="hidden sm:inline" aria-hidden="true">{text.handsFreeShort}</span>
             </button>
           )}
-          <button
-            onClick={handleEnd}
-            className="min-h-11 shrink-0 rounded-full border-2 border-white/80 px-4 text-sm font-bold hover:bg-brand-dark"
-          >
-            {text.end}
-          </button>
+          {!done && (
+            <button
+              onClick={handleEnd}
+              className="min-h-11 shrink-0 rounded-full border-2 border-white/80 px-4 text-sm font-bold hover:bg-brand-dark"
+            >
+              {guest ? text.endGuest : text.end}
+            </button>
+          )}
         </div>
         <p className="mt-2 text-base text-white short:hidden">
           {entry.company ? `${summary} · ${entry.company.name}` : summary}
@@ -290,6 +303,11 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
       </section>
 
       <PhaseRail text={text} phaseIndex={phaseIndex} done={done} />
+
+      {/* Screen readers hear when a new phase starts (the cards above only show it) */}
+      <p className="sr-only" aria-live="polite">
+        {`${text.phase} ${phaseIndex + 1} ${text.of} ${PHASES.length}: ${text.phases[phase]}`}
+      </p>
 
       {/* The chat (or call view) with its input: the page's main content */}
       <main className="flex min-h-0 flex-1 flex-col">
@@ -346,12 +364,29 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
                   </li>
                 ))}
               </ol>
-              <button
-                onClick={dismissIntro}
-                className="mt-4 min-h-11 rounded-full bg-brand-lighter px-5 font-bold text-brand-dark transition hover:bg-brand-light active:scale-[0.97]"
-              >
-                {text.introOk}
-              </button>
+              {/* Hands-free is the closest to a real interview: offer it here in words, not only as a header icon */}
+              {canSpeak && !voice.handsFree && (
+                <p className="mt-4 rounded-xl bg-page px-4 py-3 text-sm">
+                  {text.handsFreeOffer.replace("{name}", interviewer.name)}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  onClick={dismissIntro}
+                  className="min-h-11 rounded-full bg-brand-lighter px-5 font-bold text-brand-dark transition hover:bg-brand-light active:scale-[0.97]"
+                >
+                  {text.introOk}
+                </button>
+                {canSpeak && !voice.handsFree && (
+                  <button
+                    onClick={startHandsFree}
+                    className="flex min-h-11 items-center gap-2 rounded-full border-2 border-brand px-5 font-bold text-brand-dark transition hover:bg-brand-lighter active:scale-[0.97]"
+                  >
+                    <Headphones className="h-5 w-5" />
+                    {text.handsFreeStart}
+                  </button>
+                )}
+              </div>
             </Card>
           )}
 
@@ -370,7 +405,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
 
           {sending && (
             <div className="ml-13 flex w-fit animate-msg-left items-center gap-1.5 rounded-full bg-white px-4 py-3 shadow-card" role="status">
-              <span className="sr-only">{text.thinking}</span>
+              <span className="sr-only">{text.thinking.replace("{name}", interviewer.name)}</span>
               <Dot color="bg-logo-red" delay="0ms" />
               <Dot color="bg-logo-yellow" delay="150ms" />
               <Dot color="bg-logo-blue" delay="300ms" />
@@ -491,13 +526,16 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
       </main>
       </div>
 
-      {confirmEnd && <EndSheet text={text} onStay={closeEndSheet} onEnd={endNow} />}
+      {confirmEnd && <EndSheet text={text} guest={guest} onStay={closeEndSheet} onEnd={endNow} />}
     </div>
   );
 }
 
-/** Bottom sheet: pause the interview (it stays saved) or keep practising. Esc or a tap outside keeps practising. */
-function EndSheet({ text, onStay, onEnd }: { text: UiTexts; onStay: () => void; onEnd: () => void }) {
+/**
+ * Bottom sheet: pause the interview (it stays saved) or keep practising. Esc or a tap outside keeps practising.
+ * Guests have no saved interviews: for them it says plainly that ending loses this interview.
+ */
+function EndSheet({ text, guest, onStay, onEnd }: { text: UiTexts; guest: boolean; onStay: () => void; onEnd: () => void }) {
   const stayRef = useRef<HTMLButtonElement>(null);
   const endRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -524,7 +562,7 @@ function EndSheet({ text, onStay, onEnd }: { text: UiTexts; onStay: () => void; 
         className="w-full max-w-lg animate-sheet-up rounded-t-3xl bg-white px-5 pt-6 pb-safe-6 shadow-card"
       >
         <p id="end-sheet-text" className="text-lg leading-snug">
-          {text.endConfirm}
+          {guest ? text.endGuestConfirm : text.endConfirm}
         </p>
         <div className="mt-5 flex flex-col gap-3">
           <button
@@ -539,7 +577,7 @@ function EndSheet({ text, onStay, onEnd }: { text: UiTexts; onStay: () => void; 
             onClick={onEnd}
             className="min-h-12 rounded-full border-2 border-line px-5 font-bold text-charcoal transition hover:border-brand-light active:scale-[0.97]"
           >
-            {text.endConfirmYes}
+            {guest ? text.endGuest : text.endConfirmYes}
           </button>
         </div>
       </div>
@@ -633,6 +671,8 @@ function Message({
     return (
       <div className="space-y-3">
         <div className={`ml-auto w-fit max-w-[80%] hyphens-auto lg:max-w-xl ${animate ? "animate-msg-right" : ""} wrap-anywhere rounded-2xl rounded-br-md bg-brand px-4 py-3 text-lg leading-snug whitespace-pre-wrap text-white`}>
+          {/* The interviewer's turns have a visible name; screen readers also hear who said this one */}
+          <span className="sr-only">{text.you}: </span>
           {message.text}
         </div>
         {message.tip && (
@@ -705,11 +745,16 @@ function HandsFreeBar({
   onSend: () => void;
 }) {
   const box = "mb-2 flex items-center gap-3 rounded-xl px-3 py-2 text-sm";
-  const action = "min-h-10 shrink-0 rounded-full border-2 px-4 text-sm font-bold";
+  const action = "min-h-11 shrink-0 rounded-full border-2 px-4 text-sm font-bold transition active:scale-[0.97]";
   // Sends the spoken answer now, without waiting for the pause or the countdown
-  const sendButton = (
-    <button type="button" onClick={onSend} className={`${action} relative border-brand bg-brand text-white`}>
-      {text.send}
+  const sendButton = (extra = "") => (
+    <button
+      type="button"
+      onClick={onSend}
+      className={`${action} ${extra} flex items-center justify-center gap-1.5 border-brand bg-brand text-white shadow-button hover:bg-brand-dark`}
+    >
+      {text.sendNow}
+      <ArrowRight className="h-4 w-4" />
     </button>
   );
 
@@ -727,16 +772,20 @@ function HandsFreeBar({
     );
   }
   if (countdown !== null) {
+    // Two rows so both buttons get room on a phone: the filling bar on top, "Warten" and a wide "Jetzt senden" below
     return (
-      <div className={`${box} relative overflow-hidden bg-mint-lighter text-mint-dark`} role="status">
-        {/* Fills up during the pause; when full, the answer is sent */}
-        <div className="absolute inset-y-0 left-0 bg-logo-teal/25" style={{ width: `${Math.round(countdown * 100)}%` }} />
-        <ArrowRight className="relative h-4 w-4 shrink-0" />
-        <span className="relative flex-1">{text.sendingSoon}</span>
-        <button type="button" onClick={onHold} className={`${action} relative border-mint-dark`}>
-          {text.wait}
-        </button>
-        {sendButton}
+      <div className="mb-2 rounded-xl bg-mint-lighter p-2 text-sm text-mint-dark">
+        <div className="relative overflow-hidden rounded-lg px-2 py-1.5" role="status">
+          {/* Fills up during the pause; when full, the answer is sent */}
+          <div className="absolute inset-y-0 left-0 bg-logo-teal/25" style={{ width: `${Math.round(countdown * 100)}%` }} />
+          <span className="relative">{text.sendingSoon}</span>
+        </div>
+        <div className="mt-2 flex gap-2">
+          <button type="button" onClick={onHold} className={`${action} border-mint-dark bg-white`}>
+            {text.wait}
+          </button>
+          {sendButton("flex-1")}
+        </div>
       </div>
     );
   }
@@ -745,7 +794,7 @@ function HandsFreeBar({
       <div className={`${box} bg-danger-lighter text-logo-red`} role="status">
         <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-logo-red" />
         <span className="flex-1 text-charcoal">{text.listenNow}</span>
-        {sendButton}
+        {sendButton()}
       </div>
     );
   }
@@ -754,7 +803,7 @@ function HandsFreeBar({
       <div className={`${box} bg-brand-lighter text-brand`} role="status">
         <span className="h-2.5 w-2.5 shrink-0 animate-dot rounded-full bg-brand motion-reduce:animate-none" />
         <span className="flex-1">{text.transcribing}</span>
-        {sendButton}
+        {sendButton()}
       </div>
     );
   }
