@@ -136,3 +136,8 @@ def test_criteria_closed_one_brace_too_early_are_kept():
     draft = parse_json(text, ReportDraft)
     assert {k: n.comment for k, n in draft.criteria.items()} == {"clarity": "c1", "relevance": "c2", "motivation": "c3"}
     assert draft.closing == "Weiter so."
+
+
+def test_nested_lists_in_strengths_do_not_fail_the_report():
+    draft = ReportDraft.model_validate({"strengths": ["Du a", ["Du b", 3], None, ""]})
+    assert draft.strengths == ["Du a", "Du b"]

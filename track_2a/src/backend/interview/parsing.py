@@ -119,6 +119,18 @@ class ReportDraft(BaseModel):
         rest = {k: v for k, v in raw.items() if k not in stray}
         return {**rest, "criteria": {**stray, **criteria}}
 
+    @field_validator("strengths", mode="before")
+    @classmethod
+    def _flat_strings(cls, raw):
+        # After a JSON repair, strengths can contain nested lists (bench_transcripts: "strengths.3: Input should
+        # be a valid string" made the whole report fail). Keep the texts, drop everything else.
+        if isinstance(raw, str):
+            return [raw]
+        flat = []
+        for item in raw if isinstance(raw, list) else []:
+            flat.extend(item if isinstance(item, list) else [item])
+        return [item for item in flat if isinstance(item, str) and item.strip()]
+
     @field_validator("closing", mode="before")
     @classmethod
     def _text_only(cls, raw):
@@ -224,6 +236,8 @@ def _escape_inner_quotes(text: str) -> str:
 
 # The last error of _loads, with the text around it, for the log (see complete_json)
 _last_syntax_error = ""
+# The raw text of the last complete_json call, for the log when a parsed result looks incomplete (see report.py)
+last_raw = ""
 
 
 def _loads(candidate: str):
@@ -279,6 +293,7 @@ async def complete_json(messages: list[dict], model: type[M], purpose: str,
 
     Returns (result or None, attempts used, last error).
     """
+    global last_raw
     error, raw = None, None
     for attempt in range(1, MAX_JSON_ATTEMPTS + 1):
         if error is None:
@@ -295,6 +310,7 @@ async def complete_json(messages: list[dict], model: type[M], purpose: str,
             temperature=temperature if attempt == 1 else 0.0,
             **({"max_tokens": max_tokens} if max_tokens else {}),
         )
+        last_raw = raw or ""
         try:
             return parse_json(raw, model), attempt, None
         except JSONParseError as exc:
