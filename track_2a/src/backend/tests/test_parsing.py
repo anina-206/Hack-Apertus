@@ -179,3 +179,20 @@ def test_escapes_written_twice_are_decoded():
     assert draft.strengths == ["Tes réponses étaient claires."]
     assert draft.criteria["clarity"].comment == "Tu as expliqué ton stage."
     assert draft.criteria["clarity"].evidence == "J'ai organisé le stand"
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Jâai travaillé au dépôt", "J'ai travaillé au dépôt"),  # bench_transcripts T-19
+    ("Jà ai aidé mon oncle", "J'ai aidé mon oncle"),  # T-12
+    ("je nâ ai plus eu un seul retard", "je n'ai plus eu un seul retard"),
+    ("Je suis allée là aussi, à Lausanne", "Je suis allée là aussi, à Lausanne"),  # real words stay
+])
+def test_broken_french_apostrophes_are_repaired(text, expected):
+    raw = json.dumps({"strengths": [text]}, ensure_ascii=False)
+    assert parse_json(raw, ReportDraft).strengths == [expected]
+
+
+def test_criteria_read_from_the_raw_text_are_decoded_too():
+    raw = r'"clarity": "Tu as expliqu\\u00e9 ton stage.", "evidence": "J\\u00e2ai organis\\u00e9"'
+    note = criteria_from_raw(raw)["clarity"]
+    assert note.comment == "Tu as expliqué ton stage." and note.evidence == "J'ai organisé"

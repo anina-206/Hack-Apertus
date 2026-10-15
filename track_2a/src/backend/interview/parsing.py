@@ -268,7 +268,8 @@ def criteria_from_raw(text: str) -> dict[str, CriterionNote]:
     notes = {}
     for match in _RAW_CRITERION.finditer(text or ""):
         if match[1] not in notes and match[2].strip():
-            notes[match[1]] = CriterionNote(comment=_unescape(match[2]), evidence=_unescape(match[3] or ""))
+            notes[match[1]] = CriterionNote(comment=_decode_escapes(_unescape(match[2])),
+                                            evidence=_decode_escapes(_unescape(match[3] or "")))
     return notes
 
 
@@ -310,9 +311,15 @@ def _loads(candidate: str):
 _LITERAL_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
 
 
+# French: the model sometimes writes an apostrophe as "\\u00e2" or "\\u00e0" ("Jâai", "Jà ai", "nâ ai" for "J'ai").
+# "J" + à and a single consonant + â are no French words, so these are safe to replace ("là" is left alone).
+_BROKEN_APOSTROPHE = re.compile(r"\b(?:([Jj])[âà]|([NnDdLlMmTtSsCc])â) ?(?=[^\W\d_])")
+
+
 def _decode_escapes(value):
     if isinstance(value, str):
-        return _LITERAL_ESCAPE.sub(lambda m: chr(int(m[1], 16)), value)
+        value = _LITERAL_ESCAPE.sub(lambda m: chr(int(m[1], 16)), value)
+        return _BROKEN_APOSTROPHE.sub(lambda m: (m[1] or m[2]) + "'", value)
     if isinstance(value, list):
         return [_decode_escapes(v) for v in value]
     if isinstance(value, dict):
