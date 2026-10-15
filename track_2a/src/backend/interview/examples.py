@@ -29,6 +29,9 @@ EXAMPLE_IDS = [
     "A-SRC-KT-24",  # L2  handling criticism: avoids it
     "A-FR-0031",    # L3  criticism with a concrete example (French)
     "A-SRC-KR-10",  # L1  why this company: "weil es ein guter Betrieb ist"
+    # The model scored concrete_examples 0.6 lower than the experts (48 FHGR answers, 2026-10-16): what a 3 and a 4 look like
+    "A-SRC-KR-23",  # L4  strength with a real school-project example -> concrete_examples 4
+    "A-DE2-0045",   # L3  dealing with mistakes, one short example from home -> concrete_examples 3
 ]
 
 # Answers with problem flags (distress, manipulation, off topic, rude, discriminatory): without examples the
@@ -100,6 +103,11 @@ def analysis_examples(flags: bool = True) -> str:
     except (OSError, KeyError):
         logger.warning("Analysis examples could not be loaded from datasets/")
         return ""
+
+
+# Tried and dropped (2026-10-16): the FHGR whole-interview feedback F-27/F-28 as style examples in the report
+# prompt. The 8B model copied their facts into real reports ("ein echtes Erlebnis aus dem Handball" for a candidate
+# who never mentioned handball, bench_transcripts T-14), even when told they are about another candidate.
 
 
 # --- Examples that fit the question (retrieval) ---------------------------------------------------------

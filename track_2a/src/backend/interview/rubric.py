@@ -5,6 +5,7 @@ criteria, labels and level descriptions are exactly the ones of the challenge.
 """
 
 import json
+import math
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -21,12 +22,18 @@ NOT_OBSERVED = {
 }
 NOT_OBSERVED["gsw"] = NOT_OBSERVED["de"]
 
-# Criteria a phase usually gives evidence for (a hint for the analysis, not a hard limit).
+# The evaluation criteria named in the challenge (docs/challenge.md): clarity, relevance, motivation,
+# self-awareness, communication, concrete examples. Each one is a focus of at least one scored phase, so every
+# interview gives evidence for all of them (tests/test_report.py checks this).
+TASK_CRITERIA = ("clarity", "relevance", "motivation", "self_reflection", "communication", "concrete_examples")
+
+# Criteria a phase usually gives evidence for: a hint for the analysis, and in the final report a low score only
+# counts in a phase that asks for the criterion (report.final_scores).
 PHASE_FOCUS = {
     "intro": ["clarity", "communication", "demeanor"],
     "motivation": ["motivation", "relevance", "goal_orientation", "preparation"],
     "strengths_weaknesses": ["self_reflection", "concrete_examples", "clarity"],
-    "situational": ["concrete_examples", "difficult_questions", "clarity", "relevance"],
+    "situational": ["concrete_examples", "difficult_questions", "clarity", "relevance", "communication"],
     "candidate_questions": ["initiative", "preparation", "communication"],
 }
 
@@ -65,7 +72,9 @@ def describe(key: str) -> str:
 
 
 def clamp(value: float) -> int:
-    return max(SCALE_MIN, min(SCALE_MAX, round(value)))
+    """The level for a mean score, rounded half up (2.5 -> 3). Python's round() rounds half to even (2.5 -> 2),
+    which pulled every criterion with a mean of exactly x.5 down."""
+    return max(SCALE_MIN, min(SCALE_MAX, math.floor(value + 0.5)))
 
 
 def observed(scores: dict[str, Optional[int]]) -> dict[str, int]:

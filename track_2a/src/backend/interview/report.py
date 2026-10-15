@@ -92,6 +92,22 @@ def _in_third_person(draft: ReportDraft) -> bool:
     return any(_THIRD_PERSON.search(text) for text in _texts(draft) if text)
 
 
+# From this score on, an answer counts for a criterion in every phase (it shows the criterion even where it was not asked)
+POSITIVE_EVIDENCE = 3
+
+
+def counts_for(key: str, score: int, phase: Optional[str]) -> bool:
+    """Whether an answer's score for a criterion goes into the final score.
+
+    The model also scored criteria an answer was not about, mostly low (on 48 FHGR answers it rated
+    concrete_examples 17 times where the experts did not, e.g. "concrete examples: 1" for a greeting). Such
+    scores pulled the report down. So a low score only counts in a phase that asks for the criterion
+    (rubric.PHASE_FOCUS); a good one counts everywhere. Every challenge criterion is a focus of a scored phase,
+    so each one is still judged with its low scores (rubric.TASK_CRITERIA).
+    """
+    return score >= POSITIVE_EVIDENCE or phase is None or key in rubric.PHASE_FOCUS.get(phase, ())
+
+
 def final_scores(state: dict) -> tuple[dict[str, int], dict[str, float]]:
     """Score per observed criterion (rounded mean, 1-4) and the unrounded means (for ranking).
 
@@ -102,7 +118,8 @@ def final_scores(state: dict) -> tuple[dict[str, int], dict[str, float]]:
     analyses = [a for a in state.get("analyses", []) if not a.get("parse_failed")]
     means = {}
     for key in CRITERIA:
-        values = [a["scores"][key] for a in analyses if a["scores"].get(key) is not None]
+        values = [a["scores"][key] for a in analyses
+                  if a["scores"].get(key) is not None and counts_for(key, a["scores"][key], a.get("phase"))]
         if values:
             means[key] = mean(values)
     asked = any(t["role"] == "candidate" and t.get("phase") == "candidate_questions"

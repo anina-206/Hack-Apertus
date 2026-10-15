@@ -304,11 +304,15 @@ def _task(mode: str, phase: str, question_number: int, posting: Optional[dict] =
         "next_question": f"Ask ONE new question about a new topic. Goal: {goal}{_NEW_TOPIC}",
         "new_phase": (f"Start a new part of the interview with one short transition sentence, then ask ONE question. "
                       f"Goal: {goal}{_NEW_TOPIC}"),
-        "clarify": ("The last answer was hard to understand (maybe the speech recognition got it wrong) or it was a "
-                    "question about the interview itself. If it was such a question, answer it in one short sentence "
-                    "(e.g. yes, the candidate may answer in Swiss German or in their own words). If you do not "
-                    "understand it, say so kindly and ask the candidate to say it again. Never guess what it meant "
-                    "and never invent facts about it. Then ask your last question again in simple words."),
+        "clarify": ("The candidate's last message was either not understandable (random letters or words, maybe the "
+                    "speech recognition got it wrong) or a question about the interview itself. "
+                    "Case 1, a question about the interview: answer it in one short sentence (e.g. yes, you may answer "
+                    "in Swiss German or in your own words). "
+                    "Case 2, not understandable: say kindly in a few words that you did not understand the ANSWER "
+                    "(e.g. 'Das habe ich leider nicht verstanden.'); the candidate did not ask you anything. "
+                    "Never guess what it meant and never invent facts about it. "
+                    "In both cases, then ask YOUR last question again in simple words, with the same form of address "
+                    "as before."),
         "support": ("The candidate seems very unsure or upset. Respond warmly in 1-2 sentences: say that this is "
                     "completely okay and that practising is exactly for this, and that they can also talk to a "
                     "person they trust (parents, a teacher, the career counsellor). Then ask ONE easier, "
@@ -394,11 +398,35 @@ def _occupation_hint(occupation: dict, phase: str, mode: str) -> str:
             "instead of asking something generic.\n")
 
 
+# How the interviewer reacts to the last answer, by its quality (graph.answer_quality, from the analysis scores).
+# Without this the model either praised every answer or only said "Okay." to all of them.
+_REACTION = {
+    "strong": ("The candidate's last answer was really good. Start with ONE short, honest sentence that names exactly "
+               "what was good in it (e.g. 'Das Beispiel aus der Schnupperlehre zeigt gut, wie genau du arbeitest.'), "
+               "without exaggerating (no 'perfekt', 'super', 'wow'), then ask your question."),
+    "good": ("The candidate's last answer was good. Start with a short, positive reaction in half a sentence that "
+             "says what was good about it, in your own words and fitting to what the candidate said (e.g. 'Gut, dass "
+             "du [what they did] – das ist wichtig bei uns.'), without exaggerating (no 'perfekt', 'wow'), then ask "
+             "your question."),
+    "okay": ("The candidate's last answer was okay, but not outstanding: do not praise it (no 'gut', 'guter Grund', "
+             "'klingt gut'). Show in a few words that you listened by repeating one detail the candidate really "
+             "mentioned (e.g. 'Okay, [the detail] also.'), then ask your question."),
+    "weak": ("The candidate's last answer was still thin. Do not praise it. If it had nothing to do with your "
+             "question, say so kindly in a few words (e.g. 'Hm, das war noch keine Antwort auf meine Frage.') and ask "
+             "it again in simple words. Otherwise react calmly in a few words (e.g. 'Okay.', 'Verstehe.') without "
+             "criticising, then ask your question."),
+}
+_NEUTRAL_REACTION = ("Do not praise, evaluate or comment on the candidate's answers (no 'Das klingt super!', 'Das ist ein "
+                     "sehr guter Gedanke!'): a real interviewer reacts neutrally, at most with one short word like "
+                     "'Danke.' or 'Okay.'")
+
+
 def interviewer_messages(occupation: dict, style: dict, language: str, candidate: Optional[dict], phase: str,
                          mode: str, question_number: int, transcript: list[dict],
                          posting: Optional[dict] = None, focus: Optional[list[str]] = None,
                          application: Optional[str] = None, application_point: Optional[str] = None,
-                         persona: Optional[dict] = None) -> list[dict]:
+                         persona: Optional[dict] = None, quality: Optional[str] = None) -> list[dict]:
+    """`quality`: "strong", "good", "okay" or "weak" for the last answer (graph.answer_quality), None = neutral."""
     system = (
         f"{_persona(posting, persona)}"
         f"{_setting(occupation, posting)}\n"
@@ -409,9 +437,8 @@ def interviewer_messages(occupation: dict, style: dict, language: str, candidate
         f"Conduct the interview in {LANGUAGES[language]}.\n"
         f"{_focus(focus, mode)}"
         "Keep it short (at most 3 sentences), use simple words and a friendly tone suitable for a teenager. "
-        "Do not praise, evaluate or comment on the candidate's answers (no 'Das klingt super!', 'Das ist ein sehr "
-        "guter Gedanke!'): a real interviewer reacts neutrally, at most with one short word like 'Danke.' or 'Okay.' "
-        "(not the same word every time, and never only that word without the next question). "
+        f"{_REACTION.get(quality or '', _NEUTRAL_REACTION)} "
+        "Do not use the same reaction every time, and never reply with only a reaction without the next question. "
         "Do not repeat questions that were already asked."
         f"{'' if mode in _CLOSING_MODES else _NO_GOODBYE}\n"
         f"{_INTERVIEWER_SAFETY}\n\n"

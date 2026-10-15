@@ -53,6 +53,99 @@ def test_a_question_without_question_mark_also_loses_the_praise():
                                            "Erzähl mir jetzt etwas darüber, was du noch lernen könntest.")
 
 
+def test_praise_after_a_neutral_word_is_cut_too():
+    # Seen in a probe with FHGR answers (2026-10-15): the model put the praise after "Okay,"
+    assert _drop_praise("Okay, das klingt nach einem guten Plan. Was weisst du über die Firma?", "de", 1) == \
+        "Okay. Was weisst du über die Firma?"
+    assert _drop_praise("Okay, in der Bäckerei also. Was hat dir gefallen?", "de", 1) == \
+        "Okay, in der Bäckerei also. Was hat dir gefallen?"  # picking up a detail is not praise
+    for judging in ("Okay, einen klaren Plan zu haben und bei Bedarf Hilfe zu holen, das klingt gut.",
+                    "Okay, das verantwortungsvolle Vorgehen gefällt mir.",
+                    "Okay, das Sicherheitsbewusstsein auch bei anderen zu fördern, ist wichtig."):
+        assert _drop_praise(f"{judging} Was weisst du über die Firma?", "de", 1) == "Okay. Was weisst du über die Firma?"
+
+
+# --- Compliments only for really good answers ----------------------------------------------------------
+
+def test_the_quality_of_an_answer_comes_from_its_scores():
+    from backend.interview.graph import answer_quality
+    assert answer_quality({"scores": {"clarity": 4, "motivation": 3, "relevance": 3, "demeanor": None}}) == "strong"
+    # Level-3 answers of the FHGR data: mostly 3s, the model wants no follow-up -> good
+    level3 = {"clarity": 3, "relevance": 3, "motivation": 2, "concrete_examples": 2}
+    assert answer_quality({"scores": level3, "follow_up": False}) == "good"
+    assert answer_quality({"scores": level3, "follow_up": True}) == "okay"  # still something missing
+    assert answer_quality({"scores": {"clarity": 3, "motivation": 3, "relevance": 3}, "follow_up": True}) == "good"  # mean 3
+    assert answer_quality({"scores": {"clarity": 4, "motivation": 4, "concrete_examples": 1}, "follow_up": True}) == "good"
+    assert answer_quality({"scores": {"clarity": 2, "motivation": 1, "concrete_examples": 1}, "follow_up": True}) == "weak"
+    assert answer_quality({"scores": {"clarity": None}}) is None and answer_quality(None) is None
+
+
+def test_random_text_is_no_real_answer_but_i_dont_know_is():
+    from backend.interview.graph import _no_real_answer
+    assert _no_real_answer({"scores": {"clarity": 1, "relevance": 1, "motivation": 1}}, "asdf jklö qwertz")
+    assert _no_real_answer({"scores": {"clarity": 2, "relevance": 1}}, "blabla")
+    assert not _no_real_answer({"scores": {"clarity": 2, "relevance": 1}}, "Ich weiss nicht.")  # honest, scored
+    # A real but weak answer (FHGR level 2) with relevance 1 stays a scored answer
+    assert not _no_real_answer({"scores": {"clarity": 2, "relevance": 1, "motivation": 1}},
+                               "Mit den Tieren spielen und sie füttern. Und halt schauen, dass es ihnen gut geht.")
+    assert not _no_real_answer({"scores": {"clarity": 1, "relevance": 3}}, "asdf")  # relevant: not nonsense
+
+
+def test_random_text_gets_a_clarify_question_and_no_scores(fake, api):
+    nonsense = json.dumps({"scores": {"clarity": 1, "relevance": 1, "motivation": 1}, "short_tip": "Sag mehr.",
+                           "follow_up": True, "problem_flags": []})
+    client = fake(analysis_outputs=[nonsense], interviewer_outputs=["Erste Frage?", "Das habe ich nicht verstanden. Wie heisst du?"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "asdf jklö qwertz").json()
+    assert "did not understand the ANSWER" in client.last_interviewer_system
+    assert body["question"]["text"].startswith("Das habe ich nicht verstanden")
+    assert not body.get("turn_feedback") or not any((body["turn_feedback"].get("scores") or {}).values())
+
+
+def test_the_tip_says_stark_only_for_a_strong_answer():
+    from backend.interview.graph import _honest_tip
+    tip = "Stark: Deine Mutter hat dir einen praktischen Grund genannt. Ergänze, was dir gefällt."
+    assert _honest_tip(tip, "okay") == "Deine Mutter hat dir einen praktischen Grund genannt. Ergänze, was dir gefällt."
+    assert _honest_tip(tip, "strong") == tip and _honest_tip(tip, "good") == tip
+    assert _honest_tip("Super! du hast gut geplant.", "weak") == "Du hast gut geplant."
+    assert _honest_tip("Erkläre konkret, was du tun würdest.", "weak") == "Erkläre konkret, was du tun würdest."
+
+
+def test_the_interviewer_is_told_how_to_react_to_the_last_answer():
+    occupation, style = {"label": {"de": "Koch"}, "description": "x"}, {"prompt": "Be friendly.", "formal": False}
+
+    def system(quality):
+        return interviewer_messages(occupation, style, "de", None, "motivation", "next_question", 2, [],
+                                    quality=quality)[0]["content"]
+    assert "was really good" in system("strong") and "names exactly what was good" in system("strong")
+    assert "was good. Start with a short, positive reaction" in system("good")
+    assert "do not praise it" in system("okay").lower() and "do not praise it" in system("weak").lower()
+    assert "Do not praise, evaluate or comment" in system(None)  # no analysis (e.g. the opening): neutral
+
+
+def test_a_strong_answer_keeps_the_interviewers_compliment(fake, api):
+    compliment = "Das zeigt gut, wie genau du arbeitest. Was weisst du über unseren Betrieb?"
+    strong = json.dumps({"scores": {"clarity": 4, "relevance": 4, "motivation": 3}, "short_tip": "Stark: gutes Beispiel.",
+                         "follow_up": False, "problem_flags": []})
+    client = fake(analysis_outputs=[strong], interviewer_outputs=["Erste Frage?", compliment])
+    session = start(api)
+    answer = "Ich habe in der Schnupperlehre einen kleinen Hocker gebaut und dabei gelernt, genau zu messen und zu schleifen."
+    body = send(api, session["session_id"], "q1", answer).json()
+    assert body["question"]["text"] == compliment and "was really good" in client.last_interviewer_system
+    assert body["turn_feedback"]["short_tip"] == "Stark: gutes Beispiel."
+
+
+def test_an_okay_answer_loses_the_interviewers_compliment_and_the_stark(fake, api):
+    okay = json.dumps({"scores": {"clarity": 3, "relevance": 2, "motivation": 2}, "short_tip": "Stark: guter Grund. Sag mehr.",
+                       "follow_up": False, "problem_flags": []})
+    fake(analysis_outputs=[okay], interviewer_outputs=["Erste Frage?", "Das klingt super! Was weisst du über uns?"])
+    session = start(api)
+    answer = "Meine Mutter hat gesagt, dass das ein guter Beruf ist, und ich arbeite gern mit Holz im Werken in der Schule."
+    body = send(api, session["session_id"], "q1", answer).json()
+    assert not body["question"]["text"].startswith("Das klingt super") and body["question"]["text"].endswith("über uns?")
+    assert body["turn_feedback"]["short_tip"] == "Guter Grund. Sag mehr."
+
+
 def test_the_neutral_word_changes_from_turn_to_turn():
     starts = {_drop_praise("Das klingt super! Was machst du gern?", "de", turn).split()[0] for turn in range(3)}
     assert starts == {"Danke.", "Okay.", "Verstehe."}

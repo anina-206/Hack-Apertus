@@ -710,7 +710,7 @@ def test_similar_examples_fit_the_question_and_the_tested_question_can_be_left_o
     left_out = _retrieve(question, "de", frozenset([top_question]), frozenset())
     assert top_ids and not top_ids & {answer["id"] for _, answer, _ in left_out}
 
-    assert 7 <= mixed_examples(question, "de").count("Experts scored:") <= 9  # the 7 fixed + up to 2 matches
+    assert 9 <= mixed_examples(question, "de").count("Experts scored:") <= 11  # the 9 fixed + up to 2 matches
     # A question without any match only gets the fixed examples
     assert similar_examples("Was ist dein Lieblingsessen?", "de").count("Experts scored:") == 5
 

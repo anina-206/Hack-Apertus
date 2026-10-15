@@ -112,6 +112,63 @@ def occupation(state: InterviewState) -> dict:
     return config.occupation_for(state.get("occupation_id"), state.get("posting_id"), state.get("occupation_name"))
 
 
+# How good an answer was, for the interviewer's reaction and the "Stark:" of the tip. The 8B model scores low (FHGR
+# level-3 answers got a mean of about 2.6), so the scores alone hardly separate the levels. Whether it wants a
+# follow-up separates them well: measured on 48 FHGR answers (2026-10-15), "good" below caught 11 of 12 level-3 and
+# 12 of 12 level-4 answers and 1 of 24 level-1/2 answers.
+STRONG_MEAN = 3.0  # strong: this mean, no 1 and at least one 4
+GOOD_SHARE = 0.5  # good: no follow-up wanted and at least this share of the scores is 3 or 4 (or a mean of STRONG_MEAN)
+WEAK_MEAN = 2.25
+
+
+def answer_quality(analysis: Optional[dict]) -> Optional[str]:
+    """"strong", "good", "okay" or "weak" from an analysis (scores and follow-up); None if it has no scores."""
+    scores = [s for s in ((analysis or {}).get("scores") or {}).values() if s is not None]
+    if not scores:
+        return None
+    mean = sum(scores) / len(scores)
+    if mean >= STRONG_MEAN and min(scores) > 1 and max(scores) == 4:
+        return "strong"
+    share_good = sum(s >= 3 for s in scores) / len(scores)
+    if (not analysis.get("follow_up") and share_good >= GOOD_SHARE) or mean >= STRONG_MEAN:
+        return "good"
+    return "weak" if mean < WEAK_MEAN else "okay"
+
+
+POSITIVE = ("good", "strong")  # the interviewer may react positively, the tip may start with "Stark:"
+
+
+# A tip that starts with praise ("Stark: ...", "Super! ...") although the answer was not strong: the label goes.
+_PRAISE_LABEL = re.compile(r"^\s*(stark|super|sehr gut|toll|top|bravo|très bien|super|génial|ottimo|molto bene|"
+                           r"bravissim[oa])\s*[:!.,–-]\s*", re.IGNORECASE)
+
+
+def _honest_tip(tip: str, quality: Optional[str]) -> str:
+    if quality in POSITIVE or not tip:
+        return tip
+    rest = _PRAISE_LABEL.sub("", tip, count=1)
+    return rest[:1].upper() + rest[1:] if rest else tip
+
+
+# "I don't know" is an honest (weak) answer, not nonsense: it is scored as usual
+_DONT_KNOW = re.compile(r"\b((weiss|weiß|weis) (ich )?(es )?(nicht|nöd|nid)|keine ahnung|kei ahnig|je ne sais pas|"
+                        r"aucune idée|non lo so|non so)\b", re.IGNORECASE)
+
+
+def _no_real_answer(entry: dict, answer: str) -> bool:
+    """Random text ("asdf jklö", "blabla", "hallo"): relevance 1, nothing above 2, and very short or unclear (clarity 1).
+
+    The model rarely flags such text itself (6 nonsense answers, 2026-10-16: 1 flag), so it was scored as a weak
+    answer and the interviewer only said "Okay." and went on. Longer unrelated answers stay weak answers (a real
+    but weak answer like "Mit den Tieren spielen und sie füttern." also gets relevance 1); for those the
+    interviewer may say that it was not an answer to the question yet (prompts._REACTION["weak"]).
+    """
+    scores = {k: v for k, v in (entry.get("scores") or {}).items() if v is not None}
+    if not scores or scores.get("relevance") != 1 or max(scores.values()) > 2 or _DONT_KNOW.search(answer):
+        return False
+    return len(answer.split()) <= 3 or scores.get("clarity") == 1
+
+
 async def run_analysis(occupation: dict, language: str, phase: str, question: str, answer: str,
                        posting_: Optional[dict] = None, examples: str = "fixed",
                        exclude_questions: frozenset = frozenset(),
@@ -137,7 +194,10 @@ async def run_analysis(occupation: dict, language: str, phase: str, question: st
     else:
         entry.update(result.model_dump())
         entry["problem_flags"] = answer_flags(entry.get("problem_flags", []), answer)
+        if _no_real_answer(entry, answer) and "unclear_or_meta" not in entry["problem_flags"]:
+            entry["problem_flags"].append("unclear_or_meta")  # the interviewer says so and asks again (clarify)
         entry["follow_up"] = bool(entry.get("follow_up")) or len(answer.split()) < SHORT_ANSWER_WORDS
+        entry["short_tip"] = _honest_tip(entry.get("short_tip") or "", answer_quality(entry))
         if "unclear_or_meta" in entry["problem_flags"]:
             # Nothing to judge: no scores (they would pull the report down) and no tip
             entry.update(scores={key: None for key in entry["scores"]}, short_tip="", follow_up=False)
@@ -166,7 +226,8 @@ def _drop_demanded_praise(text: str) -> str:
 # "Es zeigt, dass du ..."). The model wrote one before almost every question, although the prompt forbids it:
 # praise for every answer is unrealistic and worth nothing.
 _PRAISE_SENTENCE = re.compile(
-    r"^\s*("
+    # also after a short neutral word: "Okay, das klingt nach einem guten Plan."
+    r"^\s*((okay|ok|gut|danke|aha|ah|d'accord|merci|bien|ok|grazie|bene|va bene)\s*,\s*)?("
     r"(das|dies|es)\s+(klingt|tönt|hört sich)\b|"
     r"(das|dies|es)\s+(ist|war|sind|zeigt|finde ich)\b[^.!?]*"
     r"(super|toll\w*|gut|guter|gute|spannend\w*|interessant\w*|schön\w*|klasse|prima|beeindruck\w*|faszinier\w*|"
@@ -178,6 +239,15 @@ _PRAISE_SENTENCE = re.compile(
     r"(che bello|molto bene|ottimo|interessante|bravo|fantastico|sembra)\b|"
     r"(è|questo è|questo dimostra)\s+[^.!?]*(bello|interessant\w*|important\w*|ottim\w*|buon\w*|che tu)"
     r")[^.!?]*[.!]\s+",
+    re.IGNORECASE,
+)
+
+# A first sentence that judges the answer at its end ("Okay, einen Plan zu haben, das klingt gut."). Only clear
+# judgements; picking up a detail ("Okay, die Schnupperlehre im BIZ also.") stays.
+_JUDGING_SENTENCE = re.compile(
+    r"^\s*[^.!?]*\b(klingt (gut|super|toll|spannend|vernünftig)|tönt (guet|gut)|gefällt mir|finde ich (gut|toll|super)|"
+    r"(ist|sind) (sehr )?(wichtig|super|toll|gut)|macht sinn|guter (grund|plan|punkt)|gute (idee|einstellung)|"
+    r"c'est (bien|super|important)|ça me plaît|è (importante|bello|ottimo)|mi piace)\b[^.!?]*[.!]\s+",
     re.IGNORECASE,
 )
 
@@ -194,6 +264,7 @@ def _drop_praise(text: str, language: str, turn: int) -> str:
     rest = text
     for _ in range(2):
         rest = _PRAISE_SENTENCE.sub("", rest, count=1)
+        rest = _JUDGING_SENTENCE.sub("", rest, count=1)
     if rest == text:
         return text
     words = _ACKNOWLEDGE.get(language, _ACKNOWLEDGE["de"])
@@ -247,7 +318,8 @@ async def _interviewer_reply(messages: list[dict]) -> str:
     # frequency_penalty: the 8B model sometimes got stuck repeating "Danke." until the token limit
     text = await llm.chat_completion(messages, purpose="interviewer", temperature=0.7,
                                      max_tokens=INTERVIEWER_MAX_TOKENS, frequency_penalty=0.4)
-    return _drop_repeats(text.strip())
+    text = re.sub(r"(?<=\w)([.!?]),\s+", r"\1 ", text.strip())  # "Okay., Was ..." -> "Okay. Was ..."
+    return _drop_repeats(text)
 
 
 # A question turn must ask something. The 8B model sometimes ended the interview on its own in the middle
@@ -315,12 +387,14 @@ async def interviewer(state: InterviewState) -> dict:
                  and pos.questions_in_phase <= per_phase and used < len(asks) else None)
         # Mundart: the interviewer writes Standard German (reliable), a second call turns it into dialect below
         written_in = "de" if state["language"] == "gsw" else state["language"]
+        # The reaction to the last answer depends on how good it was (only before a new question)
+        quality = answer_quality(state.get("analysis")) if mode in _QUESTION_MODES else None
         messages = interviewer_messages(occupation(state), style, written_in,
                                         state.get("candidate"), phase, mode, pos.questions_in_phase,
                                         _in_standard_german(state.get("transcript", []) + new_turns,
                                                             state.get("standard_german") or {}),
                                         posting(state), state.get("focus"),
-                                        state.get("application_summary"), point, state.get("persona"))
+                                        state.get("application_summary"), point, state.get("persona"), quality)
         text = await _interviewer_reply(messages)
         if mode in _QUESTION_MODES and not _asks_something(text):
             text = await _question_reply(messages, text, phase, mode, written_in, style["formal"],
@@ -332,7 +406,8 @@ async def interviewer(state: InterviewState) -> dict:
             text = _drop_goodbye(_drop_trailing_question(text))
         if mode == "redirect":
             text = _drop_demanded_praise(text)
-        if mode in ("next_question", "new_phase", "follow_up"):
+        if mode in ("next_question", "new_phase", "follow_up") and quality not in POSITIVE:
+            # Only a good answer may get positive feedback
             text = _drop_praise(text, written_in, state.get("question_count", 0))
         if state["language"] == "gsw":
             german = text
