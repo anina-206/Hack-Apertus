@@ -208,6 +208,28 @@ def test_last_candidate_question_is_answered_with_closing(fake, api):
     assert turn["closing_message"].startswith("Frage")  # the interviewer's LLM answer, not the fixed line
 
 
+def test_a_candidate_question_answered_only_with_thanks_is_answered_again(fake, api):
+    # Real test run: "Danke. Haben Sie noch Fragen?" lost its question and only "Danke." was left.
+    client = fake()
+    session = start(api)
+    turn = run_until(api, session, "candidate_questions")
+    client.interviewer_outputs = ["Danke. Hast du noch Fragen?", "Feedback bekommst du jede Woche im Gespräch."]
+    turn = send(api, session["session_id"], turn["question"]["id"], "Wann bekomme ich Feedback?").json()
+    assert turn["question"]["text"].startswith("Feedback bekommst du jede Woche im Gespräch.")
+    assert "IMPORTANT: Answer the candidate's last question" in client.last_interviewer_system
+
+
+def test_a_fixed_line_answers_when_the_model_keeps_only_thanking(fake, api):
+    from backend.interview.prompts import ANSWER_FALLBACK
+    client = fake()
+    session = start(api)
+    turn = run_until(api, session, "candidate_questions")
+    client.interviewer_outputs = ["Danke.", "Danke! Noch Fragen?"]
+    turn = send(api, session["session_id"], turn["question"]["id"], "Wann bekomme ich Feedback?").json()
+    assert turn["question"]["text"].startswith(ANSWER_FALLBACK[("de", False)])
+    assert turn["meta"]["llm_calls"] == 3
+
+
 # --- Report ------------------------------------------------------------------------------------------
 
 def finish(api, session):
@@ -241,6 +263,30 @@ def test_report_drops_evidence_that_was_not_said(fake, api):
     finish(api, session)
     report = api.get(f"/api/v1/sessions/{session['session_id']}/report").json()
     assert all(c["evidence"] == "" for c in report["criteria"])
+
+
+def test_a_report_that_breaks_off_is_asked_once_more(fake, api):
+    # bench_transcripts T-12: the model repeated one word until the token limit, so 8 comments were lost
+    broken = json.dumps({"criteria": {"clarity": {"comment": "Kommentar clarity.", "evidence": ""}},
+                         "strengths": ["pürfekt " * 20]})
+    client = fake(report_outputs=[broken, report_json()])
+    session = start(api)
+    finish(api, session)
+    report = api.get(f"/api/v1/sessions/{session['session_id']}/report").json()
+    assert client.calls.count("report") == 2
+    assert all(c["comment"] for c in report["criteria"] if c["score"] is not None)
+
+
+def test_a_report_that_breaks_off_twice_takes_the_tips_of_the_answers(fake, api):
+    # bench_transcripts T-12: both tries broke off in a \\u00a0 loop, so 8 comments stayed empty
+    broken = json.dumps({"criteria": {"clarity": {"comment": "Kommentar clarity.", "evidence": ""}}})
+    client = fake(report_outputs=[broken, broken])
+    session = start(api)
+    finish(api, session)
+    report = api.get(f"/api/v1/sessions/{session['session_id']}/report").json()
+    assert client.calls.count("report") == 2
+    assert "never as \\u escapes" in client.last_system
+    assert all(c["comment"] for c in report["criteria"] if c["score"] is not None)
 
 
 def test_report_failure_returns_502_and_is_not_cached(fake, api):
@@ -969,6 +1015,26 @@ def test_a_fixed_question_from_the_fhgr_bank_stands_in_when_the_model_keeps_sayi
     assert body["question"]["text"] in _bank_questions("intro", "de")
 
 
+def test_a_question_asked_before_is_replaced_by_a_new_one(fake, api):
+    client = fake(interviewer_outputs=["Wie arbeitest du im Team?", "Danke. Wie arbeitest du im Team?",
+                                       "Was machst du in deiner Freizeit?"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Was machst du in deiner Freizeit?"
+    assert 'You already asked "wie arbeitest du im team?"' in client.last_interviewer_system
+
+
+def test_an_english_reply_is_written_again_in_the_interview_language(fake, api):
+    # bench_interviews S-06: "That makes sense, Jana. ... How do you think these experiences might help you?"
+    client = fake(interviewer_outputs=["Frage 1?", "That makes sense. How do you think this would help you?",
+                                       "Das verstehe ich. Wie hilft dir das in der Lehre?"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Das verstehe ich. Wie hilft dir das in der Lehre?"
+    assert "never in English" in client.last_interviewer_system
+    assert body["meta"]["llm_calls"] == 3
+
+
 def test_an_imperative_question_needs_no_second_call(fake, api):
     client = fake(interviewer_outputs=["Frage 1?", "Okay. Erzähl mir von deiner Schnupperlehre."])
     session = start(api)
@@ -998,3 +1064,11 @@ def test_report_keeps_a_loose_quote_as_the_words_the_candidate_really_said():
         "ich mag Mathe schon, weil man dort immer ein klares Resultat sieht"
     assert _verified_evidence("Ich liebe Physik", said) == ""
     assert _verified_evidence("<words the candidate said>", said) == ""
+
+
+def test_report_prompt_gives_the_comment_phrases_in_the_report_language():
+    # bench_transcripts T-08: with the German phrases only, French reports wrote "Nächstes Mal peux-tu ..."
+    from backend.interview.prompts import report_messages
+    occupation = {"label": {"de": "Kaufmann/Kauffrau EFZ", "fr": "Employé/e de commerce CFC"}, "description": ""}
+    system = report_messages(occupation, "fr", {"clarity": 3}, [], [])[0]["content"]
+    assert "La prochaine fois, tu peux" in system and "Nächstes Mal" not in system

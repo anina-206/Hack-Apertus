@@ -21,6 +21,7 @@ import json
 import logging
 import operator
 import re
+from difflib import SequenceMatcher
 from typing import Annotated, Optional, TypedDict
 
 from langgraph.checkpoint.memory import InMemorySaver
@@ -31,8 +32,8 @@ from backend.interview import dialect as swiss_german
 from backend.interview import examples as calibration
 from backend.interview.parsing import Analysis, complete_json
 from backend.interview.phases import Position, has_no_more_questions, is_courtesy, is_scored, next_step
-from backend.interview.prompts import (FOLLOW_UP_FALLBACK, analysis_messages, closing_message, fixed_line,
-                                       interviewer_messages)
+from backend.interview.prompts import (ANSWER_FALLBACK, FOLLOW_UP_FALLBACK, analysis_messages, closing_message,
+                                       fixed_line, interviewer_messages)
 from backend.interview.safety import CRISIS_MESSAGE, answer_flags, guard_mode, is_crisis
 
 # An answer with fewer words than this always gets a follow-up question (at most one per phase, see phases.py).
@@ -259,6 +260,15 @@ _MUST_ASK = ("\nIMPORTANT: The interview is NOT over. Do not say goodbye and do 
              "End your reply with ONE question to the candidate.")
 
 
+# bench_interviews: once the interviewer suddenly answered in English ("That makes sense, Jana. ...").
+_ENGLISH = re.compile(r"\b(the|you|your|that|what|how|would|this|and)\b", re.IGNORECASE)
+_NOT_ENGLISH = "\nIMPORTANT: Write in the language of the interview, never in English."
+
+
+def _in_english(text: str) -> bool:
+    return len(_ENGLISH.findall(text)) >= 3
+
+
 def _asks_something(text: str) -> bool:
     return bool(_ASKS.search(text))
 
@@ -276,6 +286,62 @@ async def _question_reply(messages: list[dict], text: str, phase: str, mode: str
         fallback = calibration.bank_question(phase, language, [t["text"] for t in transcript])
     logger.warning(json.dumps({"event": "interviewer_asked_nothing", "mode": mode, "fallback": bool(fallback)}))
     return fallback or text
+
+
+# Questions this similar (0-1, difflib) count as the same question
+SAME_QUESTION = 0.8
+
+
+def _last_question(text: str) -> str:
+    questions = re.findall(r"[^.!?\n]*\?", text)
+    return questions[-1].strip().lower() if questions else ""
+
+
+def _repeated_question(text: str, transcript: list[dict]) -> str:
+    """The earlier question this reply asks again, or "".
+
+    A real test run asked "Wie gehen Sie typischerweise vor, wenn Sie mit einem Team ...?" twice in a row.
+    """
+    question = _last_question(text)
+    if len(question.split()) < 4:  # short ones ("Warum?") may come again
+        return ""
+    for turn in transcript:
+        earlier = _last_question(turn["text"]) if turn["role"] == "interviewer" else ""
+        if earlier and SequenceMatcher(None, question, earlier).ratio() >= SAME_QUESTION:
+            return earlier
+    return ""
+
+
+async def _new_question_reply(messages: list[dict], text: str, transcript: list[dict]) -> str:
+    """The reply repeats an earlier question: ask the model once for a different one, else keep the reply."""
+    earlier = _repeated_question(text, transcript)
+    note = f'\nIMPORTANT: You already asked "{earlier}". Do not ask it again: ask about something different.'
+    retry = await _interviewer_reply([{**messages[0], "content": messages[0]["content"] + note}, *messages[1:]])
+    if _asks_something(retry) and not _repeated_question(retry, transcript):
+        return retry
+    logger.warning(json.dumps({"event": "interviewer_repeated_question"}))
+    return text
+
+
+_MUST_ANSWER = ("\nIMPORTANT: Answer the candidate's last question in 1-2 sentences with real content. "
+                "Do not only say thank you and do not ask a question back.")
+
+
+async def _answer_reply(messages: list[dict], text: str, language: str, formal: bool) -> str:
+    """The answer to the candidate's question, without a question back or a goodbye (both are added in code).
+
+    The model sometimes replied 'Danke. Haben Sie noch Fragen?', which left only 'Danke.' (a real test:
+    the candidate's question got no answer). Then ask once more, else use a fixed friendly line.
+    """
+    text = _drop_goodbye(_drop_trailing_question(text))
+    if text and not is_courtesy(text):
+        return text
+    retry = [{**messages[0], "content": messages[0]["content"] + _MUST_ANSWER}, *messages[1:]]
+    text = _drop_goodbye(_drop_trailing_question(await _interviewer_reply(retry)))
+    if text and not is_courtesy(text):
+        return text
+    logger.warning(json.dumps({"event": "interviewer_answered_nothing"}))
+    return ANSWER_FALLBACK[(language, formal)]
 
 
 async def interviewer(state: InterviewState) -> dict:
@@ -321,15 +387,22 @@ async def interviewer(state: InterviewState) -> dict:
                                                             state.get("standard_german") or {}),
                                         posting(state), state.get("focus"),
                                         state.get("application_summary"), point, state.get("persona"))
+        # Mundart: the checks compare with earlier questions in Standard German, the language the model writes in
+        asked = _in_standard_german(state.get("transcript", []), state.get("standard_german") or {})
         text = await _interviewer_reply(messages)
-        if mode in _QUESTION_MODES and not _asks_something(text):
-            text = await _question_reply(messages, text, phase, mode, written_in, style["formal"],
-                                         state.get("transcript", []))
+        if _in_english(text):  # one retry; it takes the place of the other checks, so calls stay below 5
+            text = await _interviewer_reply([{**messages[0], "content": messages[0]["content"] + _NOT_ENGLISH},
+                                             *messages[1:]])
+            if mode in ("answer_candidate", "answer_and_close"):  # the cleanup of _answer_reply, without a call
+                text = _drop_goodbye(_drop_trailing_question(text)) or ANSWER_FALLBACK[(written_in, style["formal"])]
+        elif mode in _QUESTION_MODES and not _asks_something(text):
+            text = await _question_reply(messages, text, phase, mode, written_in, style["formal"], asked)
+        elif mode in _QUESTION_MODES and _repeated_question(text, asked):
+            text = await _new_question_reply(messages, text, asked)
+        elif mode in ("answer_candidate", "answer_and_close"):
+            text = await _answer_reply(messages, text, written_in, style["formal"])
         elif is_courtesy(text):  # only "Danke." or "Okay.": no question to answer, ask the model once more
             text = await _interviewer_reply(messages)
-        # The model tended to ask a new question or forget the goodbye, so both are added in code.
-        if mode in ("answer_candidate", "answer_and_close"):
-            text = _drop_goodbye(_drop_trailing_question(text))
         if mode == "redirect":
             text = _drop_demanded_praise(text)
         if mode in ("next_question", "new_phase", "follow_up"):

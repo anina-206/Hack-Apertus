@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from backend.interview.parsing import JSONParseError, ReportDraft, parse_analysis, parse_json
+from backend.interview.parsing import JSONParseError, ReportDraft, criteria_from_raw, parse_analysis, parse_json
 from backend.interview.prompts import CRITERIA
 
 SCORES = {key: 4 for key in CRITERIA}
@@ -136,3 +136,63 @@ def test_criteria_closed_one_brace_too_early_are_kept():
     draft = parse_json(text, ReportDraft)
     assert {k: n.comment for k, n in draft.criteria.items()} == {"clarity": "c1", "relevance": "c2", "motivation": "c3"}
     assert draft.closing == "Weiter so."
+
+
+def test_nested_lists_in_strengths_do_not_fail_the_report():
+    draft = ReportDraft.model_validate({"strengths": ["Du a", ["Du b", 3], None, ""]})
+    assert draft.strengths == ["Du a", "Du b"]
+
+
+def test_criteria_without_their_opening_brace_are_kept():
+    # Real 8B output (shortened, bench_transcripts T-06): every criterion lacks its "{", and
+    # "preparation" ends up inside "demeanor". Before the fix only clarity and relevance had a comment.
+    raw = (r'{"strengths": ["Du hast Erlebnisse beschrieben."], "closing": "Das war nur eine Probe.", '
+           r'"criteria": {"clarity": "Oft unstrukturiert, z.B. \"Geht so.\"", "evidence": "Geht so."}, '
+           r'"relevance": "Nicht immer bezogen.", "evidence": "Ich habe mich wohl gefühlt."}, '
+           r'"motivation": "Unsicher, z.B. \"Keine Ahnung\".", "evidence": "Keine Ahnung."}, '
+           r'"demeanor": "Verunsichert.", "evidence": "seufzt", "preparation": "Es fehlte Wissen."}}')
+    draft = parse_json(raw, ReportDraft)
+    assert set(draft.criteria) == {"clarity", "relevance", "motivation", "demeanor", "preparation"}
+    assert all(note.comment for note in draft.criteria.values())
+    assert draft.criteria["clarity"].evidence == "Geht so."
+    assert draft.closing == "Das war nur eine Probe."
+
+
+def test_criteria_without_any_braces_are_read_from_the_raw_text():
+    # Real 8B output (shortened, bench_transcripts T-05): no criterion has braces, and a strength is
+    # closed with \" so the JSON repair kept no criterion at all.
+    raw = (r'{"strengths": ["z.B. “Ich mag es.\", "Du ..."], "criteria": {"clarity": "Verständlich.", '
+           r'"evidence": "Ja, ich bin mit dem Bus gekommen.", "relevance": "Passt zur \"Logistik\".", '
+           r'"evidence": "Ich habe kommissioniert.", "initiative": "Du hast eine Frage gestellt."}}')
+    notes = criteria_from_raw(raw)
+    assert {k: n.comment for k, n in notes.items()} == {
+        "clarity": "Verständlich.", "relevance": 'Passt zur "Logistik".', "initiative": "Du hast eine Frage gestellt."}
+    assert notes["clarity"].evidence == "Ja, ich bin mit dem Bus gekommen."
+    assert notes["initiative"].evidence == ""
+
+
+def test_escapes_written_twice_are_decoded():
+    # bench_transcripts T-08: the model escaped the backslash too, so "réponses" was shown as it is
+    raw = r'{"strengths": ["Tes r\\u00e9ponses \\u00e9taient claires."], "criteria": {"clarity": ' \
+          r'{"comment": "Tu as expliqu\\u00e9 ton stage.", "evidence": "J\'ai organis\\u00e9 le stand"}}}'
+    draft = parse_json(raw, ReportDraft)
+    assert draft.strengths == ["Tes réponses étaient claires."]
+    assert draft.criteria["clarity"].comment == "Tu as expliqué ton stage."
+    assert draft.criteria["clarity"].evidence == "J'ai organisé le stand"
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Jâai travaillé au dépôt", "J'ai travaillé au dépôt"),  # bench_transcripts T-19
+    ("Jà ai aidé mon oncle", "J'ai aidé mon oncle"),  # T-12
+    ("je nâ ai plus eu un seul retard", "je n'ai plus eu un seul retard"),
+    ("Je suis allée là aussi, à Lausanne", "Je suis allée là aussi, à Lausanne"),  # real words stay
+])
+def test_broken_french_apostrophes_are_repaired(text, expected):
+    raw = json.dumps({"strengths": [text]}, ensure_ascii=False)
+    assert parse_json(raw, ReportDraft).strengths == [expected]
+
+
+def test_criteria_read_from_the_raw_text_are_decoded_too():
+    raw = r'"clarity": "Tu as expliqu\\u00e9 ton stage.", "evidence": "J\\u00e2ai organis\\u00e9"'
+    note = criteria_from_raw(raw)["clarity"]
+    assert note.comment == "Tu as expliqué ton stage." and note.evidence == "J'ai organisé"

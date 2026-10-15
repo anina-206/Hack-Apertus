@@ -15,8 +15,8 @@ from statistics import mean
 from typing import Optional
 
 from backend import config
-from backend.interview.parsing import ReportDraft, complete_json
-from backend.interview import rubric, safety
+from backend.interview import parsing, rubric, safety
+from backend.interview.parsing import CriterionNote, ReportDraft, complete_json
 from backend.interview.phases import has_no_more_questions
 from backend.interview.prompts import CRITERIA, report_messages
 
@@ -92,6 +92,33 @@ def _in_third_person(draft: ReportDraft) -> bool:
     return any(_THIRD_PERSON.search(text) for text in _texts(draft) if text)
 
 
+# From this many criteria without a comment the report is asked once more (it is the only call at the end,
+# so the limit of calls per answer is not touched).
+MANY_MISSING = 3
+
+
+def _missing_comments(draft: ReportDraft, scores: dict) -> list[str]:
+    """Observed criteria without a comment, after reading lost ones from the raw text of the last call."""
+    missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
+    if missing:  # read them from the raw text, where the JSON repair lost them
+        rescued = parsing.criteria_from_raw(parsing.last_raw)
+        draft.criteria.update({key: rescued[key] for key in missing if key in rescued})
+        missing = [key for key in missing if key not in rescued]
+    return missing
+
+
+# The French reports that broke off had written é as \u00e9 and then repeated \u00a0 until the token limit
+# (bench_transcripts T-12, twice in a row).
+_NO_ESCAPES = ("IMPORTANT: Write letters like é, à and ü directly, never as \\u escapes. Keep every comment to one "
+               "or two short sentences.")
+
+
+def _analysis_tip(key: str, analyses: list[dict]) -> str:
+    """The short tip of the answer with the lowest score on this criterion (written per answer, in the same language)."""
+    scored = [a for a in analyses if a["scores"].get(key) is not None and a.get("short_tip")]
+    return min(scored, key=lambda a: a["scores"][key])["short_tip"] if scored else ""
+
+
 def final_scores(state: dict) -> tuple[dict[str, int], dict[str, float]]:
     """Score per observed criterion (rounded mean, 1-4) and the unrounded means (for ranking).
 
@@ -124,6 +151,8 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
                                state["language"], scores, analyses, transcript, config.posting_for(state))
     draft: Optional[ReportDraft]
     def ask():
+        # No frequency_penalty here: it also penalises the JSON keys and the quotes, which repeat by design
+        # (bench_transcripts with 0.3: quotes dropped from 75 % to 33 %, "Nächstes Mal" turned into "Nechtest").
         return complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500)
 
     draft, _, error = await ask()
@@ -135,9 +164,21 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
         if retry is not None and not _in_third_person(retry):
             draft = retry
 
-    missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
+    missing = _missing_comments(draft, scores)
+    if len(missing) >= MANY_MISSING:  # the output broke off (repetition loop): one more try, keep the better one
+        messages[0] = {**messages[0], "content": messages[0]["content"] + "\n" + _NO_ESCAPES}
+        retry, _, _ = await ask()
+        retry_missing = _missing_comments(retry, scores) if retry is not None else missing
+        if len(retry_missing) < len(missing):
+            draft, missing = retry, retry_missing
+    for key in missing:  # last resort: the analysis tip of the answer that scored lowest on this criterion
+        tip = _analysis_tip(key, analyses)
+        if tip:
+            draft.criteria[key] = CriterionNote(comment=tip, evidence="")
     if missing:
-        logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing}))
+        # With the raw output, to see whether the model left them out or the parser lost them
+        logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing,
+                                   "raw": parsing.last_raw}, ensure_ascii=False))
 
     language = state["language"]
     # The model sometimes forgets a list: fall back to the tips from the per-answer analyses

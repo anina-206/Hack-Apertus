@@ -119,6 +119,18 @@ class ReportDraft(BaseModel):
         rest = {k: v for k, v in raw.items() if k not in stray}
         return {**rest, "criteria": {**stray, **criteria}}
 
+    @field_validator("strengths", mode="before")
+    @classmethod
+    def _flat_strings(cls, raw):
+        # After a JSON repair, strengths can contain nested lists (bench_transcripts: "strengths.3: Input should
+        # be a valid string" made the whole report fail). Keep the texts, drop everything else.
+        if isinstance(raw, str):
+            return [raw]
+        flat = []
+        for item in raw if isinstance(raw, list) else []:
+            flat.extend(item if isinstance(item, list) else [item])
+        return [item for item in flat if isinstance(item, str) and item.strip()]
+
     @field_validator("closing", mode="before")
     @classmethod
     def _text_only(cls, raw):
@@ -133,7 +145,10 @@ class ReportDraft(BaseModel):
         if not isinstance(raw, dict):
             return {}
         notes = {}
-        for key, value in raw.items():
+        items = list(raw.items())
+        for key, value in items:
+            if isinstance(value, dict):  # a criterion nested in the one before it, after a missing "}"
+                items += [(k, v) for k, v in value.items() if _CRITERION_ALIASES.get(_norm_key(k))]
             criterion = _CRITERION_ALIASES.get(_norm_key(key))
             if criterion is None:
                 continue
@@ -222,12 +237,54 @@ def _escape_inner_quotes(text: str) -> str:
     return "".join(out)
 
 
+_JSON_STRING = r'"((?:[^"\\]|\\.)*)"'
+# '"clarity": "comment", "evidence": "..."}': the model often leaves out the "{" of a criterion
+# (bench_transcripts: the criteria after the first one or two were lost).
+_FLAT_CRITERION = re.compile(r'"(' + "|".join(CRITERIA) + r')"\s*:\s*' + _JSON_STRING + r'\s*,\s*"evidence"\s*:')
+
+
+def _nest_flat_criteria(text: str) -> str:
+    return _FLAT_CRITERION.sub(lambda m: f'"{m[1]}": {{"comment": "{m[2]}", "evidence":', text)
+
+
+# '"clarity": {"comment": "...", "evidence": "..."' with or without the braces and the "comment" key
+_RAW_CRITERION = re.compile(r'"(' + "|".join(CRITERIA) + r')"\s*:\s*\{?\s*(?:"comment"\s*:\s*)?' + _JSON_STRING
+                            + r'(?:\s*,\s*"evidence"\s*:\s*' + _JSON_STRING + r')?')
+
+
+def _unescape(text: str) -> str:
+    try:
+        return json.loads(f'"{text}"', strict=False)
+    except json.JSONDecodeError:
+        return text.replace('\\"', '"')
+
+
+def criteria_from_raw(text: str) -> dict[str, CriterionNote]:
+    """Criterion comments read straight from the raw text, however its braces are broken.
+
+    bench_transcripts: some reports wrote all criteria without braces ('"clarity": "...", "evidence": "...",
+    "relevance": ...'), so not a single comment survived the JSON repair.
+    """
+    notes = {}
+    for match in _RAW_CRITERION.finditer(text or ""):
+        if match[1] not in notes and match[2].strip():
+            notes[match[1]] = CriterionNote(comment=_decode_escapes(_unescape(match[2])),
+                                            evidence=_decode_escapes(_unescape(match[3] or "")))
+    return notes
+
+
 # The last error of _loads, with the text around it, for the log (see complete_json)
 _last_syntax_error = ""
+# The raw text of the last complete_json call, for the log when a parsed result looks incomplete (see report.py)
+last_raw = ""
 
 
 def _loads(candidate: str):
     global _last_syntax_error
+    try:
+        return json.loads(candidate, strict=False)
+    except json.JSONDecodeError:
+        candidate = _nest_flat_criteria(candidate)
     fixed = re.sub(r",\s*([}\]])", r"\1", candidate)  # trailing commas
     # strict=False: line breaks inside strings, which the model often writes in longer texts
     for text in (candidate, fixed, _escape_inner_quotes(fixed)):
@@ -249,6 +306,27 @@ def _loads(candidate: str):
         return None
 
 
+# The model sometimes writes "r\\\\u00e9ponses" (backslash escaped twice), so the text kept a literal "\\u00e9"
+# instead of "é" (bench_transcripts: French reports showed "r\\u00e9ponses" and their quotes were rejected).
+_LITERAL_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
+
+
+# French: the model sometimes writes an apostrophe as "\\u00e2" or "\\u00e0" ("Jâai", "Jà ai", "nâ ai" for "J'ai").
+# "J" + à and a single consonant + â are no French words, so these are safe to replace ("là" is left alone).
+_BROKEN_APOSTROPHE = re.compile(r"\b(?:([Jj])[âà]|([NnDdLlMmTtSsCc])â) ?(?=[^\W\d_])")
+
+
+def _decode_escapes(value):
+    if isinstance(value, str):
+        value = _LITERAL_ESCAPE.sub(lambda m: chr(int(m[1], 16)), value)
+        return _BROKEN_APOSTROPHE.sub(lambda m: (m[1] or m[2]) + "'", value)
+    if isinstance(value, list):
+        return [_decode_escapes(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _decode_escapes(v) for k, v in value.items()}
+    return value
+
+
 def parse_json(text: str, model: type[M]) -> M:
     last_error = "no JSON object found"
     text = text or ""
@@ -258,7 +336,7 @@ def parse_json(text: str, model: type[M]) -> M:
     # Only if that fails, read them as JSON quotes (some outputs use “key”: “value”).
     variants = [text] + ([text.replace("“", '"').replace("”", '"')] if "“" in text or "”" in text else [])
     for candidate in (c for variant in variants for c in _candidates(variant)):
-        data = _loads(candidate)
+        data = _decode_escapes(_loads(candidate))
         if not isinstance(data, dict):
             last_error = "invalid JSON syntax"
             continue
@@ -274,11 +352,13 @@ def parse_analysis(text: str) -> Analysis:
 
 
 async def complete_json(messages: list[dict], model: type[M], purpose: str,
-                        temperature: float = 0.2, max_tokens: int | None = None) -> tuple[M | None, int, str | None]:
+                        temperature: float = 0.2, max_tokens: int | None = None,
+                        **kwargs) -> tuple[M | None, int, str | None]:
     """Call the LLM until its output parses as `model`, at most MAX_JSON_ATTEMPTS calls.
 
     Returns (result or None, attempts used, last error).
     """
+    global last_raw
     error, raw = None, None
     for attempt in range(1, MAX_JSON_ATTEMPTS + 1):
         if error is None:
@@ -294,7 +374,9 @@ async def complete_json(messages: list[dict], model: type[M], purpose: str,
             purpose=purpose if attempt == 1 else f"{purpose}_retry",
             temperature=temperature if attempt == 1 else 0.0,
             **({"max_tokens": max_tokens} if max_tokens else {}),
+            **kwargs,
         )
+        last_raw = raw or ""
         try:
             return parse_json(raw, model), attempt, None
         except JSONParseError as exc:
