@@ -125,14 +125,14 @@ the real loudness of both voices. Without the server voice the app falls back to
 
 | Step | Calls |
 |---|---|
-| Answer in a scored phase | 2 (max 4 with JSON retries) |
+| Answer in a scored phase | 2 (3 when the interviewer's reply is asked again; up to 2 more for JSON retries of the analysis) |
 | Answer in the candidate-questions phase | 1 (0 when the candidate has no more questions) |
 | Mundart: each interviewer text | +1 |
 | Opening question | 1 |
 | Uploaded application letter | 2 per interview, at the same time: summary and review of the letter |
-| Final report | 1 (max 3 with JSON retries), once per interview |
+| Final report | 1 (+1 when it breaks off or uses the third person, + JSON retries), once per interview |
 
-That is about 2 calls per answer (3 in Mundart) on average.
+That is about 2 calls per answer (3 in Mundart) on average; measured over 12 full interviews: 1.92, at most 3.
 
 **Other open-weight models (auxiliary, not LLMs).** The challenge asks for the Apertus family; we use two
 speech models only as input/output helpers, never to judge or write content:
