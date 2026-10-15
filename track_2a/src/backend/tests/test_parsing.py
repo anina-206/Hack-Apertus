@@ -127,3 +127,12 @@ def test_unescaped_quotes_and_line_breaks_inside_strings_are_repaired():
 def test_broken_report_json_from_the_8b_model_is_repaired(text):
     draft = parse_json(text, ReportDraft)
     assert draft.strengths
+
+
+def test_criteria_closed_one_brace_too_early_are_kept():
+    # Seen in bench_transcripts: only "clarity" had a comment, the other criteria were lost.
+    text = ('{"strengths": ["Du ..."], "criteria": {"clarity": {"comment": "c1", "evidence": "e"}}, '
+            '"relevance": {"comment": "c2", "evidence": "e"}, "Motivation": "c3", "closing": "Weiter so."}')
+    draft = parse_json(text, ReportDraft)
+    assert {k: n.comment for k, n in draft.criteria.items()} == {"clarity": "c1", "relevance": "c2", "motivation": "c3"}
+    assert draft.closing == "Weiter so."
