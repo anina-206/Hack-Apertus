@@ -1,32 +1,34 @@
-# React + TypeScript + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React web app of the Schnupper Interview Coach (Vite, React, TypeScript, Tailwind CSS, recharts).
+In Docker it is built and served by nginx on port 8080 (`make run` in `track_2a/`).
 
-Currently, two official plugins are available:
+## Screens
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Screen | File | What it does |
+|---|---|---|
+| Login (optional) | `src/screens/AuthScreen.tsx` | Account to keep interviews; guests can use everything |
+| Setup | `src/screens/SetupScreen.tsx` | Language (DE/FR/IT/Mundart and dialect), occupation, interviewer style, mode, optional application letter |
+| Interview | `src/screens/InterviewScreen.tsx` | Chat with progress through the phases, or the hands-free call view (`components/CallView.tsx`) |
+| Feedback | `src/screens/FeedbackScreen.tsx` | Overall score, the 11 FHGR criteria as a chart with comments, strengths, tips with example answers, letter feedback |
 
-## React Compiler
+Voice: `src/useVoice.ts` records the answer, sends it to `POST /transcribe` (Whisper on the server) and reads the
+questions aloud with `POST /speech` (Piper). Without server voice it falls back to the browser's
+`SpeechRecognition` and `speechSynthesis`. The send button sends a spoken answer at any time.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+UI texts in DE/FR/IT are in `src/i18n.ts`. The API contract is [`../docs/api.md`](../docs/api.md); its TypeScript
+types are in `src/api/types.ts` (snake_case keys as in the backend).
 
-## Expanding the Oxlint configuration
+## Develop
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm ci
+npm run dev        # http://localhost:5173, backend expected on http://localhost:8000
+npm run build      # type check + production build
+npm run lint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+| Variable | Default | Meaning |
+|---|---|---|
+| `VITE_API_URL` | `http://localhost:8000/api/v1` | Backend base URL |
+| `VITE_USE_MOCK` | `false` | `true` uses the mock service (same interface, no backend needed) |
