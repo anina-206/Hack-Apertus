@@ -19,7 +19,8 @@ _THIRD_PERSON = {
 for _patterns in (_FORMAL, _THIRD_PERSON):
     _patterns["gsw"] = _patterns["de"]
 
-_MOJIBAKE = re.compile(r"[ÃÂ][\u0080-¿]")
+# "Ã©" for "é", or an escape the parser left in the text ("r\\u00e9ponses")
+_MOJIBAKE = re.compile(r"[ÃÂ][\u0080-¿]|\\u[0-9a-fA-F]{4}")
 
 
 def report_texts(report: dict) -> list[str]:

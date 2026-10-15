@@ -249,6 +249,18 @@ def test_report_drops_evidence_that_was_not_said(fake, api):
     assert all(c["evidence"] == "" for c in report["criteria"])
 
 
+def test_a_report_that_breaks_off_is_asked_once_more(fake, api):
+    # bench_transcripts T-12: the model repeated one word until the token limit, so 8 comments were lost
+    broken = json.dumps({"criteria": {"clarity": {"comment": "Kommentar clarity.", "evidence": ""}},
+                         "strengths": ["pürfekt " * 20]})
+    client = fake(report_outputs=[broken, report_json()])
+    session = start(api)
+    finish(api, session)
+    report = api.get(f"/api/v1/sessions/{session['session_id']}/report").json()
+    assert client.calls.count("report") == 2
+    assert all(c["comment"] for c in report["criteria"] if c["score"] is not None)
+
+
 def test_report_failure_returns_502_and_is_not_cached(fake, api):
     fake(report_outputs=["kaputt"] * MAX_JSON_ATTEMPTS)
     session = start(api)
@@ -894,6 +906,17 @@ def test_a_question_asked_before_is_replaced_by_a_new_one(fake, api):
     body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
     assert body["question"]["text"] == "Was machst du in deiner Freizeit?"
     assert 'You already asked "wie arbeitest du im team?"' in client.last_interviewer_system
+
+
+def test_an_english_reply_is_written_again_in_the_interview_language(fake, api):
+    # bench_interviews S-06: "That makes sense, Jana. ... How do you think these experiences might help you?"
+    client = fake(interviewer_outputs=["Frage 1?", "That makes sense. How do you think this would help you?",
+                                       "Das verstehe ich. Wie hilft dir das in der Lehre?"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Das verstehe ich. Wie hilft dir das in der Lehre?"
+    assert "never in English" in client.last_interviewer_system
+    assert body["meta"]["llm_calls"] == 3
 
 
 def test_an_imperative_question_needs_no_second_call(fake, api):

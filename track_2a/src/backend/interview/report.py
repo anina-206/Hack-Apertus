@@ -92,6 +92,21 @@ def _in_third_person(draft: ReportDraft) -> bool:
     return any(_THIRD_PERSON.search(text) for text in _texts(draft) if text)
 
 
+# From this many criteria without a comment the report is asked once more (it is the only call at the end,
+# so the limit of calls per answer is not touched).
+MANY_MISSING = 3
+
+
+def _missing_comments(draft: ReportDraft, scores: dict) -> list[str]:
+    """Observed criteria without a comment, after reading lost ones from the raw text of the last call."""
+    missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
+    if missing:  # read them from the raw text, where the JSON repair lost them
+        rescued = parsing.criteria_from_raw(parsing.last_raw)
+        draft.criteria.update({key: rescued[key] for key in missing if key in rescued})
+        missing = [key for key in missing if key not in rescued]
+    return missing
+
+
 def final_scores(state: dict) -> tuple[dict[str, int], dict[str, float]]:
     """Score per observed criterion (rounded mean, 1-4) and the unrounded means (for ranking).
 
@@ -124,7 +139,9 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
                                state["language"], scores, analyses, transcript, config.posting_for(state))
     draft: Optional[ReportDraft]
     def ask():
-        return complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500)
+        # frequency_penalty: the model sometimes repeated one word until the token limit ("pürfekt pürfekt ...")
+        return complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500,
+                             frequency_penalty=0.3)
 
     draft, _, error = await ask()
     if draft is None:
@@ -135,11 +152,12 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
         if retry is not None and not _in_third_person(retry):
             draft = retry
 
-    missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
-    if missing:  # read them from the raw text, where the JSON repair lost them
-        rescued = parsing.criteria_from_raw(parsing.last_raw)
-        draft.criteria.update({key: rescued[key] for key in missing if key in rescued})
-        missing = [key for key in missing if key not in rescued]
+    missing = _missing_comments(draft, scores)
+    if len(missing) >= MANY_MISSING:  # the output broke off (repetition loop): one more try, keep the better one
+        retry, _, _ = await ask()
+        retry_missing = _missing_comments(retry, scores) if retry is not None else missing
+        if len(retry_missing) < len(missing):
+            draft, missing = retry, retry_missing
     if missing:
         # With the raw output, to see whether the model left them out or the parser lost them
         logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing,

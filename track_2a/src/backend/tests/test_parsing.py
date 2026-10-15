@@ -169,3 +169,13 @@ def test_criteria_without_any_braces_are_read_from_the_raw_text():
         "clarity": "Verständlich.", "relevance": 'Passt zur "Logistik".', "initiative": "Du hast eine Frage gestellt."}
     assert notes["clarity"].evidence == "Ja, ich bin mit dem Bus gekommen."
     assert notes["initiative"].evidence == ""
+
+
+def test_escapes_written_twice_are_decoded():
+    # bench_transcripts T-08: the model escaped the backslash too, so "réponses" was shown as it is
+    raw = r'{"strengths": ["Tes r\\u00e9ponses \\u00e9taient claires."], "criteria": {"clarity": ' \
+          r'{"comment": "Tu as expliqu\\u00e9 ton stage.", "evidence": "J\'ai organis\\u00e9 le stand"}}}'
+    draft = parse_json(raw, ReportDraft)
+    assert draft.strengths == ["Tes réponses étaient claires."]
+    assert draft.criteria["clarity"].comment == "Tu as expliqué ton stage."
+    assert draft.criteria["clarity"].evidence == "J'ai organisé le stand"

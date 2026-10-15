@@ -305,6 +305,21 @@ def _loads(candidate: str):
         return None
 
 
+# The model sometimes writes "r\\\\u00e9ponses" (backslash escaped twice), so the text kept a literal "\\u00e9"
+# instead of "é" (bench_transcripts: French reports showed "r\\u00e9ponses" and their quotes were rejected).
+_LITERAL_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
+
+
+def _decode_escapes(value):
+    if isinstance(value, str):
+        return _LITERAL_ESCAPE.sub(lambda m: chr(int(m[1], 16)), value)
+    if isinstance(value, list):
+        return [_decode_escapes(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _decode_escapes(v) for k, v in value.items()}
+    return value
+
+
 def parse_json(text: str, model: type[M]) -> M:
     last_error = "no JSON object found"
     text = text or ""
@@ -314,7 +329,7 @@ def parse_json(text: str, model: type[M]) -> M:
     # Only if that fails, read them as JSON quotes (some outputs use “key”: “value”).
     variants = [text] + ([text.replace("“", '"').replace("”", '"')] if "“" in text or "”" in text else [])
     for candidate in (c for variant in variants for c in _candidates(variant)):
-        data = _loads(candidate)
+        data = _decode_escapes(_loads(candidate))
         if not isinstance(data, dict):
             last_error = "invalid JSON syntax"
             continue
@@ -330,7 +345,8 @@ def parse_analysis(text: str) -> Analysis:
 
 
 async def complete_json(messages: list[dict], model: type[M], purpose: str,
-                        temperature: float = 0.2, max_tokens: int | None = None) -> tuple[M | None, int, str | None]:
+                        temperature: float = 0.2, max_tokens: int | None = None,
+                        **kwargs) -> tuple[M | None, int, str | None]:
     """Call the LLM until its output parses as `model`, at most MAX_JSON_ATTEMPTS calls.
 
     Returns (result or None, attempts used, last error).
@@ -351,6 +367,7 @@ async def complete_json(messages: list[dict], model: type[M], purpose: str,
             purpose=purpose if attempt == 1 else f"{purpose}_retry",
             temperature=temperature if attempt == 1 else 0.0,
             **({"max_tokens": max_tokens} if max_tokens else {}),
+            **kwargs,
         )
         last_raw = raw or ""
         try:
