@@ -139,9 +139,9 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
                                state["language"], scores, analyses, transcript, config.posting_for(state))
     draft: Optional[ReportDraft]
     def ask():
-        # frequency_penalty: the model sometimes repeated one word until the token limit ("pürfekt pürfekt ...")
-        return complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500,
-                             frequency_penalty=0.3)
+        # No frequency_penalty here: it also penalises the JSON keys and the quotes, which repeat by design
+        # (bench_transcripts with 0.3: quotes dropped from 75 % to 33 %, "Nächstes Mal" turned into "Nechtest").
+        return complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500)
 
     draft, _, error = await ask()
     if draft is None:

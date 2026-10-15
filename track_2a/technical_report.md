@@ -199,8 +199,9 @@ shows how the measurements drove the fixes of the last day ("JSON fixes": the pa
 By language (last run), MAE of the final scores: de 0.85, fr 0.72, it 0.70, Swiss German 1.23. The scores did
 not change with the report fixes (they are computed in code); the model is stricter than the reference (bias
 -0.74) and weakest on dialect. The remaining empty comments came from two reports where the model repeated one
-word until the token limit ("pürfekt pürfekt ..."); such a report is now asked once more, with a frequency
-penalty. The run also showed French texts with a literal `\u00e9` instead of "é" (the model escaped the
+word until the token limit ("pürfekt pürfekt ..."); such a report is now asked once more. (A frequency penalty
+against the loop made things worse: it also penalises the JSON keys and quotes, which repeat by design, and the
+share of quoted comments fell from 75 % to 33 %.) The run also showed French texts with a literal `\u00e9` instead of "é" (the model escaped the
 backslash twice); the parser now decodes these, and the mojibake check counts them. More "Sie"/third person
 hits come mostly from the word "man" in the longer, step-by-step tips.
 
@@ -246,7 +247,7 @@ answer and give one small next step.
 
 **What is already verified without Apertus:**
 
-- 264 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails,
+- 270 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails,
   JSON repair, the report, the Agent Protocol graph, accounts, the application letter, Mundart, and the voice
   endpoints.
 - The call budget follows from the code (section 3) and is logged per answer in every real run.
