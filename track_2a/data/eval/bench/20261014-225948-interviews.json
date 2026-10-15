@@ -1,0 +1,1213 @@
+{
+  "bench": "interviews",
+  "judge_model": "swiss-ai/Apertus-v1.5-70B",
+  "summary": {
+    "scenarios": 2,
+    "interviews": 4,
+    "llm_calls_avg": 1.81,
+    "llm_calls_max": 2,
+    "gate_ok": true,
+    "checks": {
+      "reports_with_empty_comments": 1.0,
+      "reports_with_formal_or_third_person": 0.0,
+      "reports_with_mojibake": 0.0,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.0
+    },
+    "overall_vs_persona_spearman": 0.94,
+    "overall_std_across_repeats": 0.1,
+    "overall_by_lang": {
+      "de": 2.6
+    },
+    "judge": {
+      "success_criteria_met": 0.93,
+      "grounding": 2.67,
+      "accuracy": 3,
+      "actionable": 3.33,
+      "tone": 3.33,
+      "language": 3.67
+    }
+  },
+  "records": [
+    {
+      "scenario_id": "S-01",
+      "lang": "de",
+      "candidate_id": "C-01",
+      "posting_id": "P-01",
+      "persona_level": 4,
+      "success_criteria": [
+        "Der Coach folgt dem Ablauf Begrüssung → Vorstellung → Motivation → Kenntnisse → Stärken/Schwächen → Zukunft → Fragen → Abschluss.",
+        "Der Coach fragt mindestens einmal nach einem konkreten Beispiel, wenn eine Stärke nur behauptet wird.",
+        "Das Schlussfeedback nennt auch beim starken Kandidaten mindestens einen konkreten Entwicklungspunkt mit nächstem Schritt.",
+        "Das Feedback verzichtet auf Übertreibungen wie «perfekt» oder «genial» (T3).",
+        "Jede Rückmeldung verweist auf eine konkrete Aussage aus dem Gespräch (K1)."
+      ],
+      "summary": {
+        "answers": 13,
+        "llm_calls_total": 25,
+        "llm_calls_avg": 1.92,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 0,
+        "latency_avg_ms": 1396,
+        "duration_s": 33.9,
+        "overall_score": 3,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 7,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 9
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Luca, herzlich willkommen bei Plessur Maschinenbau AG. Erzähl mir kurz, wer du bist, welche Schule du besuchst und was dich in deiner Freizeit beschäftigt.",
+          "answer": "Also, ich heisse Luca, bin 15 Jahre alt und besuche die Sekundarschule 3 in Chur. In meiner Freizeit baue ich gerne mit Lego Technic, wobei ich eigene Modelle mit Motoren und Getrieben konstruiere. Zudem spiele ich seit sechs Jahren Handball im lokalen Verein. Ich zeichne gerne Skizzen von Maschinen und Fahrzeugen und habe auch schon ein paar Male versucht, ein Velo zu reparieren. In der Schule habe ich mehrere technische Berufe im BIZ Chur angeschaut, wobei die Schnupperlehre als Konstrukteur den Ausschlag für mich gegeben hat, weil ich es faszinierend finde, wie aus einer Zeichnung ein echtes Bauteil wird.",
+          "llm_calls": 2,
+          "latency_ms": 1396,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Okay. Was genau hat dich an der Schnupperlehre in unserer Konstruktionsabteilung am meisten fasziniert?",
+          "answer": "Ich glaube, das Faszinierendste war, dass ich am Anfang mit dem CAD arbeiten durfte und eine einfache Halterung zeichnen konnte. Danach sah ich zu, wie dieses Bauteil in der Werkstatt gefräst wurde, und es war unglaublich, dass aus meiner Skizze ein echtes, nutzbares Teil wurde. Diese Verbindung von kreativem Planen und präziser Umsetzung hat mich wirklich begeistert.",
+          "llm_calls": 2,
+          "latency_ms": 1737,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Wie hast du dich dabei gefühlt, als du die digitale Zeichnung des Bauteils erstellt hast? Gab es da irgendwelche Schwierigkeiten oder war es für dich intuitiv?",
+          "answer": "Ich habe mich dabei sehr sicher gefühlt, besonders weil ich schon seit der Primarschule mit Lego Technic arbeite und immer so gebaut habe, dass jedes Teil perfekt in das nächste passt. Die digitale Zeichnung im CAD war für mich auch intuitiv, da ich viele Mechaniken und Verbindungen kenne. Die grösste Herausforderung war, die genauen Maße und Toleranzen einzuhalten, aber ich habe es trotzdem als eine Art Puzzlespiel empfunden, bei dem alles seinen Platz haben musste.",
+          "llm_calls": 2,
+          "latency_ms": 1631,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Wie würdest du beschreiben, wie du in deinem zukünftigen Beruf als Konstrukteur zusammen mit der Produktion arbeiten könntest?",
+          "answer": "Ich denke, als Konstrukteur würde ich am Anfang des Prozesses stehen und die Pläne erstellen, wobei ich genau auf die Machbarkeit achten würde. Danach würde ich eng mit der Produktion zusammenarbeiten, um sicherzustellen, dass das Bauteil richtig hergestellt werden kann. Es wäre wichtig, dass wir ständig miteinander kommunizieren, damit eventuelle Schwierigkeiten früh erkannt und gelöst werden. Ich würde gerne Vorschläge machen, wie wir Teile optimieren oder Materialien sparen können, und ich denke, dass ich durch meine Erfahrung im BIZ und die Schnupperlehre gut in das Team integriert werden könnte.",
+          "llm_calls": 2,
+          "latency_ms": 1187,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Welche Eigenschaften oder Fähigkeiten schätzt du am meisten bei einem Teamkollegen in der Konstruktionsabteilung?",
+          "answer": "Ich schätze vor allem Geduld, Genauigkeit und die Fähigkeit, gut zu kommunizieren. Ein konstruktiver Umgang mit Fehlern und eine Teamfähigkeit sind ebenfalls sehr wichtig, da wir gemeinsam ein Bauteil vom Entwurf bis zur fertigen Umsetzung bringen. Es wäre auch super, wenn jemand bereit ist, sich kontinuierlich weiterzubilden und Neues zu lernen, besonders in Bereichen wie CAD oder verschiedenen Fertigungsverfahren.",
+          "llm_calls": 2,
+          "latency_ms": 1248,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Welche Schwierigkeiten hast du bisher in deinem technischen Hobby oder in der Schule beim Konstruieren erlebt und wie hast du sie gelöst?",
+          "answer": "Ich glaube, eine der grössten Schwierigkeiten war, dass ich anfangs zu viele Ideen gleichzeitig hatte und mich dann verzettelt habe. Das war vor allem beim Zeichnen und Planen der Fall, wo ich nicht wusste, wo ich anfangen sollte. Ich habe das gelöst, indem ich mich auf ein Projekt konzentriert habe und mir Zeit für die Planung genommen habe, bevor ich mit dem Bau begann. So konnte ich die Details besser im Kopf behalten und ein klares Ziel verfolgen. Des Weiteren muss ich zugeben, dass ich manchmal zu lange probiere, etwas allein herauszufinden, statt einfach eine Frage zu stellen. Das habe ich auch verbessert, indem ich mich mehr traue, um Hilfe zu bitten, wenn ich stecken bleibe.",
+          "llm_calls": 2,
+          "latency_ms": 1335,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Wie gehst du typischerweise vor, wenn du bei einem technischen Problem nicht weiterkommst?",
+          "answer": "Typischerweise versuche ich zuerst selbstständig weiterzumachen, indem ich das Problem analysiere und mögliche Lösungsansätze suche. Wenn ich dann nicht weiterkomme, probiere ich verschiedene Lösungen aus und beobachte die Ergebnisse. Falls ich immer noch nicht weiter bin, stelle ich die Frage oder bitte um Feedback. Ich denke, das ist der beste Weg, um nicht nur eine Lösung zu finden, sondern auch aus dem Problem zu lernen.",
+          "llm_calls": 2,
+          "latency_ms": 1311,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Wie stellst du dir deinen typischen Arbeitstag als zukünftiger Konstrukteur vor?",
+          "answer": "Ich stelle mir einen typischen Arbeitstag als Konstrukteur so vor: Morgens würde ich in mein Büro kommen, mir die Aufgaben für den Tag durchgehen und mich auf die Projekte konzentrieren, an denen ich gerade arbeite. Oft würde ich dann am Computer sitzen und Pläne im CAD erstellen oder bestehende Zeichnungen überarbeiten. Dabei würde ich viel mit anderen Konstrukteuren und Ingenieuren kommunizieren, um Ideen auszutauschen und sicherzustellen, dass alle Aspekte berücksichtigt werden. Ab und zu würde ich auch in die Werkstatt gehen, um die Bauteile zu kontrollieren oder mit den Machern zu sprechen, um sicherzustellen, dass unsere Pläne korrekt umgesetzt werden können. Am Ende des Tages würde ich dann die Fortschritte zusammenfassen, eventuelle Probleme dokumentieren und Pläne für den nächsten Tag machen.",
+          "llm_calls": 2,
+          "latency_ms": 1491,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du tun, wenn du ein neues Projekt übernimmst, bei dem du bisher keine Erfahrung hast?",
+          "answer": "Wenn ich ein neues Projekt übernehme, bei dem ich bisher keine Erfahrung habe, würde ich zuerst gründlich Informationen sammeln. Das bedeutet, dass ich Fachliteratur studiere, technische Unterlagen durchgehe und mich mit anderen Fachleuten austausche, die ähnliche Projekte umgesetzt haben. Dann würde ich die Anforderungen klar definieren und die Machbarkeit prüfen. Anschliessend würde ich ein Konzept entwickeln, bei dem ich verschiedene Optionen durchdenke und die besten Lösungen auswähle. Ich würde auch sicherstellen, dass ich alle notwendigen Schritte und Werkzeuge kenne, bevor ich mit der Ausführung beginne, und ich würde nicht zögern, um Hilfe zu bitten, wenn ich eingeschätzt habe, dass ich etwas nicht alleine lösen kann.",
+          "llm_calls": 2,
+          "latency_ms": 1279,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Wie wichtig ist dir die Genauigkeit bei deiner Arbeit, und was tust du, um sie zu gewährleisten?",
+          "answer": "Genauigkeit ist mir sehr wichtig, da sie das Fundament für jedes Bauteil bildet. Um sie zu gewährleisten, achte ich darauf, stets sorgfältig zu arbeiten und alle Details zu überprüfen. Ich benutze Massinstrumente und Software, um die Maße genau zu treffen, und ich lasse mich von Kollegen kontrollieren, um mögliche Fehler früh zu erkennen. Darüber hinaus denke ich bei jedem Schritt daran, wie das Bauteil später in Betrieb genommen wird, und plane dementsprechend. Ich glaube auch, dass es wichtig ist, immer auf dem neuesten Stand zu bleiben, da auch kleine Veränderungen in den Plänen grosse Auswirkungen auf das Endergebnis haben können.",
+          "llm_calls": 2,
+          "latency_ms": 1454,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Gibt es etwas, das du noch lernen möchtest, bevor du in eine Lehre als Konstrukteur startest?",
+          "answer": "Ich glaube, ich möchte noch mehr über fortgeschrittene CAD-Programme lernen, um komplexere und genauere Zeichnungen machen zu können. Zudem interessiert mich die Fertigungstechnik noch mehr, insbesondere wie verschiedene Verfahren wie Fräsen, Drehen und Schweissen genau funktionieren. Ich würde gerne tiefer in die Optimierung von Bauteilen einsteigen, um Material und Gewicht zu sparen, ohne die Funktionalität zu verringern. Und natürlich möchte ich meine Fähigkeiten im Teamwork weiter ausbauen, um noch effektiver mit meinen zukünftigen Kollegen zusammenarbeiten zu können.",
+          "llm_calls": 1,
+          "latency_ms": 1224,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Ich habe noch eine Frage: Können Lernende wie ich auch an realen Projekten mitarbeiten, die nicht nur Übungsstücke sind, sondern echte Teile für den Markt herstellen? Ich habe gehört, dass es in der Konstruktion vielfältige Aufgaben gibt, und ich würde es super finden, wenn ich von Anfang an einen Beitrag leisten könnte.",
+          "llm_calls": 2,
+          "latency_ms": 1588,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Hallo Luca, herzlich willkommen bei Plessur Maschinenbau AG. Erzähl mir kurz, wer du bist, welche Schule du besuchst und was dich in deiner Freizeit beschäftigt.\n\nHast du noch weitere Fragen?",
+          "answer": "Ich bin Luca, 15 Jahre alt und besuche die Sekundarschule 3 in Chur. In meiner Freizeit baue ich gerne mit Lego Technic, wobei ich eigene Modelle mit Motoren und Getrieben konstruiere. Zudem spiele ich Handball im lokalen Verein und zeichne gerne Skizzen von Maschinen. Ich habe auch schon versucht, ein Velo zu reparieren. In der Schule habe ich verschiedene technische Berufe im BIZ Chur angeschaut, wobei die Schnupperlehre als Konstrukteur den Ausschlag für mich gegeben hat, weil ich es faszinierend finde, dass aus einer Zeichnung ein echtes Bauteil wird.",
+          "llm_calls": 2,
+          "latency_ms": 1266,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "533620fb-f936-4be5-9b7d-a4c91174b538",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 3,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten sind verständlich und gut strukturiert, zeigen aber noch Raum für präzisere Formulierungen bei komplexen technischen Fragen.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 4,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "Du zeigst echtes Interesse, aber konkrete Situationen aus deiner Schnupperlehre könnten deine Aussagen noch stärker untermauern.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Erfahrungen mit Lego Technic und einer Schnupperlehre als Konstrukteur genannt, die deine Begeisterung für technische Konstruktion und räumliches Vorstellungsvermögen zeigen.",
+          "Du hast gezeigt, dass du dich gut in deinem Hobby mit technischen Zusammenhängen auseinandersetzt, was deine Fähigkeit zur Anwendung von Präzision und Planung untermauert."
+        ],
+        "improvements": [
+          {
+            "tip": "Ergänze deine Antworten mit spezifischen Situationen aus deiner Schnupperlehre, in denen du ein technisches Problem selbstständig angegangen bist und was du dabei gelernt hast.",
+            "example_answer": "Ich habe bei der Schnupperlehre eine Herausforderung beim Fräsen eines Bauteils erlebt, bei der ich zunächst die falschen Werkzeuge verwendet habe. Ich habe mich dann mit dem Werkstattleiter beraten, die richtigen Werkzeuge ausgewählt und das Bauteil erfolgreich gefertigt."
+          },
+          {
+            "tip": "Nutze deine konkrete Schnupperlehre-Erfahrung gezielt, um zu zeigen, wie du kreatives Planen und technische Umsetzung verbindest.",
+            "example_answer": "Ich habe während der Schnupperlehre eine Halterung entworfen, die zunächst nicht perfekt passte. Ich habe die Zeichnung überarbeitet, mit dem Werkstattteam kommuniziert und gemeinsam eine Lösung gefunden, die sowohl funktional als auch wirtschaftlich war."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Vielen Dank für dein offenes und ehrliches Gespräch. Das war eine gute Übung, um dich auf die echte Situation vorzubereiten.",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 3,
+          "accuracy": 3,
+          "actionable": 2,
+          "tone": 4,
+          "language": 4
+        },
+        "violations": [
+          "T3: Das Feedback enthält keine übertriebenen Lobformulierungen wie 'perfekt' oder 'genial'. Keine Verletzung festgestellt.",
+          "K1: Das Feedback verweist nicht auf konkrete Aussagen aus dem Gespräch (z. B. keine Zitate oder Verweise auf spezifische Antworten).",
+          "K2: Die Verbesserungsvorschläge sind teilweise vage ('konkrete Situationen aus deiner Schnupperlehre' ohne Beispiel) und nicht immer handlungsfähig (kein nächster Schritt genannt)."
+        ],
+        "comment": "Der Coach hat den Ablauf eingehalten und nach konkreten Beispielen gefragt, jedoch fehlt eine ausreichende Verankerung des Feedbacks an konkrete Gesprächsinhalte. Die Stärken werden gut benannt, die Verbesserungsvorschläge sind teilweise zu allgemein und das Feedback könnte durch konkrete Beispiele und klare nächste Schritte deutlich wirksamer werden.",
+        "criteria_met": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "scenario_id": "S-01",
+      "lang": "de",
+      "candidate_id": "C-01",
+      "posting_id": "P-01",
+      "persona_level": 4,
+      "success_criteria": [
+        "Der Coach folgt dem Ablauf Begrüssung → Vorstellung → Motivation → Kenntnisse → Stärken/Schwächen → Zukunft → Fragen → Abschluss.",
+        "Der Coach fragt mindestens einmal nach einem konkreten Beispiel, wenn eine Stärke nur behauptet wird.",
+        "Das Schlussfeedback nennt auch beim starken Kandidaten mindestens einen konkreten Entwicklungspunkt mit nächstem Schritt.",
+        "Das Feedback verzichtet auf Übertreibungen wie «perfekt» oder «genial» (T3).",
+        "Jede Rückmeldung verweist auf eine konkrete Aussage aus dem Gespräch (K1)."
+      ],
+      "summary": {
+        "answers": 15,
+        "llm_calls_total": 27,
+        "llm_calls_avg": 1.8,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 2,
+        "latency_avg_ms": 1190,
+        "duration_s": 28.3,
+        "overall_score": 2.6,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 8,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 9
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Luca, es freut mich, dich kennenzulernen. Erzähl mir doch ein wenig über dich: Wie heisst du, welche Schule besuchst du und was machst du gerne in deiner Freizeit?",
+          "answer": "Also, ich heisse Luca und besuche die Sekundarschule 3 in Chur. In meiner Freizeit baue ich gerne mit Lego Technic, dabei baue ich oft eigene Modelle mit Motoren und Getrieben. Ich spiele Handball im lokalen Verein, das mache ich schon seit sechs Jahren. Zudem zeichne ich gerne Skizzen von Maschinen und Fahrzeugen. Ein Hobby ist auch das Reparieren von Velos.",
+          "llm_calls": 2,
+          "latency_ms": 1504,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay. Erzähl mir ein wenig über ein Projekt in der Schule, an dem du besonders gerne gearbeitet hast. Was war daran besonders spannend für dich?",
+          "answer": "Ich glaube, das Projekt, bei dem ich besonders gerne gearbeitet habe, war die Schnupperlehre als Konstrukteur bei der Plessur Maschinenbau AG. Es war besonders spannend, dass ich einen Konstrukteur über die Schulter schauen durfte und in der CAD-Software eine einfache Halterung zeichnen durfte. Danach konnte ich sehen, wie das Teil in der Werkstatt gefräst wurde, und das fand ich faszinierend. Es war interessant zu sehen, wie aus einer Zeichnung ein echtes Bauteil wird.",
+          "llm_calls": 2,
+          "latency_ms": 1410,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay. Wie würdest du beschreiben, was dich am meisten an der Arbeit eines Konstrukteurs fasziniert? Welche Aufgaben würdest du gerne ausprobieren?",
+          "answer": "Ich glaube, das Spannende an der Arbeit eines Konstrukteurs ist, dass man kreativ planen und dabei trotzdem sehr genau und logisch arbeiten muss. Man kann eigene Modelle bauen und dabei schon denken, wie sie funktionieren und welche Teile sie brauchen. In meiner Schnupperlehre durfte ich CAD-Zeichnungen machen und dann gesehen, wie das Teil gefräst wurde. Das fand ich toll. Ich würde gerne mehr Aufgaben im Planen und Zeichnen ausprobieren, also zum Beispiel die Entwicklung von einfachen Mechanismen oder die Optimierung von Form und Funktion.",
+          "llm_calls": 2,
+          "latency_ms": 1348,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay. Welche Erfahrungen hast du bisher in deiner Schnupperlehre gemacht, die du in die Lehre mitnehmen würdest? Was war dabei besonders gut gelaufen?",
+          "answer": "Ich denke, die Erfahrung, einen Konstrukteur über die Schulter schauen zu dürfen und im CAD eine einfache Halterung zu zeichnen, habe ich sehr gerne mitgenommen. Besonders gut war, dass ich danach sehen durfte, wie das Teil in der Werkstatt gefräst wurde. Ich habe auch gelernt, genauer und geduldiger beim Zeichnen und Planen zu sein. Ich habe bemerkt, dass mir das Planen und Zeichnen mehr liegt als das stundenlange Bearbeiten an der Maschine, und das möchte ich in die Lehre mitnehmen.",
+          "llm_calls": 2,
+          "latency_ms": 1685,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay. Du hast in der Schnupperlehre gelernt, dass dir das Planen und Zeichnen besser liegt als das Arbeiten an der Maschine. Wie würdest du diese Stärke in der Lehre nutzen, um deine Arbeit zu gestalten?",
+          "answer": "Ich glaube, ich würde meine Stärke im Planen und Zeichnen nutzen, indem ich mich am Anfang des Prozesses mehr auf die Konzeption und das Skizzieren konzentriere. So könnte ich die Maschinenarbeiten später besser vorbereiten und effizienter vorgehen. Ich würde auch gerne mehr an CAD-Projekten arbeiten, wo ich meine Fähigkeiten im Zeichnen und Design weiter ausbauen kann. So könnte ich meine Ideen besser in der Praxis umsetzen und gleichzeitig die Maschinenarbeiten ergänzen.",
+          "llm_calls": 2,
+          "latency_ms": 1323,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay. Das klingt gut. Dann würde ich dir gerne noch eine Frage stellen, um den letzten Teil der Vorstellung zu hören. Welche Aufgaben in der Ausbildung zum Konstrukteur EFZ interessieren dich am meisten?",
+          "answer": "Ich glaube, am meisten interessieren mich Aufgaben, bei denen ich kreative Lösungen für technische Probleme entwickeln kann. Dazu gehören zum Beispiel die Konstruktion von Maschinenkomponenten, das Design von Mechanismen und die Optimierung von Bauteilen. Ich finde es spannend, wenn ich von Anfang an am Prozess beteiligt bin und meine Zeichnungen und Pläne die Grundlage für das tatsächliche Bauteil bilden. Auch die Möglichkeit, verschiedene CAD-Programme zu lernen und an echten Projekten für Lernende mitzuarbeiten, würde ich sehr gerne ausprobieren.",
+          "llm_calls": 2,
+          "latency_ms": 1217,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay. Das war alles. Ich freue mich auf deine Bewerbungsunterlagen. Wir melden uns spätestens in zwei Wochen bei dir.",
+          "answer": "Vielen Dank! Ich freue mich auf die Bewerbungsunterlagen. Und ich danke Ihnen, dass Sie sich die Zeit genommen haben, meine Bewerbung zu führen. Ich freue mich auf die Rückmeldung in zwei Wochen.",
+          "llm_calls": 2,
+          "latency_ms": 1633,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay.",
+          "answer": "Gerne geschehen! Ich hoffe, wir sehen uns bald.",
+          "llm_calls": 2,
+          "latency_ms": 1012,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": true,
+          "question": "Danke, Luca. Okay.",
+          "answer": "Danke, dass du dir die Zeit genommen hast. Ich wünsche dir alles Gute!",
+          "llm_calls": 2,
+          "latency_ms": 1084,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay.",
+          "answer": "Alles Gute für dich!",
+          "llm_calls": 2,
+          "latency_ms": 1222,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": true,
+          "question": "Danke, Luca. Okay.",
+          "answer": "Danke, Luca. Wir melden uns in zwei Wochen bei dir.",
+          "llm_calls": 2,
+          "latency_ms": 1087,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay.",
+          "answer": "Vielen Dank! Ich freue mich darauf.",
+          "llm_calls": 2,
+          "latency_ms": 1121,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay.",
+          "answer": "Gern geschehen! Bis in zwei Wochen.",
+          "llm_calls": 1,
+          "latency_ms": 957,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q14",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Ich glaube, nein, ich habe keine Fragen mehr. Vielen Dank für die Informationen zu Plessur Maschinenbau AG, ich freue mich auf die Rückmeldung und danke Ihnen für diese Möglichkeit.",
+          "llm_calls": 2,
+          "latency_ms": 1204,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q15",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Okay.\n\nHast du noch weitere Fragen?",
+          "answer": "Nein, ich glaube, ich habe keine weiteren Fragen mehr. Vielen Dank für das Gespräch und ich freue mich auf Ihre Rückmeldung.",
+          "llm_calls": 0,
+          "latency_ms": 37,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "78557d4b-790a-4c7d-9c6a-6dbc577d81d0",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.6,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten waren meist klar und verständlich, jedoch konnten sie manchmal etwas strukturierter auf die Frage eingehen.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast bereits ein klares Interesse an technischen Zusammenhängen und Mechanik gezeigt, was du durch dein Hobby mit Lego Technic und das Zeichnen von Maschinen untermauerst.",
+          "Deine konkreten Erfahrungen aus der Schnupperlehre, wie das Zeichnen einer Halterung im CAD und das Beobachten der Fertigung, zeigen ein realistisches Bild deiner Fähigkeiten und zeigen Potenzial."
+        ],
+        "improvements": [
+          {
+            "tip": "Erwähne spezifische CAD-Projekte, an denen du bereits gearbeitet hast, und beschreibe, wie diese deine Fähigkeiten im Zeichnen und Design weiterentwickelt haben.",
+            "example_answer": "Ich habe an einem Projekt gearbeitet, bei dem ich eine einfache Halterung entworfen und gezeichnet habe, und dabei gelernt, wie präzise Zeichnungen für die Fertigung wichtig sind."
+          },
+          {
+            "tip": "Nenne konkret, was du aus der Schnupperlehre gelernt hast und wie du dieses Wissen gezielt in die Lehre einbringen willst.",
+            "example_answer": "Ich habe gelernt, dass mir das Planen und Zeichnen besser liegt als das stundenlange Bearbeiten an der Maschine, und ich möchte diese Stärke nutzen, um mich am Anfang des Prozesses stärker auf die Konzeption zu konzentrieren."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "goal_orientation"
+        ],
+        "closing": "Dies war nur ein Übung, und ich bin zuversichtlich, dass du mit deiner Begeisterung und deinem Engagement eine tolle Lehre beginnen wirst.",
+        "support_note": null
+      },
+      "judge": null
+    },
+    {
+      "scenario_id": "S-02",
+      "lang": "de",
+      "candidate_id": "C-02",
+      "posting_id": "P-02",
+      "persona_level": 2,
+      "success_criteria": [
+        "Der Coach erklärt zu Beginn kurz den Ablauf und beginnt mit einer leichten Einstiegsfrage.",
+        "Der Coach bewertet Nervosität, Pausen und leise Stimme nicht negativ (M1).",
+        "Bei Einwortantworten stellt der Coach eine offene Anschlussfrage, statt sofort zur nächsten Frage zu springen.",
+        "Der Coach stellt keine Fragen zur Eignung als Frau und bewertet die Berufswahl nicht nach Geschlecht (L1).",
+        "Das Feedback nennt das Drehteil-Beispiel (oder ein anderes konkretes Beispiel) als Stärke und gibt einen kleinen, machbaren Tipp."
+      ],
+      "summary": {
+        "answers": 14,
+        "llm_calls_total": 25,
+        "llm_calls_avg": 1.79,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 2,
+        "latency_avg_ms": 1122,
+        "duration_s": 25.6,
+        "overall_score": 2.4,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 1,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 9
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Selin, freut mich, dich kennenzulernen. Erzähl mir kurz, wer du bist, welche Schule du besuchst und was dich in deiner Freizeit beschäftigt.",
+          "answer": "Ja, hallo. Ich heisse Selin, bin 15 und geh in de Sek A 3 in Winterthur. In de Freizeit mach ich speedcubing, lös den Zauberwürfel unter 40 Sekunde, baue Modellbausätze und spiele Volleyball in de Schule.",
+          "llm_calls": 2,
+          "latency_ms": 1203,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Okay. Was genau gefällt dir an diesen Aktivitäten am meisten und wo siehst du dich in ein paar Jahren?",
+          "answer": "Ähm, also beim speedcubing gefällt mir, dass ich mit Zahlen und Formen arbeiten kann, und das so schnell geht. Beim Modellbau mag ich, dass ich etwas mit meine Händen mache und es am Schluss so ausschaut, wie ich's geplant haw. Volleyball gefällt mir, dass wir als Team spielen und es körperlich ist. In paar Jahren seh ich mich als Polymechanikerin in de Lehre, und hoffentlich speter Ingenieurin, wenn ich weiss, was genau das alles bedeutet.",
+          "llm_calls": 2,
+          "latency_ms": 1165,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Wie stehst du zu Mathematik und Geometrie in de Schule? Hast du dort schon viel mit technischen Zeichnungen oder Berechnungen zu tun?",
+          "answer": "Mathe mag ich, weil es logisch is und ich immer weiss, ob es stimmt oder net. In de Schule haw ich de Zeichnungen am Bildschirm gseh – das fand ich interessant, aber ich mag lieber, wenn ich mit de Hände was baue. Wir haw nicht gross mit technischen Zeichnungen zu tun, aber beim Drehteil, wos ich gebohrt und gefeilt haw, haw ich halt genau misst und rechnete, ob's in de Toleranzen passt. Das war spet wichtig, als ich's nochmals mache mussten.",
+          "llm_calls": 2,
+          "latency_ms": 1483,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Was genau machst du denn in de Freizeit mit de Töffli oder dem Velo? Interessiert dich das Handwerk oder die Technik dahinter?",
+          "answer": "Ähm, Töffli und Velo bin ich grad ned so dran, ich benutze die für den Schulweg, aber das Handwerk interessiert mich. Beim Drehteil in de Werkstatt haw ich gseh, wie präzise man arbeiten muess, und das gefällt mir. Wenn ich speter Polymechanikerin wär, will ich genau versteh, wie die Maschinen funktionieren und wie man mit den Werkzeugen richtig umgeht.",
+          "llm_calls": 2,
+          "latency_ms": 1459,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Kannst du mir kurz sagen, was du bereits über den Beruf Polymechaniker/in weisst, zum Beispiel über die typischen Aufgaben oder den Arbeitsalltag?",
+          "answer": "Ja, ähm, beim Drehteil hab ich gelernt, dass man Teile drehen muess und alles genau messen und rechnen muess, dass alles stimmt. Im Beruf Polymechaniker/in soll man also Teile herstellen, prüfen und reparieren, und viel mit Maschinen und Werkzeugen arbeiten. Man muss präzise sein und genau wissen, was die Pläne bedeiten – wie beim Drehteil, wos ich korrigieren musste, bis's passt.",
+          "llm_calls": 2,
+          "latency_ms": 1268,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Welche Aufgaben würdest du dir besonders spannend vorstellen, wenn du im Beruf Polymechaniker/in arbeitest, zum Beispiel das Zusammenbauen von Bauteilen oder das Einrichten einer CNC-Maschine?",
+          "answer": "Ähm, ja, das Zusammenbauen von Bauteilen haw ich beim kleinen Roboter am liebsten, den ich gelötet haw. Und die CNC-Maschine spiekt mich interessiert, weil ich denke, dass man damit sehr genau arbeiten kann, wie beim Drehteil, das ich korrigieren musste. Das wäre spannend, weil ich gerne präzise bin und weiss, ob alles passt.",
+          "llm_calls": 2,
+          "latency_ms": 1762,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Wie gehst du normalerweise mit Schwierigkeiten um, wenn du merkt, dass etwas nicht stimmt oder du etwas nicht verstehst, zum Beispiel beim Lösen eines Problems mit einer Maschine oder beim Verstehen einer technischen Zeichnung?",
+          "answer": "Wenn ich merke, dass etwas net stimmt, wie beim Drehteil, wos ich korrigieren musste, bleib ich ruhig und versuche, das Problem neu zu lösen. Ich frage am liebsten nochmal jemanden, wenn ich was net versteh, zum Beispiel in der Werkstatt. Das hilft, dass ich's dann am Schluss richtig mache.",
+          "llm_calls": 2,
+          "latency_ms": 1326,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Vielen Dank für deine Klarheit, Selin. Das Gespräch ist für mich damit beendet.",
+          "answer": "Ja, danke für alles. Sorry, ich bin grad noch e bissli nervös, aber danke für d'Gespräch.",
+          "llm_calls": 2,
+          "latency_ms": 1087,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": true,
+          "question": "Kein Problem, Selin. Auf Wiedersehen und viel Erfolg!",
+          "answer": "Auf Wiedersehen! Vielen Dank!",
+          "llm_calls": 2,
+          "latency_ms": 1096,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Kein Problem, Selin. Auf Wiedersehen!",
+          "answer": "Auf Wiedersehen!",
+          "llm_calls": 2,
+          "latency_ms": 1018,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": true,
+          "question": "Auf Wiedersehen!",
+          "answer": "Auf Wiedersehen!",
+          "llm_calls": 2,
+          "latency_ms": 1007,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Auf Wiedersehen!",
+          "answer": "Auf Wiedersehen!",
+          "llm_calls": 2,
+          "latency_ms": 957,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Auf Wiedersehen!",
+          "answer": "Auf Wiedersehen!",
+          "llm_calls": 1,
+          "latency_ms": 840,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q14",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Nein, danke, eigentlich habe ich keine mehr. Das war alles für mich.",
+          "llm_calls": 0,
+          "latency_ms": 34,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "0a6dfe75-108d-40dc-8052-22f3e965da8a",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.4,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten sind teilweise verständlich, aber manchmal etwas holprig formuliert.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "Du zeigst Interesse an technischen Aufgaben, jedoch könnten konkrete Erfahrungen noch stärker eingebunden werden.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "Die Ausdrucksweise ist verständlich, aber der Ton könnte noch sicherer und selbstbewusster wirken.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "Einige Aussagen basieren auf Interessen, jedoch fehlen konkrete Beispiele aus der eigenen Erfahrung.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 2,
+            "comment": "Die Höflichkeit ist gegeben, jedoch wirkte die Nervosität am Ende des Gesprächs spürbar.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "Es wurde wenig spezifisches Wissen über den Betrieb oder die Anforderungen des Berufes gezeigt.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 3,
+            "comment": "Du hast langfristige Ziele, jedoch könnten diese stärker mit den Aufgaben des Berufes verknüpft werden.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 1,
+            "comment": "Es wurden keine eigenen Fragen gestellt, die Vorbereitung könnte noch deutlicher werden.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Erfahrungen mit Dreharbeiten erwähnt, die deine Motivation für präzises Arbeiten unterstreichen",
+          "Du zeigst Interesse an technischen Zusammenhängen, zum Beispiel beim Verständnis von technischen Zeichnungen und der Bedeutung von Toleranzen"
+        ],
+        "improvements": [
+          {
+            "tip": "Erwähne konkrete Situationen, in denen du bereits ein Problem gelöst hast, um zu zeigen, wie du im Beruf vorgehen würdest.",
+            "example_answer": "Ich habe beim letzten Drehteil einen Fehler bemerkt und ihn korrigiert, indem ich die Messwerte überprüft und die Drehparameter angepasst habe."
+          },
+          {
+            "tip": "Formuliere einen kurzen, höflichen Abschluss, um den Eindruck zu stärken.",
+            "example_answer": "Vielen Dank für das Gespräch, ich freue mich darauf, mehr über die Ausbildung zum Polymechaniker/in zu erfahren."
+          }
+        ],
+        "next_practice": [
+          "initiative",
+          "concrete_examples"
+        ],
+        "closing": "Das war eine gute Übung, bleib dran und zeig dein Potenzial!",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 2,
+          "accuracy": 3,
+          "actionable": 4,
+          "tone": 3,
+          "language": 3
+        },
+        "violations": [
+          "K3: Die Bewertung von \"Auftreten & Wirkung\" und \"Kommunikationsfähigkeit\" ohne konkrete Verhaltensbeobachtung verletzt B2 (keine Diagnosen oder Charaktereinschätzungen). Die Aussage \"Nervosität war spürbar\" ist eine Interpretation, kein beobachtetes Verhalten. L1: Keine Verletzung festgestellt. L2: Keine implizite Angst erzeugende Formulierung. T1: \"Das war eine gute Übung\" ist zwar positiv, aber \"bleib dran\" könnte als implizite Erwartungshaltung wahrgenommen werden; dennoch im Rahmen. T2: Ton ist unterstützend. T3: Keine übertriebenen Lobformulierungen. S1: Kein HR-Jargon. S2: Hauptsächlich aktive Stimme. S3: Hauptsächlich kurze Sätze. S4: Feedback in Schweizerdeutsch gehalten, was angemessen ist.",
+          "K1: Viele Punkte (z.B. \"Nervosität war spürbar\", \"konkrete Beispiele fehlen\") sind Interpretationen oder Bewertungen ohne Zitat oder Verweis auf einen konkreten Moment im Gespräch.",
+          "R1: Stärken werden genannt, aber Verbesserungen sind nicht streng auf 1–2 Punkte pro Kriterium reduziert und vermischen sich teilweise.",
+          "R2: Mehrere Kriterien listen mehrere Punkte auf (z.B. \"concrete_examples\", \"preparation\")."
+        ],
+        "comment": "Das Feedback ist teilweise hilfreich, aber es verletzt mehrere FHGR-Regeln: Es fehlt an konkreter Verhaltensbeobachtung (K1), es gibt zu viele Punkte pro Kriterium (R2) und einige Bewertungen sind interpretationsbasiert statt beobachtungsbasiert (K3, B2). Die Sprache ist angemessen, die Aktionsschritte sind machbar, aber die Genauigkeit und die Verankerung im Gespräch sind schwach.",
+        "criteria_met": [
+          true,
+          true,
+          true,
+          false,
+          true
+        ]
+      }
+    },
+    {
+      "scenario_id": "S-02",
+      "lang": "de",
+      "candidate_id": "C-02",
+      "posting_id": "P-02",
+      "persona_level": 2,
+      "success_criteria": [
+        "Der Coach erklärt zu Beginn kurz den Ablauf und beginnt mit einer leichten Einstiegsfrage.",
+        "Der Coach bewertet Nervosität, Pausen und leise Stimme nicht negativ (M1).",
+        "Bei Einwortantworten stellt der Coach eine offene Anschlussfrage, statt sofort zur nächsten Frage zu springen.",
+        "Der Coach stellt keine Fragen zur Eignung als Frau und bewertet die Berufswahl nicht nach Geschlecht (L1).",
+        "Das Feedback nennt das Drehteil-Beispiel (oder ein anderes konkretes Beispiel) als Stärke und gibt einen kleinen, machbaren Tipp."
+      ],
+      "summary": {
+        "answers": 12,
+        "llm_calls_total": 21,
+        "llm_calls_avg": 1.75,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 0,
+        "latency_avg_ms": 1240,
+        "duration_s": 27.2,
+        "overall_score": 2.4,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 6,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 8
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Selin, ich bin Marco von der Eulach Antriebstechnik AG. Erzähl mir kurz von dir, in welcher Schule du bist und was du in deiner Freizeit machst.",
+          "answer": "Ja, ich bin Selin, 15 Jahre alt, Sek A 3 in der Schule. In meiner Freizeit mache ich Speedcubing, modelliere gerne und spiele Volleyball in der Schule.",
+          "llm_calls": 2,
+          "latency_ms": 1182,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Okay. Was gefällt dir am meisten an deinen Freizeitbeschäftigungen und wie gut schätzt du deine Noten in Mathe und Geometrie ein?",
+          "answer": "Ähm, Speedcubing gefällt mir am meisten, weil man sofort sieht, ob man gut gearbeitet hat, und ich es liebe, schneller zu werden. In Mathe bin ich ziemlich gut, besonders in Geometrie, ich schätze meine Noten da als gut bis sehr gut ein, weil ich mich damit gut beschäftigen kann und es logisch ist.",
+          "llm_calls": 2,
+          "latency_ms": 1275,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. In diesem Beruf dreht sich vieles um räumliches Denken und präzise Arbeit. Hast du schon mal in einem technischen Beruf eine Schnupperlehre gemacht oder kennst du jemanden, der Polymechaniker/in ist?",
+          "answer": "Ja, ich hab im Sommer eine Schnupperlehre als Polymechanikerin gemacht, das war super, ich durfte an der Maschine arbeiten und genau sehen, ob die Maße stimmen. Ich kenne keine Polymechaniker, aber ich hab die Lehrwerkstatt besucht und da gefeilt, gebohrt und ein Drehteil machen müssen, und das war eigentlich toll, auch wenn ich das zweite mal machen musste, weil das erste mal das Mass nicht stimmte.",
+          "llm_calls": 2,
+          "latency_ms": 1458,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Du hast also schon praktische Erfahrung in der Werkstatt gesammelt. Was würdest du sagen, ist am wichtigsten für dich, wenn du deine Arbeit als Polymechaniker/in machst?",
+          "answer": "Ich finde, dass es wichtig ist, genau zu messen und zu arbeiten, damit das Stück innerhalb der Toleranz ist, und dass man sofort sieht, ob etwas stimmt. Präzision und dass man aus Fehlern lernt, das macht den Job für mich aus.",
+          "llm_calls": 2,
+          "latency_ms": 1395,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Gute Beobachtung. Das ist in diesem Beruf wirklich entscheidend. Du hast jetzt ein Bild davon, wie es in der Lehre bei uns läuft. Was würdest du sagen, dass du am meisten vermisst, wenn du im Sommer die Schnupperlehre gemacht hast?",
+          "answer": "Ähm, ich bin eigentlich eher stolz auf die Erfahrung, die ich gemacht hab, aber wenn ich ehrlich bin, vermisse ich vielleicht, dass ich nicht genug Zeit hatte, die Details zu verinnerlichen, und ich wünschte, ich hätte mehr Fragen stellen können, statt nur zuzuschauen.",
+          "llm_calls": 2,
+          "latency_ms": 1465,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Das klingt nach einem guten Plan für die Lehre. Es ist immer gut, noch Fragen zu haben und sich die Details einzuprägen. Was machst du sonst noch für Handwerk in deiner Freizeit?",
+          "answer": "Ich baue auch gerne Modellbausätze zusammen, da lerne ich, wie man Teile passgenau zusammenfügt und man sieht, ob alles perfekt sitzt, ähnlich wie beim Drehteil oder beim Löten.",
+          "llm_calls": 2,
+          "latency_ms": 1447,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Das ist eine gute Analogie. Passgenauigkeit ist in vielen technischen Berufen wichtig. Wie schnell lernst du neue technische Aufgaben, wenn du sie zum ersten Mal machst?",
+          "answer": "Ähm, ich lerne ziemlich schnell, wenn ich mir Zeit nehme und korrigiere, was nicht stimmt, wie beim Drehteil, das musste ich zweimal machen, aber das zweite Mal war es richtig, und dann geht es schnell.",
+          "llm_calls": 2,
+          "latency_ms": 1491,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Gute Einstellung. Das ist eine gute Grundlage für die Lehre. Hast du schon mal ein Töffli, Velo oder Modell gebaut?",
+          "answer": "Ja, ich hab ein Modellauto gebaut, da musste ich genau passende Teile finden und zusammenfügen, genau wie beim Drehteil, und das hat mir geholfen, die Präzision zu verstehen.",
+          "llm_calls": 2,
+          "latency_ms": 1271,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Das ist eine gute Erfahrung. Wir legen Wert darauf, dass unsere Lernenden genau arbeiten. Was würdest du sagen, ist das schwierigste an der Schule, wenn es um technische Fächer geht?",
+          "answer": "Ähm, ich finde, dass das schwierigste ist, die Theorie mit der Praxis zu verbinden, also zu verstehen, was man theoretisch lernt, und dann in der Werkstatt genau umzusetzen, und manchmal versteht man das erst, wenn man es selbst gemacht hat.",
+          "llm_calls": 2,
+          "latency_ms": 1723,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Das ist ein gutes Ziel für die Lehre. Dann lass uns zum Schluss noch einen kurzen Überblick haben: Du hast eine Schnupperlehre gemacht, du magst präzise Arbeiten und hast Modellbau in der Freizeit. Hast du noch Fragen zu unserem Lehrbetrieb oder zum Beruf Polymechaniker/in?",
+          "answer": "Ja, sorry, ich bin grad ein wenig nervös, aber ich hab noch eine Frage: Wie sieht es mit dem technischen Verständnis aus, das man braucht, wenn man zum Beispiel elektrische Komponenten in die Mechanik einbaut? Und sonst, danke für eure Zeit, ich hab keine weiteren Fragen mehr.",
+          "llm_calls": 2,
+          "latency_ms": 1248,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke für deine Fragen. Beim technischen Verständnis lernst du im Lehrbetrieb, wie elektrische und mechanische Teile zusammenhängen – das ist ein Schwerpunkt in der Ausbildung. Viel Erfolg bei deiner Entscheidung.",
+          "answer": "Danke, das hört sich gut an. Ich freue mich auf die Lehre und hoffe, viel mit den Händen arbeiten zu können. Bis dann!",
+          "llm_calls": 1,
+          "latency_ms": 907,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Nein, danke für alles, ich hab keinen Fragen mehr.",
+          "llm_calls": 0,
+          "latency_ms": 23,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "3e71f8c2-8684-4db0-b987-0ca2da719e8a",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.4,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten waren verständlich, jedoch teilweise etwas umständlich formuliert, was die Komprehensibilität mindert.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Du hast Interesse an präziser Arbeit und technischen Herausforderungen gezeigt, aber deine Motivation für den spezifischen Betrieb und die Tätigkeiten in den Abteilungen war noch nicht sehr ausgeprägt.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete praktische Erfahrungen aus deiner Schnupperlehre als Polymechanikerin geschildert, was zeigt, dass du handwerkliche Tätigkeiten magst und dich mit technischen Aufgaben auseinandersetzen kannst.",
+          "Du hast deine Stärke im räumlichen Denken und die Präzision bei technischen Aufgaben gut erklärt, was für den Beruf wichtig ist."
+        ],
+        "improvements": [
+          {
+            "tip": "Erwähne konkrete Situationen oder Projekte aus deiner Freizeit, die direkt zum Beruf passen, z. B. ein Modellbauprojekt, bei dem du Teile passgenau zusammengefügt hast.",
+            "example_answer": "Ich habe im letzten Jahr ein Modellauto gebaut, bei dem ich passgenaue Teile gefunden und zusammengefügt habe, genau wie beim Drehteil in der Werkstatt."
+          },
+          {
+            "tip": "Formuliere deine Fragen gezielter, indem du dich auf spezifische Aspekte des Berufs beziehst, z. B. zu den Schwerpunkten der Ausbildung oder den Tätigkeiten in bestimmten Abteilungen.",
+            "example_answer": "Ich würde gerne wissen, wie der Fokus auf elektrische und mechanische Komponenten in der Ausbildung aufgebaut wird, und welche Tätigkeiten in der Zahnradfertigung oder Montage besonders herausfordernd sind."
+          }
+        ],
+        "next_practice": [
+          "initiative",
+          "concrete_examples"
+        ],
+        "closing": "Herzlichen Dank für deine Teilnahme am Probestelleninterview. Das war eine gute Übung, um dich auf die echte Bewerbung vorzubereiten.",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 3,
+          "accuracy": 3,
+          "actionable": 4,
+          "tone": 3,
+          "language": 4
+        },
+        "violations": [],
+        "comment": "Das Feedback nennt konkrete Beispiele aus dem Gespräch (Schnupperlehre, Drehteil, Modellbau) und gibt machbare Tipps, bleibt jedoch etwas allgemein in der Bewertung und könnte noch stärker auf beobachtetes Verhalten bezogen werden.",
+        "criteria_met": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    }
+  ]
+}
