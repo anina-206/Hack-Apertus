@@ -16,7 +16,7 @@ from typing import Optional
 
 from backend import config
 from backend.interview import parsing, rubric, safety
-from backend.interview.parsing import ReportDraft, complete_json
+from backend.interview.parsing import CriterionNote, ReportDraft, complete_json
 from backend.interview.phases import has_no_more_questions
 from backend.interview.prompts import CRITERIA, report_messages
 
@@ -107,6 +107,18 @@ def _missing_comments(draft: ReportDraft, scores: dict) -> list[str]:
     return missing
 
 
+# The French reports that broke off had written é as \u00e9 and then repeated \u00a0 until the token limit
+# (bench_transcripts T-12, twice in a row).
+_NO_ESCAPES = ("IMPORTANT: Write letters like é, à and ü directly, never as \\u escapes. Keep every comment to one "
+               "or two short sentences.")
+
+
+def _analysis_tip(key: str, analyses: list[dict]) -> str:
+    """The short tip of the answer with the lowest score on this criterion (written per answer, in the same language)."""
+    scored = [a for a in analyses if a["scores"].get(key) is not None and a.get("short_tip")]
+    return min(scored, key=lambda a: a["scores"][key])["short_tip"] if scored else ""
+
+
 def final_scores(state: dict) -> tuple[dict[str, int], dict[str, float]]:
     """Score per observed criterion (rounded mean, 1-4) and the unrounded means (for ranking).
 
@@ -154,10 +166,15 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
 
     missing = _missing_comments(draft, scores)
     if len(missing) >= MANY_MISSING:  # the output broke off (repetition loop): one more try, keep the better one
+        messages[0] = {**messages[0], "content": messages[0]["content"] + "\n" + _NO_ESCAPES}
         retry, _, _ = await ask()
         retry_missing = _missing_comments(retry, scores) if retry is not None else missing
         if len(retry_missing) < len(missing):
             draft, missing = retry, retry_missing
+    for key in missing:  # last resort: the analysis tip of the answer that scored lowest on this criterion
+        tip = _analysis_tip(key, analyses)
+        if tip:
+            draft.criteria[key] = CriterionNote(comment=tip, evidence="")
     if missing:
         # With the raw output, to see whether the model left them out or the parser lost them
         logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing,

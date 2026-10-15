@@ -261,6 +261,18 @@ def test_a_report_that_breaks_off_is_asked_once_more(fake, api):
     assert all(c["comment"] for c in report["criteria"] if c["score"] is not None)
 
 
+def test_a_report_that_breaks_off_twice_takes_the_tips_of_the_answers(fake, api):
+    # bench_transcripts T-12: both tries broke off in a \\u00a0 loop, so 8 comments stayed empty
+    broken = json.dumps({"criteria": {"clarity": {"comment": "Kommentar clarity.", "evidence": ""}}})
+    client = fake(report_outputs=[broken, broken])
+    session = start(api)
+    finish(api, session)
+    report = api.get(f"/api/v1/sessions/{session['session_id']}/report").json()
+    assert client.calls.count("report") == 2
+    assert "never as \\u escapes" in client.last_system
+    assert all(c["comment"] for c in report["criteria"] if c["score"] is not None)
+
+
 def test_report_failure_returns_502_and_is_not_cached(fake, api):
     fake(report_outputs=["kaputt"] * MAX_JSON_ATTEMPTS)
     session = start(api)
