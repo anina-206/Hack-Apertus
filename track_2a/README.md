@@ -18,6 +18,40 @@ All runtime LLM inference uses **Apertus v1.5 8B**.
 
 Team: Iago (backend), Anina (frontend)
 
+## Screenshots
+
+The feedback screen after a real test interview (informatics apprenticeship, dictated answers):
+
+![Feedback: strengths, overall score and the scores per criterion](docs/screenshots/feedback-scores.png)
+
+![Feedback: tips with example answers, and a comment per criterion](docs/screenshots/feedback-tips.png)
+
+![Feedback: what to practise next, and criteria the interview showed nothing about](docs/screenshots/feedback-next.png)
+
+These screenshots show an earlier version. Since then:
+
+- The feedback screen puts the plan first: strengths, tips with example answers, then "Genau das üben". The overall
+  score, the chart and every criterion with its comment are folded behind "Alle 11 Kriterien ansehen" (for teachers
+  and the curious).
+- The levels read "Noch am Anfang / Auf dem Weg / Gut / Sehr gut", and level 1 is amber instead of red.
+- The comments start with what worked in one concrete answer and give one small next step, instead of "Die Antworten
+  waren teilweise schwer zu folgen" (see [technical_report.md](technical_report.md), section 5), and their tone
+  follows the score.
+
+## Results in short
+
+Measured with Apertus v1.5 8B on the FHGR development data (judge: Apertus v1.5 70B; details and all numbers in
+[technical_report.md](technical_report.md), section 5):
+
+| What | Result |
+|---|---|
+| LLM calls per answer (gate < 5) | 1.92 on average, at most 3 (12 full interviews) |
+| Scenario success criteria met (judge) | 95 % |
+| Report comments backed by a real quote of the candidate | 72-75 % |
+| Judge on full interviews: grounding / accuracy / tone (1-4) | 3.67 / 3.92 / 4.08 |
+| Overall score spread over repeated runs (std) | 0.05-0.16 |
+| Problem flags (distress, manipulation, …): precision / recall | 0.90 / 0.47 |
+
 ## Run it
 
 Requirements: Docker with Compose v2 and an Apertus API key from CSCS. No GPU is needed.
@@ -57,7 +91,7 @@ only external service is the CSCS endpoint for Apertus.
 |---|---|
 | Apertus 1.5 8B as the model | The only LLM at runtime (`LLM_NAME`, `LLM_BASE_URL`, `LLM_API_KEY`) |
 | < 32 GB VRAM, consumer hardware, on-premise | Apertus 8B fits in < 32 GB; our container needs no GPU (Whisper and Piper run on the CPU) |
-| < 5 LLM calls per answer (average) | About 2 per answer (3 in Mundart), logged per answer (see [call budget](#llm-call-budget-gate-average--5-per-answer)) |
+| < 5 LLM calls per answer (average) | 1.92 measured (3 in Mundart), logged per answer (see [call budget](#llm-call-budget-gate-average--5-per-answer)) |
 | Docker container, `make run`, source, docs, visual overview | `make run` in this folder; this README, [technical_report.md](technical_report.md) and [docs/api.md](docs/api.md); diagrams in [docs/architecture.md](docs/architecture.md) |
 | DE, FR, IT; Swiss dialects a plus | All three, plus Mundart in five dialects (beta) |
 | Voice-ready (real-time TTS later) | Already spoken: Piper/Azure TTS and Whisper STT with a hands-free mode |
@@ -100,11 +134,14 @@ Judge / Agent Chat UI ──Agent Protocol──┘    analysis call (11 criteri
   interviewer asks about points from the letter.
 - **Mundart.** The interviewer writes Standard German, a second call turns it into the chosen dialect, with
   parallel examples from the FHGR question bank (`interview/dialect.py`): more reliable than asking the 8B model
-  to interview in dialect directly.
+  to interview in dialect directly. Tips and the report stay in Standard German, which is easier to read.
   In the candidate-questions phase the candidate asks and the interviewer answers; the question is
   analysed for `initiative`.
 - **Robust JSON.** The model's output is repaired in code where possible (code fences, extra text,
-  trailing commas, scores like `"3/4"`, …). Only unusable output is retried, up to 3 attempts.
+  trailing commas, scores like `"3/4"`, missing braces, escapes like `\u00e9`, …). Only unusable output is
+  retried, up to 3 attempts.
+- **Checked replies.** A reply that asks nothing, repeats an earlier question, is in English, or answers the
+  candidate's question with thanks only is asked once more; if that fails too, a fixed line stands in.
 - **Voice, without an LLM call.** `POST /transcribe` turns a spoken answer into text with Whisper
   (faster-whisper on the CPU; for German and Mundart a Swiss German fine-tune of large-v3-turbo that writes
   Standard German). `POST /speech` reads the interviewer's lines with Piper (local) or, with
@@ -115,21 +152,22 @@ Judge / Agent Chat UI ──Agent Protocol──┘    analysis call (11 criteri
   Without server voice (mock, `STT_ENABLED=false`, `TTS_ENGINE=off`) the browser's speech features are used.
 - **The report** is generated with one LLM call when first requested, then cached. Scores and the overall
   score are averages computed in code. The LLM writes the comments, strengths and improvement tips.
-  Quotes used as evidence are kept only if the candidate really said them.
+  Quotes used as evidence are kept only if the candidate really said them. A report that breaks off is asked
+  once more; comments still missing take the per-answer tip.
 
 ### LLM call budget (gate: average < 5 per answer)
 
 | Step | Calls |
 |---|---|
-| Answer in a scored phase | 2 (max 4 with JSON retries) |
+| Answer in a scored phase | 2 (3 when the reply is asked again; up to 2 more for JSON retries of the analysis) |
 | Answer in the candidate-questions phase | 1 (0 if the candidate has no more questions) |
 | Opening question | 1 |
 | Mundart: each interviewer text | +1 (translation into the dialect) |
-| Uploaded application letter | 1 per session (summary) |
-| Final report | 1 (max 3 with JSON retries), once per session |
+| Uploaded application letter | 2 per session, at the same time (summary and letter review) |
+| Final report | 1 (+1 when it breaks off or uses the third person, + JSON retries), once per session |
 | Voice (`/transcribe`, `/speech`) | 0 (Whisper and Piper, no LLM) |
 
-A full interview without retries is about 2 calls per answer, 3 in Mundart. Every LLM call is logged as one JSON line
+A full interview is about 2 calls per answer (measured: 1.92, at most 3), 3 in Mundart. Every LLM call is logged as one JSON line
 (`"event": "llm_call"`), and every answer logs its `calls_per_answer`:
 
 ```bash
@@ -178,6 +216,7 @@ curl -s -X POST localhost:8000/threads/$T/runs/wait -H 'Content-Type: applicatio
 | `src/backend/interview/safety.py` | Guardrails: crisis, distress, redirect |
 | `src/backend/interview/dialect.py` | Mundart: Standard German → dialect with examples from the question bank |
 | `src/backend/interview/application.py` | Uploaded application letter: text, summary, company and contact |
+| `src/backend/interview/letter_review.py` | Feedback on the application letter (5 criteria, shown in the report) |
 | `src/backend/interview/examples.py` | Expert examples from the FHGR annotations for the analysis prompt |
 | `src/backend/voice/` | Whisper speech-to-text (`stt.py`) and Piper/Azure text-to-speech (`tts.py`) |
 | `src/backend/tests/` | Tests (fake LLM, no network) |
@@ -224,7 +263,7 @@ Exit code 0 = gate OK, 1 = average ≥ 5 calls per answer, 2 = API error. Option
 
 ## Benchmarks (FHGR data)
 
-Three benches measure the coach against the FHGR development data in `datasets/` (not the hidden
+Four benches measure the coach against the FHGR development data in `datasets/` (not the hidden
 benchmark). They call Apertus through the backend code, so run them in the backend container.
 Results are saved as JSON in `data/eval/bench/`.
 
@@ -233,13 +272,16 @@ Results are saved as JSON in `data/eval/bench/`.
 docker compose exec backend python -m eval.bench_answers --sample 120
 docker compose exec backend python -m eval.bench_answers --sample 120 --variant baseline   # naive prompt
 
-# 2. The 13 gold interviews through analysis + report vs. the reference feedback,
+# 2. The 21 gold interviews through analysis + report vs. the reference feedback,
 #    deterministic checks (du/Sie, language, empty texts, mojibake) and the LLM judge
 docker compose exec backend python -m eval.bench_transcripts --repeat 2
 
 # 3. FHGR scenarios as full interviews through the API, Apertus plays the candidate from the
 #    FHGR profile; call gate, checks, consistency, score vs. persona level, scenario success criteria
 docker compose exec backend python -m eval.bench_interviews --limit 6 --repeat 2
+
+# 4. Mundart: share of interviewer texts that look like the chosen dialect
+docker compose exec backend python -m eval.bench_dialect --runs 2
 ```
 
 The judge (`src/eval/judge.py`) is an open model, e.g. Apertus 70B, set with `JUDGE_NAME` in `.env`.
@@ -252,6 +294,9 @@ the FHGR feedback rules. Without `JUDGE_NAME` the judge is skipped. The coach it
 - Interviews of logged-in users are also saved as readable copies in SQLite (Docker volume `storage`, `/me/interviews`).
 - Accounts are minimal: username and password only, no e-mail, no password reset. Failed logins are rate limited per IP (in memory; behind a proxy all users share one IP). Users can delete their account. No HTTPS in the demo setup: put a TLS proxy in front for real use.
 - Swiss German (`gsw`) is a beta: the 8B model may mix in Standard German or spell inconsistently.
+- When the candidate starts a role play ("you are the customer") or asks to plan a meeting, the interviewer may
+  play along instead of staying in the interview.
+- Scores are a bit stricter than the FHGR experts' (bias about -0.7 on full interviews), most in Swiss German.
 - Speech-to-text runs at about real time on a laptop CPU: a 10-second answer takes a few seconds to transcribe.
   `STT_MODEL=small` is faster for French/Italian, at lower accuracy.
 - Mundart is read aloud with a German voice (Piper and Azure have no Swiss German dialect voice).
@@ -275,5 +320,13 @@ interview; the full text is not stored, only the short summary (without contact 
 - Challenges and judging criteria: [Getting Started guide](https://hackapertus.notion.site/getting-started-guide-onlinehack)
 - Submission: http://hackapertus.ch/online-hack/submissions (not on Devpost)
 - Licence: all Hack Apertus projects are open source, see [Terms & Conditions](https://hackapertus.ch/terms-and-conditions) (6. What you build is open source)
+
+## Licence
+
+Our source code: Apache-2.0 (`LICENSE` at the repository root). The technical report: CC-BY-4.0.
+Not covered: the FHGR challenge material in `datasets/` and `fhgr/` (FHGR, for use in the challenge, see
+`datasets/README.md`), occupation data from berufsberatung.ch (SDBB), and the models and packages we use under their
+own licences: Apertus (Apache-2.0), Whisper models (MIT / Apache-2.0), Piper (`piper-tts`, GPL-3.0) and its voices
+(CC0, CC-BY-4.0, AGPL-3.0, M-AILABS licence; details in [technical_report.md](technical_report.md), section 3).
 - Questions: Discord or hello@hackapertus.ch
 - Development was assisted by Claude Code; all runtime inference uses Apertus v1.5 8B.

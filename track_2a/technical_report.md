@@ -6,7 +6,7 @@ Italian and Swiss German, and gives them constructive, criteria-based feedback.
 - **Track:** Track 2A — FHGR: AI-Powered Job Interview Coach
 - **Event:** Online
 - **Team:** Anina and Iago
-- **Demo:** video to be added before submission; the app itself starts locally with `make run`
+- **Demo:** screenshots of the feedback screen in [README.md#screenshots](README.md#screenshots); the app itself starts locally with `make run`
 
 ## 1. Summary
 
@@ -125,14 +125,14 @@ the real loudness of both voices. Without the server voice the app falls back to
 
 | Step | Calls |
 |---|---|
-| Answer in a scored phase | 2 (max 4 with JSON retries) |
+| Answer in a scored phase | 2 (3 when the interviewer's reply is asked again; up to 2 more for JSON retries of the analysis) |
 | Answer in the candidate-questions phase | 1 (0 when the candidate has no more questions) |
 | Mundart: each interviewer text | +1 |
 | Opening question | 1 |
 | Uploaded application letter | 2 per interview, at the same time: summary and review of the letter |
-| Final report | 1 (max 3 with JSON retries), once per interview |
+| Final report | 1 (+1 when it breaks off or uses the third person, + JSON retries), once per interview |
 
-That is about 2 calls per answer (3 in Mundart) on average.
+That is about 2 calls per answer (3 in Mundart) on average; measured over 12 full interviews: 1.92, at most 3.
 
 **Other open-weight models (auxiliary, not LLMs).** The challenge asks for the Apertus family; we use two
 speech models only as input/output helpers, never to judge or write content:
@@ -141,7 +141,7 @@ speech models only as input/output helpers, never to judge or write content:
 |---|---|---|---|
 | [`nebi/whisper-large-v3-turbo-swiss-german-ct2-int8`](https://huggingface.co/nebi/whisper-large-v3-turbo-swiss-german-ct2-int8), a CTranslate2 build of [`Flurin17/whisper-large-v3-turbo-swiss-german`](https://huggingface.co/Flurin17/whisper-large-v3-turbo-swiss-german) | Speech-to-text for German and Mundart (Mundart in, Standard German text out) | Apache-2.0 | CPU, int8 |
 | [`whisper-large-v3-turbo`](https://huggingface.co/openai/whisper-large-v3-turbo) (faster-whisper build) | Speech-to-text for French and Italian | MIT | CPU, int8 |
-| [Piper](https://github.com/OHF-Voice/piper1-gpl) voices `de_DE-kerstin-low`, `de_DE-thorsten-high`, `fr_FR-siwis-medium`, `fr_FR-tom-medium`, `it_IT-serena-high`, `it_IT-riccardo-x_low` | Reading the interviewer's lines aloud (female/male voice per trainer) | see the voices' model cards | CPU |
+| [Piper](https://github.com/OHF-Voice/piper1-gpl) voices `de_DE-kerstin-low`, `de_DE-thorsten-high`, `fr_FR-siwis-medium`, `fr_FR-tom-medium`, `it_IT-serena-high`, `it_IT-riccardo-x_low` | Reading the interviewer's lines aloud (female/male voice per trainer) | Piper: GPL-3.0; voice data: kerstin, thorsten CC0; siwis, serena CC-BY-4.0; tom AGPL-3.0; riccardo M-AILABS licence (see the [model cards](https://huggingface.co/rhasspy/piper-voices)) | CPU |
 
 How they run: inside the backend container that `make run` starts, with no extra software. On the first start
 the backend downloads them (about 2.5 GB) into `data/models/` (a Docker volume, git-ignored) and loads them in
@@ -406,8 +406,12 @@ answer and give one small next step.
 
 ## License
 
-Creative Commons Attribution 4.0 (CC-BY-4.0). All HackApertus projects are open-sourced.
-The source code in this repository is licensed under Apache-2.0 (see `LICENSE`).
+Creative Commons Attribution 4.0 (CC-BY-4.0) for this report. All HackApertus projects are open-sourced.
+The source code in this repository is licensed under Apache-2.0 (`LICENSE` at the repository root).
+Not covered by it: the FHGR material in `datasets/` and `fhgr/` (provided by FHGR for the challenge, see
+`datasets/README.md`), and the third-party packages and models we use under their own licences. The voice models
+are downloaded at runtime and not part of the repository; the `piper-tts` package is GPL-3.0, so a Docker image
+that includes it is distributed under GPL-3.0 terms (our Apache-2.0 code is compatible with that).
 
 ## References
 

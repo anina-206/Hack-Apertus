@@ -29,3 +29,6 @@ build/
 # Interview sessions (SQLite, created by the backend)
 track_2a/data/sessions/
 track_2a/data/models/
+
+# Local design tool state
+.impeccable/

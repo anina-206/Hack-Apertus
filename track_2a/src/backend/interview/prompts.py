@@ -474,6 +474,16 @@ _COMMENT_START = {
 _COMMENT_START["gsw"] = _COMMENT_START["de"]
 
 
+# How a criterion comment sounds at each score. Without it the model wrote comments that only listed what was
+# missing, also for a 3 ("Gut"), so the level and its comment contradicted each other on the feedback screen.
+_COMMENT_TONE = {
+    4: "only what was strong, no next step",
+    3: "mostly what worked, then one small next step; it must not read like criticism",
+    2: "what already worked, then one clear next step",
+    1: "something that worked or a kind start, then one clear, simple next step",
+}
+
+
 # The short, most important parts come first, so a cut-off answer loses the least.
 def _report_example(criteria: list[str], language: str = "de") -> dict:
     """The JSON shape of the report, with one entry for every observed criterion.
@@ -511,7 +521,8 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
                     transcript: list[dict], posting: Optional[dict] = None) -> list[dict]:
     """`scores`: the final 1-4 score of every observed criterion (computed in code)."""
     language = _feedback_language(language)
-    score_lines = "\n".join(f"- {key}: {value}/{rubric.SCALE_MAX} ({CRITERIA[key]})" for key, value in scores.items())
+    score_lines = "\n".join(f"- {key}: {value}/{rubric.SCALE_MAX} ({CRITERIA[key]}) -> comment tone: {_COMMENT_TONE[value]}"
+                            for key, value in scores.items())
     tips = "\n".join(f"- [{a['phase']}] {a['short_tip']}" for a in analyses if a.get("short_tip"))
     dialogue = "\n".join(f"{t['role'].upper()}: {t['text']}" for t in transcript)
     you, next_time = _COMMENT_START[language]
@@ -523,7 +534,8 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
         "encouraging, suitable for a teenager, but honest about what to improve.\n"
         "- criteria: one entry for each criterion listed under 'Scores' below, with exactly that key. The comment "
         f"speaks to the candidate ('{you}'): first what already worked in one concrete answer, then, if the score is "
-        f"below 4, one small next step ('{next_time}'). Describe what the candidate said or did, never "
+        f"below 4, one small next step ('{next_time}'). The tone of each comment must match its score (see "
+        "'comment tone' next to each score): 3 and 4 are good scores. Describe what the candidate said or did, never "
         "what kind of person they are, and never write 'Your answers were ...' in any language. As evidence an EXACT quote (a few "
         "words) from the CANDIDATE's answers, or an empty string if there is none.\n"
         "- strengths: 2-3 strengths, each referring to something the candidate actually said.\n"

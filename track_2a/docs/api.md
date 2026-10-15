@@ -60,16 +60,19 @@ If something changes, change it here first, then in the code.
 | POST | `/application/extract` | Text of an uploaded application (PDF, .docx, .txt) | 0 |
 | GET | `/config` | Occupations, languages, profiles for the setup screen | 0 |
 | POST | `/sessions` | Start an interview, get the first question | 1 (+1 with an application letter, +1 for an invented company) |
-| POST | `/sessions/{session_id}/answers` | Send an answer, get the next question | 2 (max 4) |
+| POST | `/sessions/{session_id}/answers` | Send an answer, get the next question | 2 (rarely 3, see below) |
 | GET | `/sessions/{session_id}` | Current state (for page reload) | 0 |
-| GET | `/sessions/{session_id}/report` | Final feedback report | 1 (max 3, once, then cached) |
+| GET | `/sessions/{session_id}/report` | Final feedback report | 1 (rarely 2-3, once, then cached) |
 | POST | `/transcribe` | Speech to text (Whisper) for a spoken answer | 0 |
 | POST | `/speech` | Text to speech (Piper or Azure) for the interviewer | 0 |
 
 Budget check: about 2 calls per answer + 1 for the report -> well below the limit of 5.
 If the model returns unusable JSON, the call is retried (max 3 attempts), and every retry counts as a call:
-an answer costs at most 4 (3 analysis + 1 interviewer). In the `candidate_questions` phase an answer costs 1,
-or 0 if the candidate has no more questions. `meta.llm_calls` always shows the real number.
+3 analysis attempts at most. The interviewer's reply is asked once more when it asks nothing, repeats an earlier
+question, is in English, or answers a candidate's question with thanks only (one retry at most, then a fixed line).
+Measured over 12 full interviews: 1.92 calls per answer on average, at most 3. In the `candidate_questions` phase an
+answer costs 1, or 0 if the candidate has no more questions. Mundart adds 1 per interviewer text.
+`meta.llm_calls` always shows the real number.
 
 Account endpoints (v1.1, section 3b): `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `DELETE /auth/me`, `GET /me/interviews`, `GET /me/interviews/{session_id}`, `DELETE /me/interviews/{session_id}`. No LLM calls.
 
@@ -331,7 +334,8 @@ After the interview, `history` ends with the closing message (`question_id: null
 ### GET `/sessions/{session_id}/report`
 
 Only works when `done: true`, otherwise `409 INTERVIEW_NOT_FINISHED`.
-Generated with one LLM call the first time, then cached.
+Generated with one LLM call the first time, then cached. It is asked once more when it talks about the candidate
+in the third person, or when it broke off and 3 or more comments are missing.
 
 ```json
 {
@@ -377,7 +381,8 @@ Generated with one LLM call the first time, then cached.
 - `support_note` is a fixed text (where to get help, incl. Pro Juventute 147) when the interview showed
   distress, else `null`. `closing` is one encouraging sentence written by the LLM (may be `""`).
 - The LLM writes `comment`, `evidence`, `strengths`, `improvements` and `closing`, following the FHGR
-  feedback rules (`datasets/rubric/feedback_guidelines.json`). `evidence` is only kept if it
+  feedback rules (`datasets/rubric/feedback_guidelines.json`). If a comment is still missing after the retry, it is
+  the per-answer tip of the answer that scored lowest on that criterion. `evidence` is only kept if it
   is a real quote from the candidate's answers, otherwise it is `""`.
 - `application_feedback` is the review of the application letter, or `null` without an uploaded letter (or if the review
   failed). It is made at the start of the interview, in parallel to the summary (one more LLM call there, none in the
@@ -625,3 +630,4 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | 2026-10-11 | v1.11: `company` and `interviewer` of `POST /sessions` and of saved interviews are never `null` any more: without a letter and without an FHGR posting a fictional default company and contact person fitting the occupation are used (`data/default_companies.yaml`). Not breaking. | Anina |
 | 2026-10-11 | v1.12: `application_feedback` in the report: review of the uploaded application letter (5 criteria, 1-4, strengths, tips). One more LLM call at the start of an interview with a letter. Not breaking. | Anina |
 | 2026-10-11 | v1.13: optional `session_id` in `POST /transcribe` (vocabulary hint for Whisper). Not breaking. | Iago |
+| 2026-10-15 | No field changes: retries of the interviewer reply and of the report, fallback comment from the answer tips; call counts above updated with measured values. | Iago |

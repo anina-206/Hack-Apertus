@@ -1,0 +1,431 @@
+{
+  "bench": "transcripts",
+  "judge_model": null,
+  "summary": {
+    "transcripts": 2,
+    "runs": 2,
+    "avg_calls_per_answer": 1.0,
+    "levels": {
+      "pairs": 18,
+      "mae": 0.78,
+      "exact": 0.33,
+      "within_1": 0.89,
+      "bias": -0.78,
+      "coverage": 0.86,
+      "extra": 0.0
+    },
+    "checks": {
+      "reports_with_empty_comments": 0.0,
+      "reports_with_formal_or_third_person": 0.0,
+      "reports_with_mojibake": 0.0,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.5
+    },
+    "overall_vs_quality_spearman": null,
+    "levels_by_lang": {
+      "de": {
+        "pairs": 18,
+        "mae": 0.78,
+        "exact": 0.33,
+        "within_1": 0.89,
+        "bias": -0.78,
+        "coverage": 0.86,
+        "extra": 0.0
+      }
+    },
+    "overall_std_across_repeats": null,
+    "reports_failed": 0,
+    "failed": []
+  },
+  "records": [
+    {
+      "transcript_id": "T-01",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "strong",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 4,
+        "relevance": 4,
+        "motivation": 4,
+        "self_reflection": 4,
+        "communication": 3,
+        "concrete_examples": 4,
+        "demeanor": 4,
+        "preparation": 4,
+        "goal_orientation": 4,
+        "difficult_questions": 3,
+        "initiative": 4
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 3,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "overall_score": 3,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 10,
+      "both_seen": 10,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 1.0,
+        "observed_criteria": 10
+      },
+      "report": {
+        "session_id": "T-01",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 3,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten sind meist gut verständlich, aber manchmal springt der Gedanke zu schnell zu neuen Themen, ohne den vorherigen Punkt abzurunden.",
+            "evidence": "Ich bin mit dem Bus gekommen und habe gestern schon auf der Karte geschaut, wo die Haltestelle ist"
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "Die Antworten passen gut zum Beruf, zeigen aber noch wenig Detailwissen über spezifische Aufgaben der Konstruktion bei Plessur Maschinenbau.",
+            "evidence": "Man zeichnet Bauteile und ganze Baugruppen im CAD und macht die technischen Zeichnungen für die Werkstatt. Ich glaube, man muss auch viel mit der Produktion reden, ob man das Teil überhaupt so herstellen kann"
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "Du zeigst echtes Interesse an der Konstruktion und an eurer Firma, weil du konkrete Schnuppererfahrungen beschreibst.",
+            "evidence": "Ich durfte im CAD eine einfache Halterung zeichnen, und am nächsten Tag habe ich gesehen, wie genau dieses Teil in der Werkstatt gefräst wurde. Das fand ich extrem faszinierend, dass aus meiner Zeichnung ein echtes Teil wird"
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "Du kannst deine Stärken und Schwächen realistisch einschätzen, erkennst deine Fehler beim Kran und deine Strategie, sie zu verbessern.",
+            "evidence": "Ich glaube, das schwierigste war ein Kran mit zwei Motoren, den ich im Winter gebaut habe. Der Arm sollte sich drehen und gleichzeitig ein Seil aufwickeln. Das Problem war, dass der Kran immer umgekippt ist, sobald ein Gewicht dran war. Ich habe dann hinten ein Gegengewicht eingebaut und das Getriebe umgebaut, damit er langsamer hebt. Beim vierten Versuch hat es gehalten"
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "Du sprichst klar und höflich, hörst zu und formulierst deine Fragen gut, aber manchmal stockst du kurz, wenn du überlegst.",
+            "evidence": "Grüezi Herr Casutt. Ja, danke. Ich bin mit dem Bus gekommen und habe gestern schon auf der Karte geschaut, wo die Haltestelle ist. Ich war dann zehn Minuten zu früh da"
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "Du bringst viele konkrete Beispiele aus Schule, Freizeit und Schnupperlehre, aber manchmal fehlt ein kurzer Bezug zu dem, was du daraus gelernt hast.",
+            "evidence": "Ich glaube, das schwierigste war ein Kran mit zwei Motoren, den ich im Winter gebaut habe. Der Arm sollte sich drehen und gleichzeitig ein Seil aufwickeln. Das Problem war, dass der Kran immer umgekippt ist, sobald ein Gewicht dran war"
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 3,
+            "comment": "Du wirkst pünktlich, höflich und zuversichtlich, dein Körperhaltung war positiv, aber manchmal siehst du kurz unsicher, wenn du überlegst.",
+            "evidence": "Grüezi Herr Casutt. Ja, danke. Ich bin mit dem Bus gekommen und habe gestern schon auf der Karte geschaut, wo die Haltestelle ist. Ich war dann zehn Minuten zu früh da"
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 3,
+            "comment": "Du hast dich gut informiert über die Firma und den Beruf, nutzt aber noch nicht alle Details aus der Ausschreibung für deine persönliche Motivation.",
+            "evidence": "Ich habe auf eurer Website gelesen, dass ihr Abfüll- und Verpackungsmaschinen baut und dass alles hier in Chur passiert, vom ersten Entwurf bis zur Inbetriebnahme"
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 3,
+            "comment": "Du hast klare Vorstellungen für deine Zukunft nach der Lehre, aber sie sind noch etwas allgemein formuliert.",
+            "evidence": "Zuerst möchte ich die Lehre gut abschliessen. Wenn meine Noten reichen, möchte ich die BM machen, vielleicht die BM2 nach der Lehre. Später kann ich mir eine Weiterbildung zum Techniker HF vorstellen oder sogar ein Studium in Maschinenbau"
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 4,
+            "comment": "Du stellst am Ende zwei sehr konkrete und sinnvolle Fragen, was zeigt, dass du dich gut vorbereitet hast.",
+            "evidence": "Ja, ich habe zwei Fragen. Wie sieht so ein echtes Projekt für Lernende aus – woran arbeiten zum Beispiel die Lernenden im 3. Lehrjahr? Und wie viele Lernende sind gerade in der Konstruktion?"
+          }
+        ],
+        "strengths": [
+          "Du beschreibst ein konkretes Projekt und eine echte technische Herausforderung. Erwähne noch, was du daraus gelernt hast, z.B. \"Ich habe gelernt, dass Gegengewichte und Getriebe entscheidend für Stabilit\"",
+          "Du hast konkrete Informationen aus der Ausschreibung genutzt und verknüpfst sie mit deiner persönlichen Motivation (z.B. ‚Ich möchte sehen, wie meine Zeichnung zum fertigen Gerät wird\")",
+          "Du formulierst zwei präzise, praxisnahe Fragen, die direkt auf das Lernumfeld und die aktuelle Auslastung eingehen – das zeigt Interesse an konkreten Rahmenbedingungen."
+        ],
+        "improvements": [
+          {
+            "tip": "Wenn du eine Schwäche nennst, gib ein konkretes Beispiel aus deiner Praxis und eine klare Lernstrategie. Sag z.B. \"Ich habe beim Kran zuerst mehrere Teile gleichzeitig bearbeitet, deshalb versuche ich jetzt, das Getriebe zuerst fertig zu machen, bevor ich den Arm baue.\"",
+            "example_answer": "Ich konzentriere mich zuerst auf das Getriebe, dann erst auf den Arm."
+          },
+          {
+            "tip": "Wenn du eine Frage stellst, formuliere sie so konkret wie möglich, damit du eine direkte Antwort bekommst. Statt zu fragen, wie viele Lernende gerade in der Konstruktion sind, könntest du fragen: \"Wie viele konkrete Aufgaben bekomm ich im 3. Lehrjahr und wer betreut mich dabei?\"",
+            "example_answer": ""
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Das war ein gutes Übungsgespräch – du hast bereits viele gute Ansätze gezeigt.",
+        "support_note": null
+      }
+    },
+    {
+      "transcript_id": "T-06",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "weak",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 2,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": 3
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 2,
+        "motivation": 2,
+        "self_reflection": 1,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "overall_score": 1.9,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "gold_seen": 10,
+      "pred_seen": 8,
+      "both_seen": 8,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 8
+      },
+      "report": {
+        "session_id": "T-06",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 1.9,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Deine Antworten sind verständlich, auch wenn du manchmal unsicher wirkst, und die wichtigsten Punkte wie die ruhige Art und die Geduld beim Erklären mit Legosteinen sind klar.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 2,
+            "comment": "Deine Antworten passen zum Teil zur Arbeit im Gesundheits- und Sozialbereich, aber manchmal fehlte die direkte Verbindung zu den Aufgaben des Assistenten/in Gesundheit und Soziales.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Dein Interesse ist noch nicht klar erkennbar; du hast dich wohler im Wohnheim gefühlt, aber warum dich genau diese Arbeit interessiert, ist noch nicht gut herausgearbeitet.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 1,
+            "comment": "Du hast deine ruhige Art und Geduld beim Erklären mit Legosteinen erkannt, aber noch nicht klar, wie du deine Schwächen realistisch einschätzt oder was du konkret verbessern willst.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 2,
+            "comment": "Du hast ruhig und verständlich geantwortet, auch wenn du manchmal unsicher wirkst und nicht immer direkt auf die Frage eingingst.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "Du hast konkrete Erlebnisse wie den Spaziergang mit dem Bewohner oder das Erklären mit Legosteinen genannt, aber noch nicht immer die Lektion daraus gezogen.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 2,
+            "comment": "Du warst höflich und zuhörend, auch wenn du am Anfang unsicher und etwas niedergeschlagen wirktest.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "Du hast Grundkenntnisse über die Lehre und die Möglichkeiten nach dem EBA, aber noch keine sehr detaillierte Vorbereitung auf die spezifischen Aufgaben des Assistenten/in Gesundheit und Soziales.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Erlebnisse aus deiner Schnupperlehre beschrieben, z.B. beim Spaziergang mit dem Bewohner und dem Uno-Spielen.",
+          "Du hast deine Geduld beim Erklären mit Legosteinen als konkrete Stärke genannt und kannst das gut auf deine Arbeit im Gesundheits- und Sozialbereich übertragen."
+        ],
+        "improvements": [
+          {
+            "tip": "Erzähle konkret, was du aus den Absagen gelernt hast, z.B. “Ich habe gemerkt, dass ich meine ruhige Art und konkrete Beispiele aus der Schnupperlehre besser hervorheben muss, um Interesse zu wecken.”",
+            "example_answer": "Ich ... habe gemerkt, dass ich meine ruhige Art und konkrete Beispiele aus der Schnupperlehre besser hervorheben muss, um Interesse zu wecken."
+          },
+          {
+            "tip": "Nenne eine Eigenschaft, die du im Alltag nutzt und die für die Lehre relevant ist, z.B. “Ich bin geduldig, wenn ich jemanden beim Anziehen helfe, und warte ruhig, bis alles passt.”",
+            "example_answer": "Ich ... bin geduldig, wenn ich jemanden beim Anziehen helfe, und warte ruhig, bis alles passt."
+          }
+        ],
+        "next_practice": [
+          "self_reflection",
+          "concrete_examples"
+        ],
+        "closing": "Vielen Dank, dass du heute deine Gedanken geteilt hast – das war eine gute Übung, um klarer zu werden.",
+        "support_note": "Wenn dich etwas belastet: Sprich mit einer Person, der du vertraust, zum Beispiel deiner Lehrperson, deinen Eltern oder der Berufsberatung. Pro Juventute erreichst du rund um die Uhr unter 147 (Telefon, Chat, SMS)."
+      }
+    }
+  ]
+}

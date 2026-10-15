@@ -1,0 +1,422 @@
+{
+  "bench": "transcripts",
+  "judge_model": null,
+  "summary": {
+    "transcripts": 2,
+    "runs": 2,
+    "avg_calls_per_answer": 1.0,
+    "levels": {
+      "pairs": 16,
+      "mae": 0.69,
+      "exact": 0.44,
+      "within_1": 0.88,
+      "bias": -0.69,
+      "coverage": 0.76,
+      "extra": 0.0
+    },
+    "checks": {
+      "reports_with_empty_comments": 1.0,
+      "reports_with_formal_or_third_person": 0.5,
+      "reports_with_mojibake": 0.0,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.0
+    },
+    "overall_vs_quality_spearman": null,
+    "levels_by_lang": {
+      "de": {
+        "pairs": 16,
+        "mae": 0.69,
+        "exact": 0.44,
+        "within_1": 0.88,
+        "bias": -0.69,
+        "coverage": 0.76,
+        "extra": 0.0
+      }
+    },
+    "overall_std_across_repeats": null,
+    "reports_failed": 0,
+    "failed": []
+  },
+  "records": [
+    {
+      "transcript_id": "T-01",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "strong",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 4,
+        "relevance": 4,
+        "motivation": 4,
+        "self_reflection": 4,
+        "communication": 3,
+        "concrete_examples": 4,
+        "demeanor": 4,
+        "preparation": 4,
+        "goal_orientation": 4,
+        "difficult_questions": 3,
+        "initiative": 4
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 3,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "overall_score": 3,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 10,
+      "both_seen": 10,
+      "checks": {
+        "empty_comments": 8,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 10
+      },
+      "report": {
+        "session_id": "T-01",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 3,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Deine Antworten sind verständlich, aber manchmal etwas holprig. Du versuchst, deine Gedanken klar zu strukturieren, was gut ist.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "Deine Antworten passen gut zum Beruf, aber manchmal etwas allgemein. Du könntest konkretere Beispiele für die Aufgaben nennen.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 4,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast bereits mehrere konkrete Beispiele genannt (Lego, Handball, Velo-Reparaturen). Ergänze noch, was dich an der Konstruktion besonders fasziniert, z.B. \"Ich mag es, wie Teile zusammenpassen und funktionieren.\"",
+          "Du beschreibst ein konkretes Projekt, eine Schwierigkeit und eine Lösung. Füge noch hinzu, was du daraus gelernt hast, z.B. \"Ich habe gelernt, dass Gegengewichte und ein langsameres Getriebe Stabilität bringen können.\""
+        ],
+        "improvements": [
+          {
+            "tip": "Du versuchst, eine Schwäche zu benennen und einen Lernansatz zu zeigen. Ergänze noch ein konkretes Beispiel, wie du es jetzt machst, z.B. \"Ich baue zuerst das Getriebe fertig, dann den Arm, dann teste ich alles gemeinsam – so läuft es besser.\"",
+            "example_answer": "Ich baue zuerst das Getriebe fertig, dann den Arm, dann teste ich alles gemeinsam – so läuft es besser."
+          },
+          {
+            "tip": "Du hast gezielt nachfragt und Fragen formuliert, die direkt auf das Lernumfeld eingehen. Ergänze noch eine Frage zu den konkreten Kompetenzen, die du im 3. Lehrjahr erwerben willst, z.B. \"Welche CAD-Fähigkeiten sind im 3. Lehrjahr besonders wichtig?\"",
+            "example_answer": ""
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Das war ein gutes Übungsgespräch, um dich auf die echte Bewerbung vorzubereiten.",
+        "support_note": null
+      }
+    },
+    {
+      "transcript_id": "T-06",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "weak",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 2,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": 3
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": 2,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "overall_score": 2.3,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 10,
+      "pred_seen": 6,
+      "both_seen": 6,
+      "checks": {
+        "empty_comments": 4,
+        "formal_or_third_person": 1,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 6
+      },
+      "report": {
+        "session_id": "T-06",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.3,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Deine Antworten sind teilweise verständlich, aber manchmal etwas unstrukturiert.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "Deine Antworten passen meist zum Thema, aber manchmal fehlt die direkte Verkn\\u00f6pfig zu den Aufgaben der Lehre.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Erlebnisse aus der Schnupperlehre beschrieben.",
+          "Du zeigst konkrete häusliche Verantwortung, indem du deinen Bruder abholst und ihm beim Zn\\u00fni hilfst."
+        ],
+        "improvements": [
+          {
+            "tip": "Gib bei Fragen zu St\\u00e4rken konkrete Beispiele aus deinem Alltag, z.B. wie du beim Erkl\\u00e4ren mit Legosteinen vorgegangen bist.",
+            "example_answer": "Ich habe die Rechnung in einzelne Schritte zerlegt, damit er sie besser verstehen konnte."
+          },
+          {
+            "tip": "Erkl\\u00e4re genauer, warum dich die Arbeit mit Menschen mit Beeintr\\u00e4chtigung interessiert, z.B. mit einem Satz wie: \"Mir gef\\u00e4llt, dass man mit Geduld und Ruhe helfen kann, wenn jemand beim Anziehen oder Waschen Unterstützung braucht.\"",
+            "example_answer": ""
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Du hast heute gezeigt, dass du mit etwas Übung und konkreten Beispielen sehr gut vorankommst.",
+        "support_note": "Wenn dich etwas belastet: Sprich mit einer Person, der du vertraust, zum Beispiel deiner Lehrperson, deinen Eltern oder der Berufsberatung. Pro Juventute erreichst du rund um die Uhr unter 147 (Telefon, Chat, SMS)."
+      }
+    }
+  ]
+}
