@@ -315,13 +315,22 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
         // role="log": a screen reader announces each new message
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5" role="log" aria-live="polite" aria-relevant="additions">
           {voice.handsFree && !done && (
-            <button
-              onClick={() => setShowCall(true)}
-              className="mx-auto flex items-center gap-2 rounded-full bg-brand-lighter px-4 py-2 text-sm font-bold text-brand"
-            >
-              <Headphones className="h-4 w-4" />
-              {text.showCall}
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                onClick={() => setShowCall(true)}
+                className="flex min-h-10 items-center gap-2 rounded-full bg-brand-lighter px-4 py-2 text-sm font-bold text-brand"
+              >
+                <Headphones className="h-4 w-4" />
+                {text.showCall}
+              </button>
+              {/* Leaves the voice mode: stops reading and listening, the chat stays */}
+              <button
+                onClick={toggleHandsFree}
+                className="min-h-10 rounded-full border-2 border-line bg-white px-4 py-2 text-sm font-bold text-charcoal hover:border-brand-light"
+              >
+                {text.voiceModeOff}
+              </button>
+            </div>
           )}
           {entry.application_summary && (
             <details className="rounded-2xl bg-white px-4 py-3 text-sm shadow-card">
@@ -410,7 +419,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             </Alert>
           )}
           {micMessage && (
-            <Alert className="mb-2">
+            <Alert className="mb-2" onClose={voice.dismissMicError} closeLabel={text.close}>
               {micMessage}
             </Alert>
           )}
@@ -437,7 +446,10 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           >
             <textarea
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                if (voice.micError) voice.dismissMicError(); // typing instead: the microphone message goes away
+              }}
               // Typing in hands-free mode stops listening and auto-sending
               onFocus={voice.hold}
               onKeyDown={(e) => {

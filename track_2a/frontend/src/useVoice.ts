@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type AppConfig, type LanguageCode, type Voice } from "./api";
 import { canRecord, play, record, unlockAudio, type Playback, type Recording } from "./audio";
-import { canListen, canSpeak, speak, speechChunks, startListening, stopSpeaking, type ListenError } from "./speech";
+import { canListen, speak, speechChunks, startListening, stopSpeaking, type ListenError } from "./speech";
 
 /** Browser engine: pause after the last recognised word before the answer is sent. */
 export const SILENCE_MS = 3000;
@@ -60,7 +60,8 @@ type Options = {
 };
 
 export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, onRepeat }: Options) {
-  const [handsFree, setHandsFree] = useState(() => canSpeak && loadHandsFree());
+  // Off at the start of every interview: nothing is read aloud or recorded until the candidate taps the button
+  const [handsFree, setHandsFree] = useState(false);
   /** Key of the text that is being read aloud (the message index), or null */
   const [speakingKey, setSpeakingKey] = useState<number | null>(null);
   const [listening, setListening] = useState(false);
@@ -351,7 +352,6 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
     const on = !handsFree;
     setHandsFree(on);
     latest.current.handsFree = on;
-    saveHandsFree(on);
     if (!on) stopAll();
     return on;
   }
@@ -367,6 +367,12 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
     stopReading();
     stopMic();
     setPaused(false);
+    setMicError(null);
+  }
+
+  /** Hides the microphone message (× on it, or the candidate starts typing). */
+  function dismissMicError() {
+    setMicError(null);
   }
 
   // Stop everything when the screen closes
@@ -409,27 +415,9 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
     paused,
     countdown,
     micError,
+    dismissMicError,
     stopAll,
     /** True when the server engines are used (real loudness in audio.ts meter) */
     server,
   };
-}
-
-// The hands-free switch is remembered in this browser. Storage can be blocked, so both are guarded.
-const HANDS_FREE_KEY = "coach.handsFree";
-
-function loadHandsFree() {
-  try {
-    return localStorage.getItem(HANDS_FREE_KEY) === "on";
-  } catch {
-    return false;
-  }
-}
-
-function saveHandsFree(on: boolean) {
-  try {
-    localStorage.setItem(HANDS_FREE_KEY, on ? "on" : "off");
-  } catch {
-    // not saved, the switch still works for this interview
-  }
 }
