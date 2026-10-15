@@ -181,22 +181,28 @@ supportive mode. Ours leaves out more criteria the answer gave no evidence for. 
 flags. Making its scores as close as the baseline's is open work (section 8).
 
 *Full feedback on the gold interviews* (`bench_transcripts --repeat 2`, 21 transcripts × 2 runs). The table
-shows how the measurements drove the fixes of the last day:
+shows how the measurements drove the fixes of the last day ("JSON fixes": the parser repairs below;
+"tone fixes": the encouraging report prompt after the real test run):
 
-| Metric | First run | After the fixes |
-|---|---|---|
-| Reports that failed (unusable JSON) | 6 / 42 | 0 / 42 |
-| Reports with an empty criterion comment | 100 % | 14 % (0 % in the re-run of the worst cases) |
-| Comments backed by a real quote from the candidate | 0 % | 42 % |
-| Judge: grounding / accuracy (1-4) | 1.69 / 2.00 | 2.12 / 2.24 |
-| Judge: actionable / tone / language (1-4) | 3.06 / 2.64 / 3.83 | 3.07 / 2.60 / 3.69 |
-| Final scores vs. reference: MAE / ±1 | 0.89 / – | 0.84 / 0.77 |
-| Overall score vs. the transcript's quality level (Spearman) | – | 0.71 |
-| Spread of the overall score over repeats (std) | – | 0.04 |
-| Wrong language / mojibake / "Sie" or third person | – | 0 % / 0 % / 5 % |
+| Metric | First run | After the JSON fixes | After the tone fixes |
+|---|---|---|---|
+| Reports that failed (unusable JSON) | 6 / 42 | 0 / 42 | 0 / 42 |
+| Reports with an empty criterion comment | 100 % | 14 % | 7 % |
+| Comments backed by a real quote from the candidate | 0 % | 42 % | 75 % |
+| Judge: grounding / accuracy (1-4) | 1.69 / 2.00 | 2.12 / 2.24 | 2.76 / 2.40 |
+| Judge: actionable / tone / language (1-4) | 3.06 / 2.64 / 3.83 | 3.07 / 2.60 / 3.69 | 3.21 / 2.81 / 3.67 |
+| Final scores vs. reference: MAE / ±1 | 0.89 / – | 0.84 / 0.77 | 0.86 / 0.78 |
+| Overall score vs. the transcript's quality level (Spearman) | – | 0.71 | 0.69 |
+| Spread of the overall score over repeats (std) | – | 0.04 | 0.05 |
+| Wrong language / "Sie" or third person | – | 0 % / 5 % | 0 % / 19 % |
 
-By language (after the fixes), MAE of the final scores: de 0.81, fr 0.69, it 0.68, Swiss German 1.26. The
-model is stricter than the reference (bias -0.71) and weakest on dialect.
+By language (last run), MAE of the final scores: de 0.85, fr 0.72, it 0.70, Swiss German 1.23. The scores did
+not change with the report fixes (they are computed in code); the model is stricter than the reference (bias
+-0.74) and weakest on dialect. The remaining empty comments came from two reports where the model repeated one
+word until the token limit ("pürfekt pürfekt ..."); such a report is now asked once more, with a frequency
+penalty. The run also showed French texts with a literal `\u00e9` instead of "é" (the model escaped the
+backslash twice); the parser now decodes these, and the mojibake check counts them. More "Sie"/third person
+hits come mostly from the word "man" in the longer, step-by-step tips.
 
 What the logs showed and what we changed: Apertus wrote the report JSON with predictable mistakes. It
 dropped the `{` of every criterion, closed a quote with `\"`, or used invalid escapes. The parser now repairs
@@ -205,16 +211,27 @@ from the raw text when the structure is lost. The example in the prompt listed o
 commented only those two; it now lists every observed one. Quotes count when most of their words appear
 together in one answer, and the report then shows the candidate's exact words.
 
-*Full interviews with a simulated candidate* (`bench_interviews`, FHGR scenarios S-01 to S-05, before the
-report fixes):
+*Full interviews with a simulated candidate* (`bench_interviews --limit 6 --repeat 2`, FHGR scenarios S-01,
+S-02, S-03, S-05, S-06, S-07 in German and Italian, 12 interviews):
 
-| Metric | Result |
-|---|---|
-| LLM calls per answer: average / max (gate < 5) | 1.81-1.83 / 2 |
-| Overall score vs. the persona's quality level (Spearman) | 0.68-0.94 |
-| Spread of the overall score over repeats (std) | 0.10-0.12 |
-| Judge: scenario success criteria met | 93 % |
-| Judge: grounding / accuracy / actionable / tone / language | 2.67 / 3.0 / 3.33 / 3.33 / 3.67 |
+| Metric | Before the report fixes (S-01 to S-05) | Final |
+|---|---|---|
+| LLM calls per answer: average / max (gate < 5) | 1.81-1.83 / 2 | 1.92 / 3 |
+| Overall score vs. the persona's quality level (Spearman) | 0.68-0.94 | 0.54 |
+| Spread of the overall score over repeats (std) | 0.10-0.12 | 0.16 |
+| Comments backed by a real quote | – | 72 % |
+| Judge: scenario success criteria met | 93 % | 95 % |
+| Judge: grounding / accuracy / actionable | 2.67 / 3.0 / 3.33 | 3.67 / 3.92 / 3.42 |
+| Judge: tone / language | 3.33 / 3.67 | 4.08 / 3.92 |
+
+The maximum of 3 calls is a retry (a repeated question, or a candidate question answered only with thanks).
+The transcripts showed two more problems: once the interviewer switched to English, and twice it fell into a
+role play the simulated candidate started (taking the customer's part, arranging a meeting "tomorrow at 3").
+An English reply is now asked again in the interview language; the role-play drift is open.
+
+*Mundart* (`bench_dialect --runs 2`, 6 interviewer texts per dialect): the share of texts that look like dialect
+is 67 % for Zurich and Valais German, 50 % for Bernese and Basel German, and 33 % for Grisons German. The rest
+is Standard German with a few dialect words; the second call sometimes switches to the formal "Si".
 
 The first runs also found an interviewer that said goodbye in the middle of the interview and then repeated
 the goodbye until the end. A question turn without a question is now asked again, and a question from the
@@ -229,7 +246,7 @@ answer and give one small next step.
 
 **What is already verified without Apertus:**
 
-- 260 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails,
+- 264 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails,
   JSON repair, the report, the Agent Protocol graph, accounts, the application letter, Mundart, and the voice
   endpoints.
 - The call budget follows from the code (section 3) and is logged per answer in every real run.
@@ -285,6 +302,7 @@ answer and give one small next step.
 
 - Close the gap to the baseline on single scores while keeping the problem flags (e.g. a separate flag
   check, or the baseline's scoring wording), and reduce the strictness on dialect answers.
+- Keep the interviewer in its role when the candidate starts a role play or asks it to plan a meeting.
 - Validate the scoring and the feedback with teachers and career counsellors (Profolio), and calibrate the
   analysis on reviewed data.
 - Mundart with native speakers: review the dialect examples, test speech-to-text with real Swiss German

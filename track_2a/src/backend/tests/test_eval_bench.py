@@ -92,3 +92,9 @@ def test_bench_interviews_runs_a_scenario_through_the_api(fake, monkeypatch):
     prompt = real_candidate._prompt(fhgr.candidates()["C-01"], config.postings()["P-01"], "de")
     assert "Luca" in prompt and "Plessur Maschinenbau AG" in prompt and "very good" in prompt
     assert bench_interviews.scenario_ids(None, ["apprenticeship_interview"], None)[:2] == ["S-01", "S-02"]
+
+
+def test_check_counts_escapes_left_in_the_text_as_mojibake():
+    report = {"criteria": [{"id": "clarity", "score": 3, "comment": "Tes r\\u00e9ponses étaient claires.",
+                            "evidence": ""}], "strengths": [], "improvements": []}
+    assert checks.check_report(report, "fr")["mojibake"] == 1

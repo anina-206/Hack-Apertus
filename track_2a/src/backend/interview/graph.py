@@ -256,6 +256,15 @@ _MUST_ASK = ("\nIMPORTANT: The interview is NOT over. Do not say goodbye and do 
              "End your reply with ONE question to the candidate.")
 
 
+# bench_interviews: once the interviewer suddenly answered in English ("That makes sense, Jana. ...").
+_ENGLISH = re.compile(r"\b(the|you|your|that|what|how|would|this|and)\b", re.IGNORECASE)
+_NOT_ENGLISH = "\nIMPORTANT: Write in the language of the interview, never in English."
+
+
+def _in_english(text: str) -> bool:
+    return len(_ENGLISH.findall(text)) >= 3
+
+
 def _asks_something(text: str) -> bool:
     return bool(_ASKS.search(text))
 
@@ -370,7 +379,12 @@ async def interviewer(state: InterviewState) -> dict:
                                         state.get("transcript", []) + new_turns, posting(state), state.get("focus"),
                                         state.get("application_summary"), point, state.get("persona"))
         text = await _interviewer_reply(messages)
-        if mode in _QUESTION_MODES and not _asks_something(text):
+        if _in_english(text):  # one retry; it takes the place of the other checks, so calls stay below 5
+            text = await _interviewer_reply([{**messages[0], "content": messages[0]["content"] + _NOT_ENGLISH},
+                                             *messages[1:]])
+            if mode in ("answer_candidate", "answer_and_close"):  # the cleanup of _answer_reply, without a call
+                text = _drop_goodbye(_drop_trailing_question(text)) or ANSWER_FALLBACK[(written_in, style["formal"])]
+        elif mode in _QUESTION_MODES and not _asks_something(text):
             text = await _question_reply(messages, text, phase, mode, written_in, style["formal"],
                                          state.get("transcript", []))
         elif mode in _QUESTION_MODES and _repeated_question(text, state.get("transcript", [])):
