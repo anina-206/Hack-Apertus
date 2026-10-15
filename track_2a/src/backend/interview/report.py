@@ -10,6 +10,7 @@ if they really appear in the candidate's answers.
 import json
 import logging
 import re
+from difflib import SequenceMatcher
 from statistics import mean
 from typing import Optional
 
@@ -31,10 +32,40 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[\"'„“”«»‘’]", "", text)).strip().lower()
 
 
+_WORD = re.compile(r"\w+")
+
+# A quote counts if this share of its words appears close together in one answer (at least MIN_QUOTE_WORDS words)
+QUOTE_MATCH = 0.7
+MIN_QUOTE_WORDS = 3
+
+
 def _verified_evidence(quote: str, candidate_texts: list[str]) -> str:
+    """The quote as the candidate really said it, or "" if they did not say it.
+
+    The 8B model rarely quotes word for word ("Ich mag Mathe" for "Mathe mag ich schon"), so an exact
+    match kept no quote at all (bench_transcripts: evidence share 0). Now it is enough that most of the
+    quote's words appear close together in one answer; the evidence shown is that part of the answer, so it is
+    always what the candidate said.
+    """
     quote = quote.strip().strip("\"'„“”«»…. ")
-    if quote and any(_norm(quote) in _norm(text) for text in candidate_texts):
+    if not quote:
+        return ""
+    if any(_norm(quote) in _norm(text) for text in candidate_texts):
         return quote
+    wanted = [w.lower() for w in _WORD.findall(quote)]
+    best, best_text, best_span = 0, "", (0, 0)
+    for text in candidate_texts:
+        words = list(_WORD.finditer(text))
+        blocks = [b for b in SequenceMatcher(None, [w.group().lower() for w in words], wanted,
+                                             autojunk=False).get_matching_blocks() if b.size]
+        matched = sum(b.size for b in blocks)
+        if not blocks or matched <= best:
+            continue
+        first, last = blocks[0].a, blocks[-1].a + blocks[-1].size - 1
+        if last - first + 1 <= 2 * len(wanted):  # the words must be close together, not spread over the answer
+            best, best_text, best_span = matched, text, (words[first].start(), words[last].end())
+    if best >= max(MIN_QUOTE_WORDS, QUOTE_MATCH * len(wanted)):
+        return best_text[best_span[0]:best_span[1]]
     return ""
 
 

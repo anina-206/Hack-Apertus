@@ -13,6 +13,7 @@ import logging
 import re
 from typing import Optional, TypeVar
 
+from json_repair import repair_json
 from pydantic import BaseModel, ValidationError, field_validator
 
 from backend import llm
@@ -220,6 +221,12 @@ def _loads(candidate: str):
         pythonic = re.sub(r"\btrue\b", "True", re.sub(r"\bfalse\b", "False", re.sub(r"\bnull\b", "None", fixed)))
         return ast.literal_eval(pythonic)
     except (ValueError, SyntaxError, MemoryError, RecursionError):
+        pass
+    # Last resort, measured on bench_transcripts: about 1 report in 6 had wrong closing brackets ("}}]}"),
+    # a quote closed with \" or invalid escapes (\' and \u00er). json_repair fixes all of these.
+    try:
+        return repair_json(candidate.replace("\\'", "'"), return_objects=True)
+    except Exception:  # json_repair does not promise not to raise on odd input
         return None
 
 

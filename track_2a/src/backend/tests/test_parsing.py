@@ -114,3 +114,16 @@ def test_unescaped_quotes_and_line_breaks_inside_strings_are_repaired():
     draft = parse_json(text, ReportDraft)
     assert draft.strengths == ['Du hast gesagt: "Ich baue gerne Lego" und das passt.']
     assert draft.closing == "Weiter so.\nDas war ein Training."
+
+
+# Real failures from bench_transcripts (cut down): wrong closing brackets, a quote closed with \", bad escapes
+@pytest.mark.parametrize("text", [
+    '{"strengths": ["Gut."], "improvements": [{"tip": "Mehr Beispiele.", "example_answer": "Ich ... herstellt.\\""}}]}',
+    '{"strengths": ["z.B. \\u201cIch mag, wenn alles hat einen Platz.\\", "Du zeigst Interesse"], "closing": "Weiter so."}',
+    '{"strengths": ["Mantieni l\\\'ordine e la calma."], "closing": "Bravo."}',
+    '{"strengths": ["Tu as prepar\\u00e9 les mat\\u00eriels."], "closing": "Bravo."}',
+    '{"strengths": ["Gut."], "closing": "Weiter so.", "criteria": {"clarity": {"comment": "Les r\\u00e9ponses s',
+])
+def test_broken_report_json_from_the_8b_model_is_repaired(text):
+    draft = parse_json(text, ReportDraft)
+    assert draft.strengths
