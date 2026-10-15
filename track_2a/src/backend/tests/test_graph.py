@@ -948,3 +948,11 @@ def test_report_keeps_a_loose_quote_as_the_words_the_candidate_really_said():
         "ich mag Mathe schon, weil man dort immer ein klares Resultat sieht"
     assert _verified_evidence("Ich liebe Physik", said) == ""
     assert _verified_evidence("<words the candidate said>", said) == ""
+
+
+def test_report_prompt_gives_the_comment_phrases_in_the_report_language():
+    # bench_transcripts T-08: with the German phrases only, French reports wrote "Nächstes Mal peux-tu ..."
+    from backend.interview.prompts import report_messages
+    occupation = {"label": {"de": "Kaufmann/Kauffrau EFZ", "fr": "Employé/e de commerce CFC"}, "description": ""}
+    system = report_messages(occupation, "fr", {"clarity": 3}, [], [])[0]["content"]
+    assert "La prochaine fois, tu peux" in system and "Nächstes Mal" not in system

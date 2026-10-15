@@ -410,19 +410,30 @@ def interviewer_messages(occupation: dict, style: dict, language: str, candidate
     return messages
 
 
+# How a criterion comment starts, in the language of the report. With the German phrases only, French
+# reports wrote "Nächstes Mal peux-tu ..." (bench_transcripts T-08).
+_COMMENT_START = {
+    "de": ("Du ...", "Nächstes Mal kannst du ..."),
+    "fr": ("Tu ...", "La prochaine fois, tu peux ..."),
+    "it": ("Tu ...", "La prossima volta puoi ..."),
+}
+_COMMENT_START["gsw"] = _COMMENT_START["de"]
+
+
 # The short, most important parts come first, so a cut-off answer loses the least.
-def _report_example(criteria: list[str]) -> dict:
+def _report_example(criteria: list[str], language: str = "de") -> dict:
     """The JSON shape of the report, with one entry for every observed criterion.
 
     With only two example criteria the 8B model wrote comments for just those two (bench_transcripts:
     every report had empty comments). The evidence placeholder is not a sentence the model could copy as is.
     """
+    you, next_time = _COMMENT_START[language]
     return {
-        "strengths": ["Du hast ... (a strength, addressed to the candidate)", "Du ..."],
+        "strengths": [f"{you} (a strength, addressed to the candidate)", you],
         "improvements": [{"tip": "A concrete tip, addressed to the candidate.",
                           "example_answer": "Ich ... (what the candidate could say, in the first person)"}],
         "closing": "One encouraging sentence.",
-        "criteria": {key: {"comment": "Du ... (what worked). Nächstes Mal kannst du ... (one small step).",
+        "criteria": {key: {"comment": f"{you} (what worked). {next_time} (one small step).",
                            "evidence": "<words the candidate said>"}
                      for key in criteria or ("clarity", "motivation")},
     }
@@ -448,6 +459,7 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
     score_lines = "\n".join(f"- {key}: {value}/{rubric.SCALE_MAX} ({CRITERIA[key]})" for key, value in scores.items())
     tips = "\n".join(f"- [{a['phase']}] {a['short_tip']}" for a in analyses if a.get("short_tip"))
     dialogue = "\n".join(f"{t['role'].upper()}: {t['text']}" for t in transcript)
+    you, next_time = _COMMENT_START[language]
     system = (
         "You are an experienced career coach for young people. Write the final feedback after a practice "
         "interview for an apprenticeship.\n"
@@ -455,9 +467,9 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
         f"Write all texts in {LANGUAGES[language]}. {ADDRESS[language]} Be positive and "
         "encouraging, suitable for a teenager, but honest about what to improve.\n"
         "- criteria: one entry for each criterion listed under 'Scores' below, with exactly that key. The comment "
-        "speaks to the candidate ('Du ...'): first what already worked in one concrete answer, then, if the score is "
-        "below 4, one small next step ('Nächstes Mal kannst du ...'). Describe what the candidate said or did, never "
-        "what kind of person they are, and never write 'Die Antworten waren ...'. As evidence an EXACT quote (a few "
+        f"speaks to the candidate ('{you}'): first what already worked in one concrete answer, then, if the score is "
+        f"below 4, one small next step ('{next_time}'). Describe what the candidate said or did, never "
+        "what kind of person they are, and never write 'Your answers were ...' in any language. As evidence an EXACT quote (a few "
         "words) from the CANDIDATE's answers, or an empty string if there is none.\n"
         "- strengths: 2-3 strengths, each referring to something the candidate actually said.\n"
         "- improvements: 2-3 concrete tips, each referring to one of the candidate's answers, with a short "
@@ -468,7 +480,7 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
         f"{_FEEDBACK_RULES}\n"
         "Base everything on the scores, tips and transcript below. Do not invent facts.\n\n"
         "Respond with ONLY a JSON object, no other text, in this shape:\n"
-        f"{json.dumps(_report_example(list(scores)), ensure_ascii=False)}"
+        f"{json.dumps(_report_example(list(scores), language), ensure_ascii=False)}"
     )
     user = f"Scores:\n{score_lines or '(none)'}\n\nTips per answer:\n{tips or '(none)'}\n\nTranscript:\n{dialogue}"
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
