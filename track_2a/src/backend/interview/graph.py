@@ -31,8 +31,8 @@ from backend.interview import dialect as swiss_german
 from backend.interview import examples as calibration
 from backend.interview.parsing import Analysis, complete_json
 from backend.interview.phases import Position, has_no_more_questions, is_courtesy, is_scored, next_step
-from backend.interview.prompts import (FOLLOW_UP_FALLBACK, FURTHER, INVITATION, analysis_messages,
-                                       closing_message, interviewer_messages)
+from backend.interview.prompts import (FOLLOW_UP_FALLBACK, analysis_messages, closing_message, fixed_line,
+                                       interviewer_messages)
 from backend.interview.safety import CRISIS_MESSAGE, answer_flags, guard_mode, is_crisis
 
 # An answer with fewer words than this always gets a follow-up question (at most one per phase, see phases.py).
@@ -73,6 +73,9 @@ class InterviewState(TypedDict, total=False):
     question_count: int  # interviewer questions so far, for ids q1, q2, ...
     current_question: Optional[dict]  # {"id", "text", "is_follow_up"}
     transcript: Annotated[list[dict], operator.add]  # {"role", "question_id", "text"}; candidate turns also "phase"
+    # Mundart: question id -> the Standard German text of the interviewer's line before it became dialect. The model
+    # writes Standard German, so it gets its own earlier lines in Standard German too (dialect there made it mix).
+    standard_german: Annotated[dict, operator.or_]
     analyses: Annotated[list[dict], operator.add]
     done: bool
     support_needed: bool  # distress or crisis seen -> the report adds a support note
@@ -291,13 +294,16 @@ async def interviewer(state: InterviewState) -> dict:
         pos, mode = Position(), "opening"
 
     style = config.interviewer_styles()[state["interviewer_style"]]
+    dialect = state.get("dialect") or swiss_german.DEFAULT_DIALECT
+    german = None  # Mundart: the Standard German text of a line the model wrote
     point = None  # the point of the application this question is about, if any
     if mode == "close":
-        text = closing_message(state["language"], style["formal"], (state.get("candidate") or {}).get("first_name"))
+        text = closing_message(state["language"], style["formal"], (state.get("candidate") or {}).get("first_name"),
+                               dialect)
     elif mode == "crisis":
         text = CRISIS_MESSAGE[state["language"]]
     elif mode == "new_phase" and pos.phase == "candidate_questions":
-        text = INVITATION[(state["language"], style["formal"])]  # fixed line, no LLM call
+        text = fixed_line("invitation", state["language"], style["formal"], dialect)  # fixed line, no LLM call
     else:
         # answer_and_close still answers within the candidate_questions phase.
         phase = "candidate_questions" if mode == "answer_and_close" else pos.phase
@@ -311,7 +317,9 @@ async def interviewer(state: InterviewState) -> dict:
         written_in = "de" if state["language"] == "gsw" else state["language"]
         messages = interviewer_messages(occupation(state), style, written_in,
                                         state.get("candidate"), phase, mode, pos.questions_in_phase,
-                                        state.get("transcript", []) + new_turns, posting(state), state.get("focus"),
+                                        _in_standard_german(state.get("transcript", []) + new_turns,
+                                                            state.get("standard_german") or {}),
+                                        posting(state), state.get("focus"),
                                         state.get("application_summary"), point, state.get("persona"))
         text = await _interviewer_reply(messages)
         if mode in _QUESTION_MODES and not _asks_something(text):
@@ -327,13 +335,14 @@ async def interviewer(state: InterviewState) -> dict:
         if mode in ("next_question", "new_phase", "follow_up"):
             text = _drop_praise(text, written_in, state.get("question_count", 0))
         if state["language"] == "gsw":
-            text = await swiss_german.to_dialect(text, state.get("dialect") or swiss_german.DEFAULT_DIALECT,
-                                                 style["formal"])
+            german = text
+            text = await swiss_german.to_dialect(text, dialect, style["formal"])
         if mode == "answer_candidate":
-            text += "\n\n" + FURTHER[(state["language"], style["formal"])]
+            text += "\n\n" + fixed_line("further", state["language"], style["formal"], dialect)
+            german = german and german + "\n\n" + fixed_line("further", "de", style["formal"])
         elif mode == "answer_and_close":
             first_name = (state.get("candidate") or {}).get("first_name")
-            text += "\n\n" + closing_message(state["language"], style["formal"], first_name)
+            text += "\n\n" + closing_message(state["language"], style["formal"], first_name, dialect)
 
     update = {"phase_index": pos.phase_index, "questions_in_phase": pos.questions_in_phase,
               "follow_ups_in_phase": pos.follow_ups_in_phase}
@@ -350,7 +359,16 @@ async def interviewer(state: InterviewState) -> dict:
     if mode in ("crisis", "support", "redirect", "clarify"):
         question["guard"] = mode
     new_turns.append({"role": "interviewer", "question_id": question["id"], "text": text})
+    if german:
+        update["standard_german"] = {question["id"]: german}
     return {**update, "transcript": new_turns, "current_question": question, "question_count": question_count}
+
+
+def _in_standard_german(transcript: list[dict], standard_german: dict) -> list[dict]:
+    """The transcript with the interviewer's Mundart lines replaced by their Standard German originals."""
+    return [{**t, "text": standard_german[t["question_id"]]}
+            if t["role"] == "interviewer" and t.get("question_id") in standard_german else t
+            for t in transcript]
 
 
 def build_graph(checkpointer=None):
@@ -368,7 +386,7 @@ _TURN_RESET = {"analysis": None, "analysis_attempts": 0}
 
 def initial_state(setup: dict) -> dict:
     """State for a new interview (REST: POST /sessions, Agent Protocol: first message of a thread)."""
-    return {**setup, "phase_index": 0, "questions_in_phase": 1, "follow_ups_in_phase": 0, "question_count": 0,
+    return {**setup, "standard_german": {}, "phase_index": 0, "questions_in_phase": 1, "follow_ups_in_phase": 0, "question_count": 0,
             "done": False, "closing_message": None, "report": None, "answer": None, **_TURN_RESET}
 
 

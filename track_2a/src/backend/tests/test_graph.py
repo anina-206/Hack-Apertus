@@ -92,6 +92,7 @@ class FakeLLM:
         else:
             self.calls.append("interviewer")
             self.last_interviewer_system = system
+            self.last_interviewer_messages = messages
             content = self.interviewer_outputs.pop(0) if self.interviewer_outputs else f"Frage {len(self.calls)}?"
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))], usage=None)
 
@@ -835,6 +836,57 @@ def test_if_the_dialect_call_fails_the_standard_german_text_is_used(fake, api, m
     monkeypatch.setattr(dialect.llm, "chat_completion", selective)
     session = start(api, language="gsw")
     assert not session["question"]["text"].startswith("Gsw: ") and session["question"]["text"].endswith("?")
+
+
+def test_mundart_tips_and_report_are_in_standard_german(fake, api):
+    client = fake()
+    session = start(api, language="gsw", dialect="be")
+    send(api, session["session_id"], "q1", "Ich bi d Lara und bou gärn PCs zäme.")
+    assert "Swiss German dialect" not in client.last_analysis_system
+    assert "German (Swiss Standard German" in client.last_analysis_system
+    from backend.interview.prompts import report_messages
+    system = report_messages({"label": {"de": "Koch"}, "description": "x"}, "gsw", {}, [], [])[0]["content"]
+    assert "Swiss German dialect" not in system and "German (Swiss Standard German" in system
+
+
+def test_the_interviewer_sees_its_earlier_mundart_lines_in_standard_german(fake, api):
+    client = fake()
+    session = start(api, language="gsw")
+    assert session["question"]["text"].startswith("Gsw: ")  # the candidate sees dialect
+    turn = send(api, session["session_id"], "q1", "Ich bi d Lara und bou gärn PCs zäme.").json()
+    own_lines = [m["content"] for m in client.last_interviewer_messages if m["role"] == "assistant"]
+    assert own_lines and not any(line.startswith("Gsw: ") for line in own_lines)
+    # The history of the API still shows what the candidate saw
+    history = api.get(f"/api/v1/sessions/{session['session_id']}").json()["history"]
+    assert history[0]["text"].startswith("Gsw: ") and turn["question"]["text"].startswith("Gsw: ")
+
+
+def test_fixed_lines_follow_the_dialect():
+    from backend.interview.prompts import closing_message, fixed_line
+    assert fixed_line("invitation", "gsw", False, "be") == "Das si mini Frage gsi. Hesch du no Frage a mi oder zum Betrieb?"
+    assert fixed_line("invitation", "gsw", False, "zh").startswith("Das sind mini Frage gsi.")
+    assert fixed_line("further", "gsw", True, "vs") == "Händ Sie na meh Frage?"  # no own lines yet: Zürich
+    assert closing_message("gsw", False, "Lara", "be").startswith("Merci vilmau, Lara!")
+    assert "kenne z lehre" in closing_message("gsw", False, None, "zh")
+    assert fixed_line("further", "de", False, "be") == "Hast du noch weitere Fragen?"  # dialect only for gsw
+
+
+def test_typed_mundart_is_understood_by_the_checks():
+    from backend.interview.phases import has_no_more_questions, is_courtesy
+    from backend.interview.safety import is_crisis
+    for text in ("Ich wett nüme läbe", "I wott mi umbringe", "Ich möcht mir öppis aatue", "ich ha mi gritzt"):
+        assert is_crisis(text), text
+    for text in ("Chasch mi hei bringe", "Mir chönd am Mittwuch afange", "Ich lebe gern in Chur"):
+        assert not is_crisis(text), text
+    assert not has_no_more_questions("Nei, aber werum händ er kei Lernendi im Lager")
+    assert is_courtesy("Merci vilmal für ds Gspräch")
+
+
+def test_dialect_examples_include_similar_questions():
+    from backend.interview.dialect import EXAMPLES_FROM_QUESTIONS, _all_question_pairs, examples
+    question = _all_question_pairs("gr")[-1][0]  # a question at the end, which the even spread does not pick
+    picked = [de for de, _ in examples("gr", question)]
+    assert question in picked and len(picked) == EXAMPLES_FROM_QUESTIONS
 
 
 def test_dialect_helpers():
