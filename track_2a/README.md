@@ -314,5 +314,13 @@ interview; the full text is not stored, only the short summary (without contact 
 - Challenges and judging criteria: [Getting Started guide](https://hackapertus.notion.site/getting-started-guide-onlinehack)
 - Submission: http://hackapertus.ch/online-hack/submissions (not on Devpost)
 - Licence: all Hack Apertus projects are open source, see [Terms & Conditions](https://hackapertus.ch/terms-and-conditions) (6. What you build is open source)
+
+## Licence
+
+Our source code: Apache-2.0 (`LICENSE` at the repository root). The technical report: CC-BY-4.0.
+Not covered: the FHGR challenge material in `datasets/` and `fhgr/` (FHGR, for use in the challenge, see
+`datasets/README.md`), occupation data from berufsberatung.ch (SDBB), and the models and packages we use under their
+own licences: Apertus (Apache-2.0), Whisper models (MIT / Apache-2.0), Piper (`piper-tts`, GPL-3.0) and its voices
+(CC0, CC-BY-4.0, AGPL-3.0; details in [technical_report.md](technical_report.md), section 3).
 - Questions: Discord or hello@hackapertus.ch
 - Development was assisted by Claude Code; all runtime inference uses Apertus v1.5 8B.
