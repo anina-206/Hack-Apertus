@@ -10,7 +10,7 @@ In Docker it is built and served by nginx on port 8080 (`make run` in `track_2a/
 | Login (optional) | `src/screens/AuthScreen.tsx` | Account to keep interviews; guests can use everything |
 | Setup | `src/screens/SetupScreen.tsx` | Language (DE/FR/IT/Mundart and dialect), occupation, interviewer style, mode, optional application letter |
 | Interview | `src/screens/InterviewScreen.tsx` | Chat with progress through the phases, or the hands-free call view (`components/CallView.tsx`) |
-| Feedback | `src/screens/FeedbackScreen.tsx` | Overall score, the 11 FHGR criteria as a chart with comments, strengths, tips with example answers, letter feedback |
+| Feedback | `src/screens/FeedbackScreen.tsx` | Strengths, tips with example answers, letter feedback, what to practise next; the overall score and the 11 criteria (chart and comments) folded away until opened |
 
 Voice: `src/useVoice.ts` records the answer, sends it to `POST /transcribe` (Whisper on the server) and reads the
 questions aloud with `POST /speech` (Piper). Without server voice it falls back to the browser's

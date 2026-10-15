@@ -22,15 +22,21 @@ Team: Iago (backend), Anina (frontend)
 
 The feedback screen after a real test interview (informatics apprenticeship, dictated answers):
 
-![Feedback: overall score, strengths and the 11 FHGR criteria](docs/screenshots/feedback-scores.png)
+![Feedback: strengths, overall score and the scores per criterion](docs/screenshots/feedback-scores.png)
 
 ![Feedback: tips with example answers, and a comment per criterion](docs/screenshots/feedback-tips.png)
 
 ![Feedback: what to practise next, and criteria the interview showed nothing about](docs/screenshots/feedback-next.png)
 
-These screenshots were taken before the last report fixes: the comments now start with what worked in one
-concrete answer and give one small next step, instead of "Die Antworten waren teilweise schwer zu folgen"
-(see [technical_report.md](technical_report.md), section 5).
+These screenshots show an earlier version. Since then:
+
+- The feedback screen puts the plan first: strengths, tips with example answers, then "Genau das üben". The overall
+  score, the chart and every criterion with its comment are folded behind "Alle 11 Kriterien ansehen" (for teachers
+  and the curious).
+- The levels read "Noch am Anfang / Auf dem Weg / Gut / Sehr gut", and level 1 is amber instead of red.
+- The comments start with what worked in one concrete answer and give one small next step, instead of "Die Antworten
+  waren teilweise schwer zu folgen" (see [technical_report.md](technical_report.md), section 5), and their tone
+  follows the score.
 
 ## Results in short
 
@@ -321,6 +327,6 @@ Our source code: Apache-2.0 (`LICENSE` at the repository root). The technical re
 Not covered: the FHGR challenge material in `datasets/` and `fhgr/` (FHGR, for use in the challenge, see
 `datasets/README.md`), occupation data from berufsberatung.ch (SDBB), and the models and packages we use under their
 own licences: Apertus (Apache-2.0), Whisper models (MIT / Apache-2.0), Piper (`piper-tts`, GPL-3.0) and its voices
-(CC0, CC-BY-4.0, AGPL-3.0; details in [technical_report.md](technical_report.md), section 3).
+(CC0, CC-BY-4.0, AGPL-3.0, M-AILABS licence; details in [technical_report.md](technical_report.md), section 3).
 - Questions: Discord or hello@hackapertus.ch
 - Development was assisted by Claude Code; all runtime inference uses Apertus v1.5 8B.
