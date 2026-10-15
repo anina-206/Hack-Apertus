@@ -133,6 +133,14 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
     }
   }
 
+  // While the microphone listens or Whisper writes, "Senden" sends the spoken answer right away
+  const voiceBusy = voice.listening || voice.transcribing || voice.countdown !== null;
+
+  function submit() {
+    if (voiceBusy) voice.sendNow();
+    else send();
+  }
+
   /** Takes over the server's state of this interview. Tips already shown are kept. Returns false if it fails. */
   async function catchUp() {
     try {
@@ -301,6 +309,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
           onHold={voice.hold}
           onResume={voice.resume}
           onShowChat={() => setShowCall(false)}
+          onSend={voice.sendNow}
         />
       ) : (
         // role="log": a screen reader announces each new message
@@ -416,12 +425,13 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
               paused={voice.paused}
               onSkip={voice.skipReading}
               onHold={voice.hold}
+              onSend={voice.sendNow}
             />
           )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              send();
+              submit();
             }}
             className="flex items-end gap-2"
           >
@@ -434,7 +444,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
                 // Enter sends, Shift+Enter makes a new line
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  send();
+                  submit();
                 }
               }}
               placeholder={text.answerPlaceholder}
@@ -458,7 +468,7 @@ export default function InterviewScreen({ entry, onRestart, onFinished }: Props)
             )}
             <button
               type="submit"
-              disabled={!draft.trim() || sending}
+              disabled={!(draft.trim() || voiceBusy) || sending}
               aria-label={text.send}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-button transition hover:bg-brand-dark active:scale-90 disabled:active:scale-100 disabled:cursor-not-allowed disabled:bg-line disabled:shadow-none"
             >
@@ -681,6 +691,7 @@ function HandsFreeBar({
   paused,
   onSkip,
   onHold,
+  onSend,
 }: {
   text: UiTexts;
   speaker: string;
@@ -691,9 +702,16 @@ function HandsFreeBar({
   paused: boolean;
   onSkip: () => void;
   onHold: () => void;
+  onSend: () => void;
 }) {
   const box = "mb-2 flex items-center gap-3 rounded-xl px-3 py-2 text-sm";
   const action = "min-h-10 shrink-0 rounded-full border-2 px-4 text-sm font-bold";
+  // Sends the spoken answer now, without waiting for the pause or the countdown
+  const sendButton = (
+    <button type="button" onClick={onSend} className={`${action} relative border-brand bg-brand text-white`}>
+      {text.send}
+    </button>
+  );
 
   if (speaking) {
     return (
@@ -718,6 +736,7 @@ function HandsFreeBar({
         <button type="button" onClick={onHold} className={`${action} relative border-mint-dark`}>
           {text.wait}
         </button>
+        {sendButton}
       </div>
     );
   }
@@ -726,6 +745,7 @@ function HandsFreeBar({
       <div className={`${box} bg-danger-lighter text-logo-red`} role="status">
         <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-logo-red" />
         <span className="flex-1 text-charcoal">{text.listenNow}</span>
+        {sendButton}
       </div>
     );
   }
@@ -734,6 +754,7 @@ function HandsFreeBar({
       <div className={`${box} bg-brand-lighter text-brand`} role="status">
         <span className="h-2.5 w-2.5 shrink-0 animate-dot rounded-full bg-brand motion-reduce:animate-none" />
         <span className="flex-1">{text.transcribing}</span>
+        {sendButton}
       </div>
     );
   }

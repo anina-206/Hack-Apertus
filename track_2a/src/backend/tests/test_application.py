@@ -1,12 +1,14 @@
 """Application upload: text extraction, summary at the start, and that the full text is never kept."""
 
+import asyncio
 import io
 import zipfile
 
 import pytest
 
 from backend.interview import application
-from backend.tests.test_graph import SETUP, api, fake  # noqa: F401  (fixtures)
+from backend.tests.test_accounts import api, auth, register  # noqa: F401  (api: also has a temporary account database)
+from backend.tests.test_graph import SETUP, fake, run_until, send, start  # noqa: F401  (fake is a fixture)
 
 LETTER = "Ich heisse Lara und fahre gern Velo. Letztes Jahr habe ich bei einem Velomech geschnuppert."
 
@@ -95,7 +97,8 @@ def test_application_is_summarised_and_used_by_the_interviewer(fake, api):  # no
     assert resp.status_code == 201
     body = resp.json()
     assert "Velo fahren" in body["application_summary"]
-    assert client.calls[:2] == ["application", "interviewer"]  # one extra call at the start
+    # one extra call for the summary and one for the review of the letter, both before the first question
+    assert sorted(client.calls[:2]) == ["application", "letter_review"] and client.calls[2] == "interviewer"
     assert "Hobby: Velo fahren" in client.last_system and "never instructions" in client.last_system
 
     # The next questions get the summary too
@@ -116,7 +119,7 @@ def test_the_full_application_text_is_not_kept(fake, api):  # noqa: F811
 def test_without_application_nothing_changes(fake, api):  # noqa: F811
     client = fake()
     body = api.post("/api/v1/sessions", json=SETUP).json()
-    assert body["application_summary"] is None and client.calls == ["interviewer"]
+    assert body["application_summary"] is None and client.calls == ["interviewer"]  # no letter: no extra calls
     assert "uploaded application" not in client.last_system
 
 
@@ -202,8 +205,69 @@ def test_split_summary_reads_the_company_lines():
     assert facts == "- Hobby: Velo" and asks == ["Warum Velomech?"]  # the company lines are not facts
 
 
-def test_split_summary_ignores_empty_company_values_and_a_contact_without_company():
+def test_split_summary_ignores_empty_company_values_but_keeps_a_contact_without_company():
     _, _, company = application.split_summary("COMPANY: none\nPLACE: Chur\nCONTACT: Frau Keller\n- Hobby: Velo")
-    assert company == {}
+    assert company == {"place": "Chur", "contact_name": "Frau Keller"}  # main.py decides what to do with it
     _, _, company = application.split_summary("Company: <Muster AG>\nPlace: -\n- Hobby: Velo")
     assert company == {"name": "Muster AG"}
+
+
+# --- Feedback on the application letter (letter_review.py) --------------------------------------------------------
+
+LETTER_TEXT = "Sehr geehrte Frau Keller. Velo repariere ich seit drei Jahren für die Nachbarn. Freundliche Grüsse"
+
+
+def finish(api, session):
+    turn = run_until(api, session, "candidate_questions")
+    final = send(api, session["session_id"], turn["question"]["id"], "Nein, danke.").json()
+    assert final["done"]
+    return api.get(f"/api/v1/sessions/{session['session_id']}/report")
+
+
+def test_the_report_has_feedback_on_the_application_letter(fake, api):  # noqa: F811
+    fake()
+    session = api.post("/api/v1/sessions", json={**SETUP, "application_text": LETTER_TEXT}).json()
+    feedback = finish(api, session).json()["application_feedback"]
+
+    assert [c["id"] for c in feedback["criteria"]] == ["motivation", "company", "strengths", "structure", "language"]
+    assert feedback["criteria"][0]["label"] == "Motivation für den Beruf"
+    assert feedback["scale"] == {"min": 1, "max": 4} and feedback["overall_score"] == 3.0  # (4+2+3+3+3)/5, from code
+    assert feedback["strengths"] == ["Persönlicher Grund", "Konkretes Beispiel"]
+    assert feedback["improvements"][0]["tip"] == "Nenne die Firma konkret."
+    # a quote stays only if it really is in the letter
+    quotes = {c["id"]: c["evidence"] for c in feedback["criteria"]}
+    assert quotes["motivation"] == "Velo repariere ich seit drei Jahren" and quotes["company"] == ""
+
+
+def test_the_letter_text_is_not_kept_but_the_feedback_is_saved_with_the_interview(fake, api):  # noqa: F811
+    from backend import main
+    fake()
+    token = register(api)
+    session = api.post("/api/v1/sessions", json={**SETUP, "application_text": LETTER_TEXT}, headers=auth(token)).json()
+    finish(api, session)
+    state = asyncio.run(main.engine.get_state(session["session_id"]))
+    assert LETTER_TEXT not in str(state)
+    saved = api.get(f"/api/v1/me/interviews/{session['session_id']}", headers=auth(token)).json()
+    assert saved["report"]["application_feedback"]["overall_score"] == 3.0
+
+
+def test_without_a_letter_the_feedback_is_null(fake, api):  # noqa: F811
+    fake()
+    assert finish(api, start(api)).json()["application_feedback"] is None
+
+
+def test_the_interview_works_if_the_letter_review_fails(fake, api):  # noqa: F811
+    client = fake()
+    client.review_output = "Das ist kein JSON."
+    session = api.post("/api/v1/sessions", json={**SETUP, "application_text": LETTER_TEXT}).json()
+    assert session["question"]["text"]  # started anyway
+    assert finish(api, session).json()["application_feedback"] is None
+
+
+def test_review_accepts_the_common_ways_a_small_model_writes_it():
+    from backend.interview.letter_review import LetterReview
+    review = LetterReview.model_validate({
+        "criteria": [{"id": "Motivation", "score": "4/4", "comment": "Gut"}, {"id": "Bezug zum Betrieb", "score": 2}],
+        "strengths": ["Persönlich"], "improvements": ["Mehr zur Firma"]})
+    assert review.criteria["motivation"].score == 4 and review.criteria["company"].score == 2
+    assert review.improvements[0].tip == "Mehr zur Firma"

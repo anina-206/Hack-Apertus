@@ -62,7 +62,7 @@ CLOSING = {
     ("fr", True): "Merci beaucoup{name} pour cet entretien. Nous vous recontacterons prochainement.",
     ("it", False): "Grazie mille{name}! È stato un piacere conoscerti. Ti ricontatteremo presto.",
     ("it", True): "Grazie mille{name} per il colloquio. La ricontatteremo nei prossimi giorni.",
-    ("gsw", False): "Merci vielmal{name}! Hät mi gfreut, dich kenneztlehre. Mir mälded eus bald bi dir.",
+    ("gsw", False): "Merci vielmal{name}! Hät mi gfreut, dich kenne z lehre. Mir mälded eus bald bi dir.",
     ("gsw", True): "Merci vielmal{name} für s Gspröch. Mir mälded eus i de nächschte Täg bi Ihne.",
 }
 
@@ -110,8 +110,28 @@ FURTHER = {
 }
 
 
-def closing_message(language: str, formal: bool, first_name: Optional[str]) -> str:
-    return CLOSING[(language, formal)].format(name=f", {first_name}" if first_name else "")
+# The gsw lines above are Zürichdeutsch; Berndeutsch has its own. The other dialects use the Zürich lines.
+DIALECT_LINES = {
+    "be": {
+        "closing": {False: "Merci vilmau{name}! Het mi gfreut, di kennezlehre. Mir mälde üs gli bi dir.",
+                    True: "Merci vilmau{name} für ds Gspräch. Mir mälde üs i de nächschte Täg bi Ihne."},
+        "invitation": {False: "Das si mini Frage gsi. Hesch du no Frage a mi oder zum Betrieb?",
+                       True: "Das si mini Frage gsi. Hei Sie no Frage a mi oder zum Betrieb?"},
+        "further": {False: "Hesch du no meh Frage?", True: "Hei Sie no meh Frage?"},
+    },
+}
+_FIXED = {"closing": CLOSING, "invitation": INVITATION, "further": FURTHER}
+
+
+def fixed_line(kind: str, language: str, formal: bool, dialect: Optional[str] = None) -> str:
+    """A fixed line ("closing", "invitation", "further"), for Mundart in the chosen dialect if there is one."""
+    if language == "gsw" and kind in DIALECT_LINES.get(dialect or "", {}):
+        return DIALECT_LINES[dialect][kind][formal]
+    return _FIXED[kind][(language, formal)]
+
+
+def closing_message(language: str, formal: bool, first_name: Optional[str], dialect: Optional[str] = None) -> str:
+    return fixed_line("closing", language, formal, dialect).format(name=f", {first_name}" if first_name else "")
 
 
 # The company details typed in by the candidate are free text: they are facts, never instructions.
@@ -150,6 +170,12 @@ def _candidate_info(candidate: Optional[dict]) -> str:
         return ""
     parts = [f"{key.replace('_', ' ')}: {value}" for key, value in candidate.items() if value]
     return "About the candidate: " + "; ".join(parts) + "\n" if parts else ""
+
+
+def _feedback_language(language: str) -> str:
+    """Tips and the report for Mundart are in Standard German (docs/api.md, as in the FHGR data): the 8B model
+    does not write dialect reliably, and the UI tells the candidate so."""
+    return "de" if language == "gsw" else language
 
 
 _ANALYSIS_EXAMPLE = {
@@ -212,6 +238,7 @@ _TIP_RULES = (
 def analysis_messages(occupation: dict, language: str, phase: str, question: str, answer: str,
                       posting: Optional[dict] = None, examples: Optional[str] = None,
                       previous_tips: tuple[str, ...] = ()) -> list[dict]:
+    language = _feedback_language(language)
     criteria = "\n".join(rubric.describe(key) for key in CRITERIA)
     focus = ", ".join(rubric.PHASE_FOCUS.get(phase, []))
     flags = "\n".join(f"- {key}: {desc}" for key, desc in safety.PROBLEM_FLAGS.items())
@@ -456,6 +483,7 @@ _FEEDBACK_RULES = (
 def report_messages(occupation: dict, language: str, scores: dict[str, int], analyses: list[dict],
                     transcript: list[dict], posting: Optional[dict] = None) -> list[dict]:
     """`scores`: the final 1-4 score of every observed criterion (computed in code)."""
+    language = _feedback_language(language)
     score_lines = "\n".join(f"- {key}: {value}/{rubric.SCALE_MAX} ({CRITERIA[key]})" for key, value in scores.items())
     tips = "\n".join(f"- [{a['phase']}] {a['short_tip']}" for a in analyses if a.get("short_tip"))
     dialogue = "\n".join(f"{t['role'].upper()}: {t['text']}" for t in transcript)

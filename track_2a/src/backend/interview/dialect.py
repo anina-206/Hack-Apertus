@@ -74,8 +74,8 @@ def looks_like_dialect(text: str) -> bool:
 
 
 @lru_cache
-def _question_pairs(dialect: str) -> list[tuple[str, str]]:
-    """Standard German question -> the same question in the dialect, evenly picked from the FHGR question bank."""
+def _all_question_pairs(dialect: str) -> tuple[tuple[str, str], ...]:
+    """Standard German question -> the same question in the dialect, from the FHGR question bank."""
     pairs = []
     with open(QUESTIONS_FILE, encoding="utf-8") as f:
         for line in f:
@@ -83,17 +83,34 @@ def _question_pairs(dialect: str) -> list[tuple[str, str]]:
             variant = {v["dialect"]: v["text"] for v in q.get("gsw_variants") or []}.get(dialect)
             if variant and len(variant) <= 110:
                 pairs.append((q["text"]["de"], variant))
-    step = max(1, len(pairs) // EXAMPLES_FROM_QUESTIONS)
-    return pairs[::step][:EXAMPLES_FROM_QUESTIONS]
+    return tuple(pairs)
 
 
-def examples(dialect: str) -> list[tuple[str, str]]:
-    return PHRASES.get(dialect, []) + _question_pairs(dialect)
+def _words(text: str) -> set[str]:
+    return set(re.findall(r"[a-zäöüéèàç]{3,}", text.lower()))
+
+
+def _question_pairs(dialect: str, text: str = "") -> list[tuple[str, str]]:
+    """The questions that share the most words with `text` (half of the examples), the rest evenly spread.
+
+    Similar sentences show the model the dialect forms of exactly the words it has to translate; Basel, Graubünden
+    and Valais have only about 30 questions each and no extra phrases, so the right ones matter most there.
+    """
+    pairs = list(_all_question_pairs(dialect))
+    wanted = _words(text)
+    similar = sorted(pairs, key=lambda p: -len(_words(p[0]) & wanted))[:EXAMPLES_FROM_QUESTIONS // 2] if wanted else []
+    rest = [p for p in pairs if p not in similar]
+    step = max(1, len(rest) // (EXAMPLES_FROM_QUESTIONS - len(similar)))
+    return similar + rest[::step][:EXAMPLES_FROM_QUESTIONS - len(similar)]
+
+
+def examples(dialect: str, text: str = "") -> list[tuple[str, str]]:
+    return PHRASES.get(dialect, []) + _question_pairs(dialect, text)
 
 
 def messages(text: str, dialect: str, formal: bool) -> list[dict]:
     name = DIALECTS[dialect]
-    shots = "\n".join(f"Standard German: {de}\n{name}: {gsw}" for de, gsw in examples(dialect))
+    shots = "\n".join(f"Standard German: {de}\n{name}: {gsw}" for de, gsw in examples(dialect, text))
     address = 'Keep the formal "Sie" (dialect: "Sie").' if formal else 'Address the person with "du".'
     system = (
         f"You translate Standard German into Swiss German dialect ({name}), written the way Swiss people write in "

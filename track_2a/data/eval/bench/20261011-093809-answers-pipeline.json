@@ -1,0 +1,4880 @@
+{
+  "bench": "answers",
+  "variant": "pipeline",
+  "summary": {
+    "answers": 100,
+    "parse_failed": 0,
+    "avg_calls": 1,
+    "scores": {
+      "pairs": 212,
+      "mae": 0.5,
+      "exact": 0.54,
+      "within_1": 0.96,
+      "bias": -0.07,
+      "coverage": 0.61,
+      "extra": 0.54
+    },
+    "holistic_spearman": 0.82,
+    "mean_score_by_class": {
+      "incomplete": 2.39,
+      "problematic": 1.74,
+      "strong": 2.88,
+      "weak": 1.91
+    },
+    "follow_up": {
+      "precision": 0.71,
+      "recall": 0.6
+    },
+    "problem_flags": {
+      "any": {
+        "gold": 18,
+        "precision": 1.0,
+        "recall": 0.33
+      },
+      "distress_signal": {
+        "gold": 3,
+        "precision": null,
+        "recall": 0.0
+      },
+      "manipulation_attempt": {
+        "gold": 3,
+        "precision": 1.0,
+        "recall": 0.33
+      }
+    },
+    "by_lang": {
+      "de": {
+        "pairs": 69,
+        "mae": 0.46,
+        "exact": 0.58,
+        "within_1": 0.96,
+        "bias": -0.12,
+        "coverage": 0.59,
+        "extra": 0.45
+      },
+      "fr": {
+        "pairs": 44,
+        "mae": 0.59,
+        "exact": 0.5,
+        "within_1": 0.91,
+        "bias": -0.05,
+        "coverage": 0.65,
+        "extra": 0.59
+      },
+      "gsw": {
+        "pairs": 60,
+        "mae": 0.42,
+        "exact": 0.58,
+        "within_1": 1.0,
+        "bias": -0.25,
+        "coverage": 0.62,
+        "extra": 0.48
+      },
+      "it": {
+        "pairs": 39,
+        "mae": 0.59,
+        "exact": 0.44,
+        "within_1": 0.97,
+        "bias": 0.28,
+        "coverage": 0.59,
+        "extra": 0.65
+      }
+    },
+    "by_answer_class": {
+      "incomplete": {
+        "pairs": 53,
+        "mae": 0.32,
+        "exact": 0.72,
+        "within_1": 0.96,
+        "bias": -0.02,
+        "coverage": 0.66,
+        "extra": 0.51
+      },
+      "problematic": {
+        "pairs": 38,
+        "mae": 0.68,
+        "exact": 0.37,
+        "within_1": 0.95,
+        "bias": 0.21,
+        "coverage": 0.52,
+        "extra": 0.58
+      },
+      "strong": {
+        "pairs": 71,
+        "mae": 0.61,
+        "exact": 0.42,
+        "within_1": 0.97,
+        "bias": -0.49,
+        "coverage": 0.7,
+        "extra": 0.5
+      },
+      "weak": {
+        "pairs": 50,
+        "mae": 0.4,
+        "exact": 0.64,
+        "within_1": 0.96,
+        "bias": 0.28,
+        "coverage": 0.54,
+        "extra": 0.59
+      }
+    },
+    "by_criterion": {
+      "clarity": {
+        "pairs": 44,
+        "mae": 0.43,
+        "exact": 0.57,
+        "within_1": 1.0,
+        "bias": -0.3,
+        "coverage": 1.0,
+        "extra": 0.0
+      },
+      "relevance": {
+        "pairs": 43,
+        "mae": 0.4,
+        "exact": 0.65,
+        "within_1": 0.95,
+        "bias": 0.26,
+        "coverage": 0.98,
+        "extra": 0.0
+      },
+      "motivation": {
+        "pairs": 26,
+        "mae": 0.46,
+        "exact": 0.54,
+        "within_1": 1.0,
+        "bias": 0,
+        "coverage": 1.0,
+        "extra": 0.16
+      },
+      "self_reflection": {
+        "pairs": 6,
+        "mae": 0.83,
+        "exact": 0.17,
+        "within_1": 1.0,
+        "bias": -0.5,
+        "coverage": 0.11,
+        "extra": 0.0
+      },
+      "communication": {
+        "pairs": 21,
+        "mae": 0.67,
+        "exact": 0.38,
+        "within_1": 0.95,
+        "bias": 0.19,
+        "coverage": 0.6,
+        "extra": 0.0
+      },
+      "concrete_examples": {
+        "pairs": 48,
+        "mae": 0.48,
+        "exact": 0.6,
+        "within_1": 0.92,
+        "bias": -0.35,
+        "coverage": 0.98,
+        "extra": 0.02
+      },
+      "demeanor": {
+        "pairs": 6,
+        "mae": 1.17,
+        "exact": 0.0,
+        "within_1": 0.83,
+        "bias": 0.17,
+        "coverage": 0.4,
+        "extra": 0.0
+      },
+      "preparation": {
+        "pairs": 8,
+        "mae": 0.75,
+        "exact": 0.25,
+        "within_1": 1.0,
+        "bias": 0,
+        "coverage": 0.36,
+        "extra": 0.0
+      },
+      "goal_orientation": {
+        "pairs": 5,
+        "mae": 0,
+        "exact": 1.0,
+        "within_1": 1.0,
+        "bias": 0,
+        "coverage": 0.23,
+        "extra": 0.0
+      },
+      "difficult_questions": {
+        "pairs": 0
+      },
+      "initiative": {
+        "pairs": 5,
+        "mae": 0.6,
+        "exact": 0.4,
+        "within_1": 1.0,
+        "bias": 0.6,
+        "coverage": 0.83,
+        "extra": 0.0
+      }
+    }
+  },
+  "records": [
+    {
+      "answer_id": "A-DE2-0017",
+      "lang": "de",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "preparation": 4,
+        "relevance": 4,
+        "clarity": 4,
+        "self_reflection": 3,
+        "concrete_examples": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Du hast bereits gute Beispiele für Zuverlässigkeit und Flexibilität genannt – weiss du, wie du deine Sprachkenntnisse konkret im Beruf nutzen könntest?",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.14,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 7,
+      "both_seen": 4
+    },
+    {
+      "answer_id": "A-OCC1-0028",
+      "lang": "de",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "relevance": 3,
+        "preparation": 1,
+        "motivation": null,
+        "concrete_examples": 1,
+        "self_reflection": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "memorized_phrases"
+      ],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Eine konkrete Situation beschreiben, in der du Kritik genutzt hast, um etwas zu verbessern, zeigt, wie du damit umgehst.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.4,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DIF-0018",
+      "lang": "de",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 2,
+        "self_reflection": 2,
+        "concrete_examples": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne auch, was du aus diesem Misserfolg gelernt hast – das zeigt Selbstreflexion und Lernbereitschaft.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          1,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-DE2-0027",
+      "lang": "de",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 1,
+        "relevance": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "manipulation_attempt"
+      ],
+      "scores": {
+        "clarity": 1,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 1,
+        "concrete_examples": 1,
+        "demeanor": 1,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Beschreibe deine tatsächlichen Stärken anhand konkreter Erfahrungen, statt auf humorvolle oder ablenkende Aussagen zu setzen.",
+      "follow_up": true,
+      "flags": [
+        "inappropriate_tone"
+      ],
+      "mean_score": 1,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0019",
+      "lang": "gsw",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 1,
+        "difficult_questions": 1,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": null,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre konkret, wo du dich verbessern möchtest, statt zu sagen, dass du keine Schwächen hast.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.33,
+      "pairs": [
+        [
+          2,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 3,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-FR-0038",
+      "lang": "fr",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "concrete_examples": 1,
+        "communication": 3,
+        "self_reflection": 2,
+        "difficult_questions": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Présente une stratégie plus nuancée pour résoudre les conflits, comme chercher un compromis ou demander de l'aide à un tiers, afin de montrer une approche constructive.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.33,
+      "pairs": [
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 3,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-FR-0048",
+      "lang": "fr",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "candidate_questions",
+      "attempts": 1,
+      "gold_scores": {
+        "initiative": 4,
+        "preparation": 4,
+        "communication": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": 3,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "short_tip": "Pose des questions précises qui montrent ton intérêt pour les activités et la préparation, ce qui est très positif.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 7,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-FR-0050",
+      "lang": "fr",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "communication": 2,
+        "relevance": 3,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Précise comment tu clarifies la consigne directement à ta formatrice avant de demander de l'aide.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.4,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-FR-0057",
+      "lang": "fr",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": null,
+        "difficult_questions": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "distress_signal"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": null,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Sois plus précis sur un point faible réel et propose une action concrète pour l'améliorer, plutôt que de généraliser.",
+      "follow_up": true,
+      "flags": [
+        "badmouthing"
+      ],
+      "mean_score": 1.67,
+      "pairs": [],
+      "gold_seen": 2,
+      "pred_seen": 3,
+      "both_seen": 0
+    },
+    {
+      "answer_id": "A-IT-0010",
+      "lang": "it",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 1,
+        "relevance": 2,
+        "goal_orientation": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Prova a spiegare cosa ti piace di questa professione, ad esempio le attività quotidiane o il contatto con le persone.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.5,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0004",
+      "lang": "it",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "demeanor": 4,
+        "communication": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Hai fornito un esempio concreto di come ti sei preparata, ma potresti collegare meglio questo esempio alle tue motivazioni per il ruolo di koch/köchin.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.67,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0009",
+      "lang": "it",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "clarity": 2,
+        "communication": 2,
+        "self_reflection": 1,
+        "relevance": 1,
+        "demeanor": 2
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "off_topic"
+      ],
+      "scores": {
+        "clarity": 3,
+        "relevance": null,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Parla di te stesso e delle tue competenze, non di calcio.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0045",
+      "lang": "it",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "goal_orientation": 2,
+        "motivation": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Sviluppa un po' di più il motivo per cui la maturità professionale è importante per te e come si collega al lavoro che vuoi fare.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.4,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0040",
+      "lang": "gsw",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 4,
+        "concrete_examples": 4,
+        "clarity": 3,
+        "motivation": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erzähle deine Erfahrungen etwas strukturierter, zum Beispiel mit klaren Tagesabläufen und was du daraus gelernt hast.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.25,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0011",
+      "lang": "gsw",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "difficult_questions": 2,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne konkret, wie du Geduld übst, z. B. durch Pausen oder langsameres Arbeiten, damit die Aussage greifbarer wird.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.67,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 6,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0048",
+      "lang": "gsw",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "clarity": 3,
+        "communication": 1,
+        "self_reflection": null,
+        "relevance": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "manipulation_attempt"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": 2,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Versuche, deine Antwort klarer zu strukturieren und ein konkretes Beispiel aus deinem Leben zu nennen, das zeigt, warum du dich für die Lehre interessierst.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.5,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 6,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-OCC2-0066",
+      "lang": "de",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 4,
+        "concrete_examples": 4,
+        "motivation": 4,
+        "communication": 4,
+        "clarity": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Deine konkreten Erfahrungen aus der Schnupperlehre zeigen echtes Interesse an der Arbeit mit Holz – nutze diese Begeisterung, um gezielt nach Projekten und Aufgaben zu fragen, die du in der Lehre übernehmen könntest.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 5,
+      "both_seen": 4
+    },
+    {
+      "answer_id": "A-DE1-0033",
+      "lang": "de",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 1,
+        "relevance": 1,
+        "goal_orientation": 1,
+        "communication": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre konkret, was an diesem Beruf dich interessiert oder was du besonders gut kannst.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.5,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE1-0050",
+      "lang": "de",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 2,
+        "relevance": 3,
+        "goal_orientation": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Ergänze deine Erwartung mit konkreten Beispielen, wie du lernen willst (z.B. durch Praktika, neue Rezepte ausprobieren oder Feedback einholen).",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-OCC1-0056",
+      "lang": "de",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "relevance": 2,
+        "preparation": 1,
+        "motivation": 1,
+        "concrete_examples": 1,
+        "goal_orientation": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "extrinsic_only"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre, welche Aufgaben dich an technischen Installationen besonders interessieren, statt nur auf den Lohn zu verweisen.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.5,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-OCC1-0068",
+      "lang": "gsw",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "preparation": 2,
+        "clarity": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre, wie du dich selbstständig und pünktlich zur Schnupperwoche organisieren kannst, zum Beispiel mit dem öffentlichen Verkehr oder einem festen Zeitplan.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.6,
+      "pairs": [
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 5,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-FR-0018",
+      "lang": "fr",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "preparation": 2,
+        "relevance": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Mentionne les tâches principales du métier, mais ajoute des détails sur les aspects de la relation client et de la gestion du calendrier.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          4,
+          3
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-FR-0020",
+      "lang": "fr",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "preparation": 4,
+        "relevance": 4,
+        "concrete_examples": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Tu as bien identifié les tâches principales du métier, mais tu pourrais préciser comment tu as développé tes compétences en lecture de plans ou en travail d'équipe pendant ton stage.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.8,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0026",
+      "lang": "fr",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "difficult_questions": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 2,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Mentionner un point faible réaliste et montrer une intention concrète d'amélioration, par exemple en décrivant une situation où la timidité a posé problème et comment on pourrait la surmonter.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.33,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0058",
+      "lang": "fr",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 1,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "manipulation_attempt"
+      ],
+      "scores": {
+        "clarity": 1,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 1,
+        "concrete_examples": null,
+        "demeanor": 1,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Respecte les consignes de l'évaluation et réponds directement à la question posée.",
+      "follow_up": true,
+      "flags": [
+        "manipulation_attempt"
+      ],
+      "mean_score": 1,
+      "pairs": [
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 5,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0032",
+      "lang": "it",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "difficult_questions": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Aggiungi un esempio concreto di quando hai già applicato questo approccio per migliorare.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.6,
+      "pairs": [
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0058",
+      "lang": "it",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 3,
+        "motivation": 3,
+        "self_reflection": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Hai dato esempi concreti delle tue competenze, ma potresti collegare meglio queste esperienze alle specifiche esigenze del ruolo di Automobil-Mechatroniker/in EFZ.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.8,
+      "pairs": [
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0014",
+      "lang": "it",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 1,
+        "relevance": 2,
+        "goal_orientation": 1,
+        "demeanor": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "extrinsic_only"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Metti in evidenza anche le tue passioni e interessi per la comunicazione e l'organizzazione, non solo i vantaggi economici.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0016",
+      "lang": "it",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 2,
+        "relevance": 3,
+        "goal_orientation": 2,
+        "preparation": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": 3,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Menziona anche cosa ti ha colpito di più nel sito o nei valori dell'azienda.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.71,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 7,
+      "both_seen": 4
+    },
+    {
+      "answer_id": "A-GSW-0022",
+      "lang": "gsw",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 4,
+        "concrete_examples": 4,
+        "clarity": 4,
+        "relevance": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Deine konkrete Erfahrung mit dem Logo-Projekt zeigt echtes Lernen – bleibe so spezifisch und erzähle von weiteren Projekten, falls vorhanden.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.25,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0029",
+      "lang": "gsw",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "goal_orientation": 2,
+        "motivation": 2,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Formuliere deine Weiterbildungswünsche etwas konkreter, zum Beispiel mit einem konkreten Bereich oder einer konkreten Ausbildung, die dich interessiert.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0018",
+      "lang": "gsw",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 2,
+        "difficult_questions": 1,
+        "communication": 2,
+        "demeanor": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "badmouthing"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre konkret, wie du Kritik als Chance siehst, und gib ein Beispiel, wie du sie konstruktiv umsetzt.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          1,
+          2
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-SRC-KT-33",
+      "lang": "de",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "communication": 3,
+        "self_reflection": 3,
+        "concrete_examples": 1,
+        "difficult_questions": 3,
+        "clarity": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Eine gute Grundlage: Zeige Verständnis für unterschiedliche Standpunkte, bevor du nach einer gemeinsamen Lösung suchst.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-OCC1-0013",
+      "lang": "de",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "relevance": 1,
+        "preparation": 1,
+        "motivation": null,
+        "concrete_examples": 1,
+        "difficult_questions": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre, dass du im Restaurant immer freundlich bleibst und nach der Ursache fragst, auch wenn es noch nie vorgekommen ist.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.4,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE1-0059",
+      "lang": "de",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 2,
+        "relevance": 3,
+        "goal_orientation": 1,
+        "preparation": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": 2,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne auch, welche spezifischen Fähigkeiten oder Projekte dich besonders interessieren, um deine Motivation noch stärker zu untermauern.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.2,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 5,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-DE1-0061",
+      "lang": "de",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 1,
+        "relevance": 2,
+        "goal_orientation": 1,
+        "communication": 2,
+        "self_reflection": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "badmouthing"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre, warum der Beruf Logistiker/in dich jetzt wirklich interessiert, statt nur den negativen Grund zu nennen.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-OCC1-0057",
+      "lang": "gsw",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "clarity": 2,
+        "demeanor": 2,
+        "communication": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": null,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Versuche, deine Frage klarer zu formulieren und direkt zu erklären, warum dich genau diese Schnupperlehre interessiert.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.75,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0013",
+      "lang": "fr",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 1,
+        "relevance": 1,
+        "goal_orientation": 1,
+        "preparation": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Essaie d'expliquer ce qui t'attire spécifiquement chez cette entreprise, par exemple des valeurs, des projets ou des tâches qui te parlent.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0004",
+      "lang": "fr",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "demeanor": 4,
+        "communication": 4,
+        "preparation": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Continue to structure your answers clearly and provide concrete examples to show your preparation.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.6,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0022",
+      "lang": "fr",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Mentionez des exemples concrets de situations où ces qualités ont été utiles.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.4,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0060",
+      "lang": "fr",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "demeanor": 1,
+        "communication": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "inappropriate_tone"
+      ],
+      "scores": {
+        "clarity": 3,
+        "relevance": 2,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Sois plus concis et professionnel dans ta première phrase, par exemple en remerciant pour l'accueil.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.4,
+      "pairs": [
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0049",
+      "lang": "it",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "candidate_questions",
+      "attempts": 1,
+      "gold_scores": {
+        "initiative": 2,
+        "preparation": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": 2,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 3
+      },
+      "short_tip": "Hai già fatto una domanda pertinente sull'apprendistato, ma potresti approfondire come questa esperienza si collega ai tuoi interessi futuri.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.57,
+      "pairs": [
+        [
+          3,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 7,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0050",
+      "lang": "it",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "candidate_questions",
+      "attempts": 1,
+      "gold_scores": {
+        "initiative": 3,
+        "preparation": 2
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 4,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 4,
+        "concrete_examples": null,
+        "demeanor": null,
+        "preparation": 3,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "short_tip": "Le tue domande sono pertinenti e dimostrano interesse per i dettagli operativi e la struttura del team.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.67,
+      "pairs": [
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0060",
+      "lang": "it",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 1,
+        "motivation": null,
+        "self_reflection": 1,
+        "demeanor": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "distress_signal"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": 2,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Prova a concentrarti su un tuo punto di forza concreto e su cosa ti entusiasma di questo lavoro, invece di sottovalutarti.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.67,
+      "pairs": [
+        [
+          2,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 6,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0028",
+      "lang": "it",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "difficult_questions": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Menziona una debolezza specifica e un esempio concreto di come la stai già cercando di migliorare.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.5,
+      "pairs": [
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-GSW-0009",
+      "lang": "gsw",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 3,
+        "goal_orientation": 3,
+        "self_reflection": 3,
+        "clarity": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre konkret, welche konkreten Schritte du unternehmen würdest, um dich weiterzuentwickeln, statt nur zu fragen, was du besser machen könntest.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-GSW-0047",
+      "lang": "gsw",
+      "answer_class": "incomplete",
+      "quality_level": 3,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 3,
+        "concrete_examples": 2,
+        "relevance": 4,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 2,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne konkrete Situationen aus der Schule, in denen du Ordnung und Organisation gezeigt hast, um die Aussage glaubwürdiger zu machen.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.5,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0006",
+      "lang": "gsw",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "demeanor": 1,
+        "communication": 1,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "inappropriate_tone"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": null,
+        "demeanor": 2,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Versuche, die Frage auf Deutsch zu beantworten, statt umgangssprachliche Ausdrücke zu verwenden, damit deine Antwort klarer und professioneller wirkt.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-DE2-0065",
+      "lang": "de",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 3,
+        "concrete_examples": 2,
+        "clarity": 3,
+        "relevance": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Eine gute Strategie, die du bereits anwendest – versuche, diese Methode auch auf zukünftige Herausforderungen im Beruf anzuwenden und sie mit konkreten Beispielen zu untermauern.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.8,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 5,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-OCC2-0057",
+      "lang": "de",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "preparation": 1,
+        "self_reflection": 1,
+        "communication": 2,
+        "demeanor": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": 1,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre kurz, welche konkreten Schritte du unternommen hast, um dich auf das Gespräch vorzubereiten, z. B. welche Informationen du über die Firma gesammelt hast oder welche Fragen du formuliert hast.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.5,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE2-0034",
+      "lang": "de",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "clarity": 3,
+        "relevance": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne zusätzlich, wie deine Genauigkeit in einer konkreten Situation hilfreich war, um den Punkt glaubwürdiger zu machen.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-DE2-0047",
+      "lang": "de",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 2,
+        "difficult_questions": 1,
+        "clarity": 3,
+        "demeanor": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "badmouthing",
+        "inappropriate_tone"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Konzentriere dich auf eine sachliche Reaktion auf Kritik, ohne Personen zu verurteilen oder zu beschuldigen.",
+      "follow_up": true,
+      "flags": [
+        "badmouthing"
+      ],
+      "mean_score": 1.4,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0038",
+      "lang": "gsw",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 2,
+        "relevance": 3,
+        "goal_orientation": 1,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre konkret, welche Tätigkeiten dir besonders gefallen und wie du diese mit deinem Interesse verbindest.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-FR-0014",
+      "lang": "fr",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 2,
+        "relevance": 3,
+        "goal_orientation": 2,
+        "preparation": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": 2,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Mentionner des aspects spécifiques du programme ou des valeurs de l'entreprise renforcerait ton intérêt.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.2,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 5,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-FR-0032",
+      "lang": "fr",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 4,
+        "concrete_examples": 4,
+        "difficult_questions": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Ta réponse est claire et convaincante : tu as bien expliqué ton processus de réaction à la critique et donné un exemple concret. Continue à structurer tes réponses avec un fil conducteur logique pour gagner en précision.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.17,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0034",
+      "lang": "fr",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 3,
+        "motivation": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 2,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Mentionne également ce que tu as appris ou les compétences que tu as développées lors de ces stages.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.5,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0059",
+      "lang": "fr",
+      "answer_class": "problematic",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 2,
+        "communication": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "badmouthing"
+      ],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Mentionne des compétences techniques spécifiques que tu as acquises plutôt que des jugements personnels sur les personnes.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          1,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0002",
+      "lang": "it",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "demeanor": 2,
+        "communication": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Prova a descrivere cosa ti ha colpito di positivo nel percorso verso l'azienda.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.5,
+      "pairs": [
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0037",
+      "lang": "it",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 3,
+        "concrete_examples": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Hai descritto bene un'esperienza concreta e utile per il ruolo di logistiker/in, ma potresti collegare meglio questa esperienza alle tue motivazioni future per mostrare un interesse più personale.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0043",
+      "lang": "it",
+      "answer_class": "problematic",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "concrete_examples": 1,
+        "communication": 2,
+        "self_reflection": 1,
+        "difficult_questions": 2,
+        "demeanor": 2
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "discriminatory"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 1,
+        "concrete_examples": 1,
+        "demeanor": 1,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Evita stereotipi e cerca di descrivere strategie costruttive per risolvere i conflitti, mostrando empatia e rispetto per gli altri.",
+      "follow_up": true,
+      "flags": [
+        "inappropriate_tone"
+      ],
+      "mean_score": 1.17,
+      "pairs": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 6,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-IT-0036",
+      "lang": "it",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Menziona brevemente cosa ti ha colpito di più in ciascun stage per mostrare un interesse più approfondito.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          3,
+          1
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-GSW-0045",
+      "lang": "gsw",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "candidate_questions",
+      "attempts": 1,
+      "gold_scores": {
+        "initiative": 3,
+        "preparation": 2,
+        "communication": 3,
+        "clarity": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "short_tip": "Deine Frage zeigt echtes Interesse an praktischen Aufgaben – präzisiere am besten, welche Art von Kundenaufträgen du im Sinn hast, damit du gezielt planen kannst.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 6,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0017",
+      "lang": "gsw",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "concrete_examples": 1,
+        "communication": 3,
+        "self_reflection": 2,
+        "difficult_questions": 3,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Du hast eine klare Strategie beschrieben, wie du Konflikte angehst – jetzt wäre ein konkretes Beispiel, wie das in der Praxis funktioniert, hilfreich.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.33,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 3,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0036",
+      "lang": "gsw",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 1,
+        "goal_orientation": 1,
+        "self_reflection": null
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "distress_signal"
+      ],
+      "scores": {
+        "clarity": 1,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 1,
+        "concrete_examples": 1,
+        "demeanor": 1,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Versuche, deine Situation positiv zu formulieren und konkrete Schritte zu nennen, die du unternehmen würdest, um trotzdem weiterzukommen.",
+      "follow_up": true,
+      "flags": [
+        "badmouthing"
+      ],
+      "mean_score": 1,
+      "pairs": [],
+      "gold_seen": 2,
+      "pred_seen": 6,
+      "both_seen": 0
+    },
+    {
+      "answer_id": "A-DIF-0020",
+      "lang": "de",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 4,
+        "self_reflection": 4,
+        "concrete_examples": 4,
+        "clarity": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Deine Erfahrung zeigt, dass ein klarer Plan hilft – im nächsten Projekt kannst du noch genauer Zwischenziele formulieren und sie schriftlich festhalten, um den Überblick zu behalten.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.83,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 6,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-OCC2-0041",
+      "lang": "de",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "relevance": 1,
+        "preparation": 1,
+        "motivation": null,
+        "concrete_examples": 1,
+        "clarity": 2,
+        "communication": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Ergänze deine Antwort mit einem konkreten Beispiel, wie Geduld in deiner täglichen Arbeit helfen würde, zum Beispiel beim Anleiten einer Person bei der Körperpflege.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-DE1-0058",
+      "lang": "de",
+      "answer_class": "incomplete",
+      "quality_level": 3,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "clarity": 3,
+        "communication": 3,
+        "self_reflection": 2,
+        "concrete_examples": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne konkrete Fähigkeiten oder Projekte, die du durch diesen Wechsel entwickelt hast, um deine Motivation und Lernbereitschaft zu zeigen.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE3-0070",
+      "lang": "de",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "concrete_examples": 1,
+        "communication": 1,
+        "self_reflection": 1,
+        "clarity": 1,
+        "relevance": 1
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "off_topic"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre deine Strategie für den Umgang mit unterschiedlichen Meinungen konkret und ohne Fremdbeispiele.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.33,
+      "pairs": [
+        [
+          2,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 3,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0026",
+      "lang": "gsw",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "concrete_examples": 1,
+        "communication": 2,
+        "self_reflection": 2,
+        "difficult_questions": 2,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Versuche, Konflikte aktiv anzusprechen und gemeinsam Lösungen zu finden, statt wegzulaufen.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.67,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 3,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0021",
+      "lang": "fr",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 1,
+        "communication": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Essaie de citer des compétences spécifiques que tu maîtrises, comme la résolution de problèmes ou le travail en équipe, pour montrer une meilleure connaissance de toi-même.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.6,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0012",
+      "lang": "fr",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 4,
+        "relevance": 4,
+        "goal_orientation": 4,
+        "concrete_examples": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Continue d'expliquer comment tu pourrais contribuer à la restauration de montres anciennes dès le début de ta formation.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.25,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-FR-0042",
+      "lang": "fr",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "goal_orientation": 2,
+        "motivation": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": null,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Précise tes intentions après l'apprentissage pour montrer une vision plus claire de ton avenir professionnel.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0056",
+      "lang": "it",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 1,
+        "motivation": 1,
+        "self_reflection": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Prova a spiegare con più dettagli cosa ti rende unico per questo ruolo, ad esempio una tua competenza specifica o un interesse particolare per il settore logistico.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0046",
+      "lang": "it",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "goal_orientation": 3,
+        "motivation": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "La tua visione futura è chiara e legata al settore, ma potresti approfondire come le tue esperienze attuali ti stanno preparando per il ruolo di capo partita.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.8,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0024",
+      "lang": "it",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "relevance": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Metti in evidenza anche un esempio concreto di quando hai dimostrato puntualità, gentilezza o lavoro di squadra.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.6,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0010",
+      "lang": "gsw",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 4,
+        "relevance": 4,
+        "goal_orientation": 4,
+        "concrete_examples": 4,
+        "clarity": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Deine persönliche Verbindung zur Backstube und die konkreten Schnuppererfahrungen sind sehr gut verständlich. Versuche, deine Begeisterung noch stärker mit konkreten Zielen für die Zukunft zu verknüpfen, um deiner Motivation noch mehr Tiefe zu verleihen.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 4
+    },
+    {
+      "answer_id": "A-GSW-0041",
+      "lang": "gsw",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "relevance": 3,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre konkret, warum es wichtig ist, Fehler zu erkennen und zu korrigieren, statt einfach weiterzumachen.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0030",
+      "lang": "gsw",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 1,
+        "communication": 2,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "dishonesty"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Nimm konkrete Beispiele für deine Stärken und zeige, wie du sie in der Praxis anwendest, statt allgemeine Aussagen zu machen.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-SRC-KR-29",
+      "lang": "de",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 3,
+        "concrete_examples": 1,
+        "relevance": 3,
+        "clarity": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne konkrete Situationen, in denen du deine zuverlässige Arbeitshaltung gezeigt hast, um sie glaubwürdiger zu machen.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-DE1-0013",
+      "lang": "de",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "clarity": 1,
+        "communication": 1,
+        "self_reflection": null
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erweitere deine Antwort mit konkreten Interessen, Hobbys oder schulischen Leistungen, um zu zeigen, wer du bist und was dich motiviert.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.4,
+      "pairs": [
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE1-0057",
+      "lang": "de",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 3,
+        "relevance": 3,
+        "goal_orientation": 3,
+        "self_reflection": null
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erweitere deine Antwort um konkrete Schritte, wie du diese Ziele erreichen willst, zum Beispiel durch gezieltes Üben oder spezifische Kurse.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE3-0066",
+      "lang": "de",
+      "answer_class": "problematic",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 2,
+        "clarity": 3,
+        "relevance": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "dishonesty"
+      ],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Du hast bereits konkrete Projekte erwähnt – nutze diese als Beispiele, um zu zeigen, wie du das Gelernte praktisch anwendest.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.25,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0044",
+      "lang": "gsw",
+      "answer_class": "weak",
+      "quality_level": 2,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "relevance": 3,
+        "clarity": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Versuche, den Fehler zuerst selbstständig zu beheben, bevor du jemanden um Hilfe bittest – das zeigt Eigeninitiative und Verantwortungsbewusstsein.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0049",
+      "lang": "fr",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "communication": 1,
+        "relevance": 2,
+        "clarity": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Explique clairement ce que tu as compris de la tâche et demande des précisions à ta formatrice, même si elle est occupée.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.8,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-FR-0056",
+      "lang": "fr",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "difficult_questions": 4,
+        "motivation": 4,
+        "self_reflection": 4,
+        "concrete_examples": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Mentionner des exemples concrets de compétences techniques et de persévérance renforce le profil, mais préciser comment ces qualités s'appliquent spécifiquement à l'horlogerie pourrait aider davantage.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3,
+      "pairs": [
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-IT-0001",
+      "lang": "it",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "demeanor": 1,
+        "communication": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": null,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Prova a spiegare brevemente perché la risposta è sì, ad esempio citando un punto di riferimento o un mezzo di trasporto usato.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.5,
+      "pairs": [],
+      "gold_seen": 2,
+      "pred_seen": 2,
+      "both_seen": 0
+    },
+    {
+      "answer_id": "A-IT-0030",
+      "lang": "it",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 4,
+        "concrete_examples": 4,
+        "difficult_questions": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Hai già identificato una debolezza e proposto un metodo concreto per migliorarla: chiedere aiuto prima, ad esempio dopo mezz'ora di tentativi. Continua a usare esempi concreti come questo per mostrare maturità e capacità di crescita.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.17,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 6,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0028",
+      "lang": "gsw",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 4,
+        "concrete_examples": 4,
+        "difficult_questions": 4,
+        "clarity": 4,
+        "relevance": 4
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Du zeigst bereits gute Selbstreflexion und konkrete Lernstrategien – bleibe dran, und versuche, die gelernten Wörter aktiv im Alltag einzusetzen, zum Beispiel beim Smalltalk mit Kunden.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 3.17,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 6,
+      "both_seen": 4
+    },
+    {
+      "answer_id": "A-GSW-0023",
+      "lang": "gsw",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "preparation": 2,
+        "relevance": 3,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Versuche, deine Antwort etwas strukturierter zu formulieren, zum Beispiel indem du die Aufgaben in logische Schritte einteilst.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-SRC-KR-41",
+      "lang": "de",
+      "answer_class": "strong",
+      "quality_level": 4,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "concrete_examples": 4,
+        "communication": 3,
+        "self_reflection": 3,
+        "difficult_questions": 3,
+        "clarity": 4,
+        "relevance": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Eine gute Idee, den Konflikt durch gemeinsames Erklären und Kompromissbildung zu lösen – versuche, auch deine eigenen Gefühle und Bedürfnisse dabei klar zu benennen.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.75,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 6,
+      "pred_seen": 4,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-DE1-0045",
+      "lang": "de",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 1,
+        "relevance": 2,
+        "goal_orientation": 1,
+        "preparation": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erkläre, was an unserem Betrieb besonders ist, zum Beispiel die Art der Kundenbetreuung oder die Produkte, die angeboten werden.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE2-0054",
+      "lang": "de",
+      "answer_class": "incomplete",
+      "quality_level": 3,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 3,
+        "difficult_questions": 3,
+        "clarity": 3,
+        "initiative": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 3,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Eine gute Geschichte, die du noch mit konkreten Lernpunkten verbinden könntest, wie z.B. wie du Stress bewältigt oder Teamarbeit genutzt hast.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.75,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 5,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-DE2-0032",
+      "lang": "de",
+      "answer_class": "problematic",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": null,
+        "relevance": 1,
+        "clarity": 2
+      },
+      "gold_probe": false,
+      "problem_flags": [
+        "off_topic"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 1,
+        "motivation": null,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Beschreibe eine Eigenschaft, die dich auszeichnet, und verknüpfe sie mit einer konkreten Situation oder Erfahrung, die diese Eigenschaft zeigt.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.33,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 3,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-GSW-0031",
+      "lang": "gsw",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "candidate_questions",
+      "attempts": 1,
+      "gold_scores": {
+        "initiative": 1,
+        "preparation": 1,
+        "communication": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 4,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": null,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 1
+      },
+      "short_tip": "Versuche, eine Frage vorzubereiten, zum Beispiel nach den Möglichkeiten zur Weiterbildung oder den Projekten des Unternehmens.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 2,
+      "pairs": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0009",
+      "lang": "fr",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "motivation": 1,
+        "relevance": 2,
+        "goal_orientation": 1
+      },
+      "gold_probe": true,
+      "problem_flags": [
+        "extrinsic_only"
+      ],
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Explique tes propres intérêts pour le métier et ce que tu peux apporter, pas seulement ce que ta mère dit ou l'argent.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.5,
+      "pairs": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 4,
+      "both_seen": 2
+    },
+    {
+      "answer_id": "A-FR-0019",
+      "lang": "fr",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "motivation",
+      "attempts": 1,
+      "gold_scores": {
+        "preparation": 3,
+        "relevance": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 4,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Tu as bien identifié les tâches principales du métier, mais essaie d'ajouter un exemple concret d'une situation où tu as déjà aidé lors d'une activité ou d'un repas.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.5,
+      "pairs": [
+        [
+          4,
+          3
+        ]
+      ],
+      "gold_seen": 2,
+      "pred_seen": 4,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0023",
+      "lang": "it",
+      "answer_class": "weak",
+      "quality_level": 1,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 1,
+        "concrete_examples": 1,
+        "demeanor": 2
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 2,
+        "relevance": 3,
+        "motivation": 1,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Prova a elencare almeno due qualità concrete, come capacità organizzative o precisione, invece di basarti solo su caratteristiche soggettive.",
+      "follow_up": true,
+      "flags": [],
+      "mean_score": 1.8,
+      "pairs": [
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 1
+    },
+    {
+      "answer_id": "A-IT-0054",
+      "lang": "it",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "situational",
+      "attempts": 1,
+      "gold_scores": {
+        "communication": 3,
+        "relevance": 3,
+        "clarity": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "È un approccio molto maturo: prima chiedere a un collega, poi aspettare un momento opportuno per chiedere alla formatrice in modo breve e rispettoso.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.4,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 3,
+      "pred_seen": 5,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0033",
+      "lang": "gsw",
+      "answer_class": "strong",
+      "quality_level": 3,
+      "phase": "intro",
+      "attempts": 1,
+      "gold_scores": {
+        "clarity": 3,
+        "communication": 3,
+        "self_reflection": 3,
+        "relevance": 3
+      },
+      "gold_probe": false,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Erwähne konkret, wie deine Hobbys deine technischen Fähigkeiten oder Teamfähigkeit für den Beruf als Konstrukteur/in unterstützen könnten.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.83,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 6,
+      "both_seen": 3
+    },
+    {
+      "answer_id": "A-GSW-0035",
+      "lang": "gsw",
+      "answer_class": "incomplete",
+      "quality_level": 2,
+      "phase": "strengths_weaknesses",
+      "attempts": 1,
+      "gold_scores": {
+        "self_reflection": 2,
+        "concrete_examples": 1,
+        "difficult_questions": 3,
+        "clarity": 3
+      },
+      "gold_probe": true,
+      "problem_flags": [],
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": null,
+        "concrete_examples": 1,
+        "demeanor": null,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "short_tip": "Nimm konkrete Situationen heran, in denen du schon mal konstruktiv mit Kritik umgegangen bist, um zu zeigen, wie du sie wirklich anwendest.",
+      "follow_up": false,
+      "flags": [],
+      "mean_score": 2.25,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "gold_seen": 4,
+      "pred_seen": 4,
+      "both_seen": 2
+    }
+  ]
+}

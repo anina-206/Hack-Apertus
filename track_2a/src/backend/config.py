@@ -92,18 +92,20 @@ def contact_voice(name: str, role: str) -> str:
     return _interviewer_voices()["default"]
 
 
-def posting_from_company(company: dict) -> dict:
-    """A posting-shaped dict (like an FHGR posting) from the company details found in the candidate's application letter,
-    or from a company Apertus invented at the start (interview/company.py, `generated: true`).
+def posting_from_company(company: dict, user_provided: Optional[bool] = None) -> dict:
+    """A posting-shaped dict (like an FHGR posting) from a company name, place and contact person: from the candidate's
+    application letter, from a company Apertus invented at the start (interview/company.py, `generated: true`) or
+    from the fictional default company (default_company).
 
     All prompts work with this shape. From a letter only what the letter says is filled in; nothing is invented.
     Keys of `company`: name, place, contact_name, contact_role (and optionally about, apprentice_tasks, facts, generated).
+    `user_provided`: the details come from the candidate's letter (default: not generated).
     """
     about = company.get("about") or ""
     tasks = company.get("apprentice_tasks") or ""
     return {
         "id": None,
-        "user_provided": not company.get("generated"),
+        "user_provided": (not company.get("generated")) if user_provided is None else user_provided,
         "company": {"name": company.get("name") or "", "place": company.get("place") or "", "description": about},
         "interviewer": {"name": company.get("contact_name") or "", "role": company.get("contact_role") or "",
                         "style": "friendly and professional",
@@ -116,11 +118,62 @@ def posting_from_company(company: dict) -> dict:
     }
 
 
-def posting_for(state: dict) -> Optional[dict]:
-    """The company the interviewer works for: the candidate's own details, else the FHGR posting, else none."""
-    if state.get("company"):
-        return posting_from_company(state["company"])
-    return postings().get(state.get("posting_id") or "")
+@lru_cache
+def _default_companies() -> dict:
+    with open(DATA_DIR / "default_companies.yaml", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def default_company(language: str, occupation_name: Optional[str]) -> dict:
+    """A fictional company and contact person for an interview that has neither a letter nor an FHGR posting.
+
+    The company fits the field of the occupation (from occupations.csv), the person is picked by the occupation
+    name: the same occupation always gets the same company. data/default_companies.yaml has the names.
+    """
+    data = _default_companies()
+    by_key, _ = _apprenticeships()
+    row = by_key.get(_occupation_key(occupation_name)) if occupation_name else None
+    field = {w.strip() for w in (row["Berufsfelder"].split(" - ")[0].split(",") if row else [])}
+    company = next((c for c in data["companies"] if field & set(c["fields"])), data["companies"][-1])
+    lang = "de" if language == "gsw" else language
+    people = data["interviewers"].get(lang) or data["interviewers"]["de"]
+    person = people[sum(map(ord, occupation_name or "")) % len(people)]
+    return {"name": company["name"], "place": data["places"].get(lang, data["places"]["de"]),
+            "contact_name": person["name"], "contact_role": person["role"]}
+
+
+def _german_occupation_name(state: dict) -> Optional[str]:
+    if state.get("occupation_name"):
+        return state["occupation_name"]
+    known = occupations().get(state.get("occupation_id") or "")
+    return known["label"]["de"] if known and not known.get("hidden") else None
+
+
+def posting_for(state: dict, fallback: bool = True) -> Optional[dict]:
+    """The company the interviewer works for, in this order of what is known:
+
+    1. the details from the candidate's application letter (company, place, contact person);
+    2. the FHGR posting (default per occupation, or the one asked for);
+    3. a fictional default company that fits the occupation (default_company), so there is always a company and a
+       named interviewer. A letter (or a generated company) that names only the company or only the person is
+       completed with the default. `fallback=False`: no default, None instead (to see whether a company is missing).
+    """
+    letter = {k: v for k, v in (state.get("company") or {}).items() if v}
+    if not letter:
+        posting = postings().get(state.get("posting_id") or "")
+        if posting:
+            return posting
+    if not letter and not fallback:
+        return None
+    if not (letter or state.get("occupation_id") or state.get("occupation_name")):
+        return None
+    company = default_company(state.get("language") or "de", _german_occupation_name(state))
+    extra = {k: v for k, v in letter.items() if k not in ("name", "place", "contact_name", "contact_role")}
+    if letter.get("name"):
+        company["name"], company["place"] = letter["name"], letter.get("place", "")
+    if letter.get("contact_name"):
+        company["contact_name"], company["contact_role"] = letter["contact_name"], letter.get("contact_role", "")
+    return posting_from_company({**company, **extra}, user_provided=bool(letter) and not letter.get("generated"))
 
 
 def company_of(posting: Optional[dict]) -> Optional[dict]:

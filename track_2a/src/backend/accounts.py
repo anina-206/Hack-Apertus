@@ -251,7 +251,9 @@ class Store:
         feedback = d.get("turn_feedback", {})
         history = [({**t, "turn_feedback": feedback.get(t["question_id"])} if t["role"] == "candidate" else t)
                    for t in d["history"]]
-        posting = config.posting_for({"company": d.get("company_input"), "posting_id": d.get("posting_id")})
+        posting = config.posting_for({"company": d.get("company_input"), "posting_id": d.get("posting_id"),
+                                      "language": d["language"], "occupation_id": d["occupation_id"],
+                                      "occupation_name": d.get("occupation_name")})
         company, interviewer = config.company_of(posting), config.interviewer_of(posting, d.get("persona"))
         return {"session_id": session_id, "language": d["language"], "occupation_id": d["occupation_id"],
                 "occupation_name": d.get("occupation_name"),

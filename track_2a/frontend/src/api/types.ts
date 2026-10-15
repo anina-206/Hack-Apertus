@@ -161,6 +161,15 @@ export type SessionState = {
 
 // ---------- GET /sessions/{id}/report ----------
 
+/** Feedback on the uploaded application letter (null without a letter), part of the report */
+export type LetterFeedback = {
+  scale: { min: number; max: number };
+  overall_score: number;
+  criteria: { id: string; label: string; score: number | null; comment: string; evidence: string }[];
+  strengths: string[];
+  improvements: { tip: string; example_answer?: string }[];
+};
+
 export type Report = {
   session_id: string;
   language: LanguageCode;
@@ -177,6 +186,7 @@ export type Report = {
   strengths: string[];
   improvements: { tip: string; example_answer?: string }[];
   next_practice: CriterionId[];
+  application_feedback?: LetterFeedback | null;
   closing?: string; // one encouraging sentence
   support_note?: string | null; // where to get help, only if the interview showed distress
 };

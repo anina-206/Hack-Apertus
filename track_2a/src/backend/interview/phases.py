@@ -44,6 +44,9 @@ _STARTS_WITH_NO = re.compile(
 # Spoken answers come without "?", so a question is also recognised by its question word.
 _QUESTION_WORD = re.compile(
     r"\b(wie|was|wann|wo|wieso|warum|weshalb|wer|welche\w*|gibt es|git es|habt ihr|händ ihr|kann ich|darf ich|"
+    # Mundart: typed questions often come without "?"
+    r"werum|worum|wele\w*|weli\w*|gits|git's|händ er|hend er|hend ihr|heit dir|hei dir|chan ich|cha ich|chani|"
+    r"cha mer|darf i|törf ich|wievil\w*|wieviu|"
     r"comment|quand|où|pourquoi|combien|quel\w*|est-ce|come|quando|dove|perché|quanto|quant\w|qual\w*|"
     r"how|what|when|where|why|which)\b",
     re.IGNORECASE,
@@ -53,6 +56,7 @@ _QUESTION_WORD = re.compile(
 # every word is from this list.
 _COURTESY_WORDS = set(
     "danke dank dankeschön vielen herzlichen merci vielmal für das gespräch auch ok okay super gern gerne "
+    "vilmal vilmau dankschön ds gspräch s gspröch gärn "
     "beaucoup pour l'entretien de rien thanks thank you grazie mille per il colloquio prego".split()
 )
 

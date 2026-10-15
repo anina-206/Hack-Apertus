@@ -286,6 +286,65 @@ export default function FeedbackScreen({
                 </Card>
               )}
 
+              {/* Feedback on the uploaded application letter */}
+              {report.application_feedback && (
+                <Card step={3} className="order-2">
+                  <SectionTitle chip="teal" icon={<Check className="h-4 w-4" />}>
+                    {text.letterFeedbackTitle}
+                  </SectionTitle>
+                  <p className="mb-3 text-sm text-charcoal-soft">{text.letterFeedbackIntro}</p>
+                  <ul className="space-y-4">
+                    {report.application_feedback.criteria.map((c) => (
+                      <li key={c.id} className="wrap-anywhere">
+                        <div className="mb-1 flex items-center justify-between gap-3">
+                          <span className="font-bold">{c.label}</span>
+                          {c.score !== null && <LevelPill score={c.score} text={text} />}
+                        </div>
+                        {c.score !== null && <LevelMeter score={c.score} max={report.application_feedback?.scale.max ?? 4} />}
+                        {c.comment && <p className="mt-1 text-sm">{c.comment}</p>}
+                        {c.evidence && (
+                          <p className="mt-1 border-l-2 border-line pl-2 text-sm text-charcoal-soft italic">«{c.evidence}»</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {report.application_feedback.strengths.length > 0 && (
+                    <>
+                      <h3 className="mt-5 mb-2 font-bold">{text.strengthsTitle}</h3>
+                      <ul className="space-y-2">
+                        {report.application_feedback.strengths.map((s) => (
+                          <li key={s} className="flex items-start gap-3 wrap-anywhere">
+                            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-mint-dark text-white">
+                              <Check className="h-4 w-4" />
+                            </span>
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {report.application_feedback.improvements.length > 0 && (
+                    <>
+                      <h3 className="mt-5 mb-2 font-bold">{text.improvementsTitle}</h3>
+                      <ul className="space-y-3">
+                        {report.application_feedback.improvements.map((item) => (
+                          <li key={item.tip} className="rounded-xl bg-logo-yellow-lighter px-4 py-3 text-logo-yellow-dark wrap-anywhere">
+                            <p className="font-bold">{item.tip}</p>
+                            {item.example_answer && (
+                              <p className="mt-1">
+                                <span className="font-bold">{text.exampleAnswer}:</span> {item.example_answer}
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </Card>
+              )}
+
               {/* 5: next practice */}
               {report.next_practice.length > 0 && (
                 <Card step={3} className="order-2">

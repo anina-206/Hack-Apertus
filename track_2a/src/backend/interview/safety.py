@@ -34,8 +34,10 @@ REDIRECT_FLAGS = {"manipulation_attempt", "off_topic", "inappropriate_tone", "di
 CLARIFY_FLAGS = {"unclear_or_meta"}
 
 _CRISIS = re.compile(
-    r"suizid|selbstmord|mich umbringen|nicht mehr leben|nümme lebe|\britz(e|en)\b|\bgeritzt\b|"
+    r"suizid|selbstmord|mich umbringen|nicht mehr leben|\britz(e|en)\b|\bgeritzt\b|"
     r"mir (etwas |öppis )?an?tun|"
+    # Mundart (typed answers; spoken ones come back as Standard German)
+    r"\bn[üi]mm?e? l[eä]b[eä]\b|\b(mi|mich) umbringe\b|mir (öppis |eppis )?(aa|a|an)tue\b|\bgritzt\b|"
     r"suicid|me tuer|en finir avec la vie|plus envie de vivre|me faire du mal|"
     r"uccidermi|togliermi la vita|non voglio più vivere|farmi del male|"
     r"kill myself|end my life",

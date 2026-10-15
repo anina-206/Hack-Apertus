@@ -24,7 +24,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend import config, llm
 from backend.accounts import AccountError, Limits, Store
-from backend.interview import application, dialect
+from backend.interview import application, dialect, letter_review
 from backend.interview import company as company_generator
 from backend.interview.graph import InterviewEngine, position
 from backend.interview.phases import progress
@@ -256,6 +256,12 @@ async def extract_application(file: UploadFile) -> dict:
             "truncated": len(text) > application.MAX_TEXT_CHARS}
 
 
+def _german_label(setup: dict) -> Optional[str]:
+    """The occupation's German name for the letter review (None if it is not known)."""
+    occupation = config.occupations().get(setup.get("occupation_id") or "")
+    return occupation["label"]["de"] if occupation and not occupation.get("hidden") else None
+
+
 @api.post("/sessions", status_code=201)
 async def create_session(req: SessionRequest, request: Request) -> dict:
     user = _require_user(request) if _bearer(request) else None  # a bad token is an error, not a silent guest
@@ -273,14 +279,26 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
     else:
         setup["occupation_name"] = None  # only used when no known occupation or posting is given
     # The application letter names the company and the contact person: the interviewer speaks as them
-    application_summary, application_asks, company = None, [], {}
+    application_summary, application_asks, company, letter_feedback = None, [], {}, None
     if (req.application_text or "").strip():
-        try:
-            application_summary, application_asks, company = await application.summarize(
-                req.application_text, req.language)
+        # Two calls at the same time: what the interviewer needs, and the feedback on the letter for the report.
+        # Neither may stop the interview.
+        summary, review = await asyncio.gather(
+            application.summarize(req.application_text, req.language),
+            letter_review.review(req.application_text, req.language, setup["occupation_name"] or _german_label(setup)),
+            return_exceptions=True)
+        if isinstance(summary, Exception):
+            logger.error("Application summary failed", exc_info=summary)
+        else:
+            application_summary, application_asks, company = summary
             application_summary = application_summary or None
-        except Exception:
-            logger.exception("Application summary failed")  # the interview works without it
+        if isinstance(review, Exception):
+            logger.error("Letter review failed", exc_info=review)
+        else:
+            letter_feedback = review
+    default_posting = config.default_posting_id(setup["occupation_id"], req.language) if setup["occupation_id"] else None
+    if company and not company.get("name") and (default_posting or req.posting_id):
+        company = {}  # a contact person alone does not replace the FHGR company (with a fictional default it does)
     setup["company"] = company or None
     # Without a company in the letter an FHGR posting of the occupation is used (an explicit posting_id wins):
     # the default one of a known occupation, else one found by the apprenticeship's name
@@ -291,9 +309,10 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
     else:
         setup["posting_id"] = config.default_posting_id(setup["occupation_id"], req.language)
     setup["application_summary"] = application_summary
+    setup["application_review"] = letter_feedback  # shown with the report; the letter itself is not kept
     setup["application_asks"] = application_asks  # points the interviewer asks about, one per question
     # No contact person from a posting or the letter: a random interviewer, so it is not always the same one
-    setup["persona"] = (None if config.interviewer_of(config.posting_for(setup))
+    setup["persona"] = (None if config.interviewer_of(config.posting_for(setup, fallback=False))
                         else config.random_interviewer(req.language))
     if not setup["posting_id"] and not setup["company"]:
         # No FHGR posting for this apprenticeship and no letter: Apertus invents a company (one call), with the

@@ -34,6 +34,17 @@ APPLICATION_OUTPUT = (
     "→ Was hast du in der Schnupperlehre gemacht?")
 
 
+LETTER_REVIEW_OUTPUT = json.dumps({
+    "criteria": {
+        "motivation": {"score": 4, "comment": "Echter Grund.", "evidence": "Velo repariere ich seit drei Jahren"},
+        "company": {"score": 2, "comment": "Noch allgemein.", "evidence": "Dieser Satz steht nicht im Brief"},
+        "strengths": {"score": 3, "comment": "Gutes Beispiel.", "evidence": ""},
+        "structure": {"score": 3, "comment": "Klar aufgebaut.", "evidence": ""},
+        "language": {"score": 3, "comment": "Verständlich.", "evidence": ""},
+    },
+    "strengths": ["Persönlicher Grund", "Konkretes Beispiel"],
+    "improvements": [{"tip": "Nenne die Firma konkret.", "example_answer": "Mich spricht an, dass [Firma] ..."}],
+}, ensure_ascii=False)
 COMPANY_OUTPUT = (
     "COMPANY: Strassenbau Gerber AG\nABOUT: Wir bauen Strassen und Plätze in der Region, mit 40 Mitarbeitenden.\n"
     "TASKS: Lernende teeren, pflästern und bedienen kleine Baumaschinen.\n"
@@ -49,6 +60,7 @@ class FakeLLM:
         self.interviewer_outputs = list(interviewer_outputs)
         self.calls = []
         self.application_output = APPLICATION_OUTPUT
+        self.review_output = LETTER_REVIEW_OUTPUT
         self.company_output = COMPANY_OUTPUT
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
@@ -71,12 +83,16 @@ class FakeLLM:
             self.calls.append("dialect")
             self.last_dialect_system = system
             content = "Gsw: " + messages[1]["content"]
+        elif "Review the cover letter" in system:
+            self.calls.append("letter_review")
+            content = self.review_output
         elif "career coach" in system:
             self.calls.append("report")
             content = self.report_outputs.pop(0) if self.report_outputs else report_json()
         else:
             self.calls.append("interviewer")
             self.last_interviewer_system = system
+            self.last_interviewer_messages = messages
             content = self.interviewer_outputs.pop(0) if self.interviewer_outputs else f"Frage {len(self.calls)}?"
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))], usage=None)
 
@@ -407,19 +423,16 @@ def test_interviewer_may_only_say_goodbye_when_closing():
 
 # --- Any apprenticeship by name (occupation_name) ----------------------------------------------------
 
-def test_occupation_name_starts_an_interview_without_company(fake, api):
+def test_occupation_name_gets_a_fictional_default_company(fake, api):
     fake()
     client = fake()
     client.company_output = "Das kann ich nicht."  # the company generation gives nothing usable
     resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Strassenbauer/in EFZ"})
     assert resp.status_code == 201, resp.text
     body = resp.json()
-    assert body["company"] is None  # no FHGR posting for this apprenticeship and no generated company
-    # No posting, so no contact person: a random interviewer from the pool, not always the same one
-    from backend import config
-    interviewer = body["interviewer"]
-    assert (interviewer["name"], interviewer["role"]) in config.INTERVIEWERS["de"]
-    assert interviewer["voice"] == ("female" if interviewer["role"].endswith("in") else "male")
+    # no letter, no FHGR posting, no generated company: the default company of the occupation's field (Bau) and a named person
+    assert body["company"] == {"name": "Brunner Bau AG", "place": "Chur"}
+    assert body["interviewer"]["name"] in ("Frau Keller", "Herr Meier") and body["interviewer"]["voice"] in ("female", "male")
     state = api.get(f"/api/v1/sessions/{body['session_id']}").json()
     assert state["occupation_name"] == "Strassenbauer/in EFZ"
 
@@ -459,7 +472,8 @@ def test_a_known_posting_or_a_failing_call_needs_no_generated_company(fake, api,
     from backend.interview import company
     monkeypatch.setattr(company, "generate", broken)
     resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Strassenbauer/in EFZ"})
-    assert resp.status_code == 201 and resp.json()["company"] is None and resp.json()["interviewer"]["name"]
+    # the failing call is not fatal: the fictional default company is used (company is never null)
+    assert resp.status_code == 201 and resp.json()["company"]["name"] and resp.json()["interviewer"]["name"]
 
 
 def test_the_random_interviewer_introduces_themselves_by_that_name():
@@ -475,6 +489,33 @@ def test_repeated_sentences_are_dropped_from_the_interviewer_reply():
     assert _drop_repeats("Danke. Danke. Danke. Danke.") == "Danke."
     assert _drop_repeats("Okay. Was machst du gern? Okay. Was machst du gern?") == "Okay. Was machst du gern?"
     assert _drop_repeats("Danke. Erzähl mir von deiner Schnupperlehre.") == "Danke. Erzähl mir von deiner Schnupperlehre."
+
+
+def test_the_default_company_fits_the_occupation_and_the_language(fake, api):
+    from backend import config
+    assert config.default_company("de", "Koch/Köchin EFZ")["name"] == "Hotel Alpenblick"
+    assert config.default_company("de", "Gärtner/in EFZ")["name"] == "Gärtnerei Sonnenhof"
+    assert config.default_company("de", "Automobil-Fachmann/-frau EFZ")["name"] == "Garage Bergblick AG"
+    french = config.default_company("fr", "Koch/Köchin EFZ")
+    assert french["place"] == "Lausanne" and french["contact_role"] in ("formatrice", "formateur")
+    assert config.default_company("it", "Koch/Köchin EFZ")["place"] == "Bellinzona"
+    assert config.default_company("gsw", "Koch/Köchin EFZ")["place"] == "Chur"  # gsw uses the German names
+    # the same occupation always gets the same company and person
+    assert config.default_company("de", "Koch/Köchin EFZ") == config.default_company("de", "Koch/Köchin EFZ")
+    # an occupation that is not in the data gets the general fallback
+    assert config.default_company("de", "Erfundener Beruf EFZ")["name"] == "Muster AG"
+    assert config.default_company("de", None)["name"] == "Muster AG"
+
+
+def test_the_default_company_has_no_facts_and_is_not_marked_as_from_the_letter(fake, api):
+    from backend import config
+    from backend.interview.prompts import interviewer_messages
+    posting = config.posting_for({"language": "de", "occupation_name": "Koch/Köchin EFZ"})
+    assert posting["user_provided"] is False and posting["insider_facts"] == [] and posting["company"]["description"] == ""
+    system = interviewer_messages({"label": {"de": "Koch"}, "description": "x"}, {"prompt": "Be friendly.", "formal": False},
+                                  "de", None, "motivation", "next_question", 1, [], posting)[0]["content"]
+    assert "Hotel Alpenblick" in system and "taken from the candidate's application letter" not in system
+    assert config.posting_for({"language": "de"}) is None  # nothing known about the occupation at all
 
 
 def test_occupation_name_is_ignored_when_a_known_occupation_is_given(fake, api):
@@ -518,15 +559,27 @@ def test_letter_without_company_keeps_the_default_posting(fake, api):
     assert body["company"] == {"name": "Limmatcode GmbH", "place": "Zürich"} and body["interviewer"]["name"] == "Stefan Keller"
 
 
-def test_company_without_contact_person_and_for_any_occupation(fake, api):
+def test_letter_with_company_but_without_contact_person_gets_the_default_person(fake, api):
     client = fake()
-    client.application_output = "COMPANY: Hotel Alpina\nPLACE: none\nCONTACT: none\nROLE: none\n- Hobby: Kochen"
+    client.application_output = "COMPANY: Hotel Alina\nPLACE: none\nCONTACT: none\nROLE: none\n- Hobby: Kochen"
     resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Koch/Köchin EFZ",
                                               "application_text": "Bewerbung als Koch"})
     assert resp.status_code == 201, resp.text
     body = resp.json()
-    assert body["company"] == {"name": "Hotel Alpina", "place": ""}
-    assert body["interviewer"]["name"]  # no contact person in the letter: a random interviewer
+    assert body["company"] == {"name": "Hotel Alina", "place": ""}  # the letter's company, not the default one
+    assert body["interviewer"]["name"] in ("Frau Keller", "Herr Meier")
+
+
+def test_letter_with_only_a_contact_person_keeps_the_person_and_uses_the_default_company(fake, api):
+    client = fake()
+    client.application_output = "COMPANY: none\nPLACE: none\nCONTACT: Frau Meyer\nROLE: Leiterin\n- Hobby: Kochen"
+    body = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Koch/Köchin EFZ",
+                                              "application_text": "Sehr geehrte Frau Meyer"}).json()
+    assert body["company"]["name"] == "Hotel Alpenblick"
+    assert body["interviewer"] == {"name": "Frau Meyer", "role": "Leiterin", "voice": "female"}
+    # An occupation with an FHGR company keeps it: a contact person alone does not replace the posting
+    other = api.post("/api/v1/sessions", json={**SETUP, "application_text": "Sehr geehrte Frau Meyer"}).json()
+    assert other["company"]["name"] == "Limmatcode GmbH"
 
 
 def test_the_request_no_longer_takes_a_company(fake, api):
@@ -829,6 +882,57 @@ def test_if_the_dialect_call_fails_the_standard_german_text_is_used(fake, api, m
     monkeypatch.setattr(dialect.llm, "chat_completion", selective)
     session = start(api, language="gsw")
     assert not session["question"]["text"].startswith("Gsw: ") and session["question"]["text"].endswith("?")
+
+
+def test_mundart_tips_and_report_are_in_standard_german(fake, api):
+    client = fake()
+    session = start(api, language="gsw", dialect="be")
+    send(api, session["session_id"], "q1", "Ich bi d Lara und bou gärn PCs zäme.")
+    assert "Swiss German dialect" not in client.last_analysis_system
+    assert "German (Swiss Standard German" in client.last_analysis_system
+    from backend.interview.prompts import report_messages
+    system = report_messages({"label": {"de": "Koch"}, "description": "x"}, "gsw", {}, [], [])[0]["content"]
+    assert "Swiss German dialect" not in system and "German (Swiss Standard German" in system
+
+
+def test_the_interviewer_sees_its_earlier_mundart_lines_in_standard_german(fake, api):
+    client = fake()
+    session = start(api, language="gsw")
+    assert session["question"]["text"].startswith("Gsw: ")  # the candidate sees dialect
+    turn = send(api, session["session_id"], "q1", "Ich bi d Lara und bou gärn PCs zäme.").json()
+    own_lines = [m["content"] for m in client.last_interviewer_messages if m["role"] == "assistant"]
+    assert own_lines and not any(line.startswith("Gsw: ") for line in own_lines)
+    # The history of the API still shows what the candidate saw
+    history = api.get(f"/api/v1/sessions/{session['session_id']}").json()["history"]
+    assert history[0]["text"].startswith("Gsw: ") and turn["question"]["text"].startswith("Gsw: ")
+
+
+def test_fixed_lines_follow_the_dialect():
+    from backend.interview.prompts import closing_message, fixed_line
+    assert fixed_line("invitation", "gsw", False, "be") == "Das si mini Frage gsi. Hesch du no Frage a mi oder zum Betrieb?"
+    assert fixed_line("invitation", "gsw", False, "zh").startswith("Das sind mini Frage gsi.")
+    assert fixed_line("further", "gsw", True, "vs") == "Händ Sie na meh Frage?"  # no own lines yet: Zürich
+    assert closing_message("gsw", False, "Lara", "be").startswith("Merci vilmau, Lara!")
+    assert "kenne z lehre" in closing_message("gsw", False, None, "zh")
+    assert fixed_line("further", "de", False, "be") == "Hast du noch weitere Fragen?"  # dialect only for gsw
+
+
+def test_typed_mundart_is_understood_by_the_checks():
+    from backend.interview.phases import has_no_more_questions, is_courtesy
+    from backend.interview.safety import is_crisis
+    for text in ("Ich wett nüme läbe", "I wott mi umbringe", "Ich möcht mir öppis aatue", "ich ha mi gritzt"):
+        assert is_crisis(text), text
+    for text in ("Chasch mi hei bringe", "Mir chönd am Mittwuch afange", "Ich lebe gern in Chur"):
+        assert not is_crisis(text), text
+    assert not has_no_more_questions("Nei, aber werum händ er kei Lernendi im Lager")
+    assert is_courtesy("Merci vilmal für ds Gspräch")
+
+
+def test_dialect_examples_include_similar_questions():
+    from backend.interview.dialect import EXAMPLES_FROM_QUESTIONS, _all_question_pairs, examples
+    question = _all_question_pairs("gr")[-1][0]  # a question at the end, which the even spread does not pick
+    picked = [de for de, _ in examples("gr", question)]
+    assert question in picked and len(picked) == EXAMPLES_FROM_QUESTIONS
 
 
 def test_dialect_helpers():
