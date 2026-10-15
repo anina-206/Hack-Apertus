@@ -247,7 +247,7 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
         {!starting && <ArrowRight />}
       </PrimaryButton>
       <p className="mt-3 text-center text-sm text-charcoal-soft">
-        {!occupation ? text.fillRequired : text.startHint}
+        {!occupation ? text.fillRequired : user ? text.startHint : text.startHintGuest}
       </p>
       {!user && (
         <p className="mt-1 text-center text-sm text-charcoal-soft">
@@ -286,8 +286,8 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
         <div className="relative divide-y divide-line overflow-hidden rounded-3xl bg-white shadow-card">
           <CardAccent />
 
-          <Step number="1" chip="yellow" title={text.language}>
-            <div className="grid grid-cols-2 gap-3">
+          <Step number="1" chip="yellow" title={text.language} titleId="language-title">
+            <div role="group" aria-labelledby="language-title" className="grid grid-cols-2 gap-3">
               {config.languages.map((l) => (
                 <Choice key={l.code} selected={language === l.code} onClick={() => onLanguageChange(l.code)}>
                   {languageNames[l.code]}
@@ -301,8 +301,8 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
             </div>
             {language === "gsw" && config.dialects && (
               <div className="mt-4">
-                <p className="mb-2 text-sm font-bold">{text.dialect}</p>
-                <div className="grid grid-cols-2 gap-3">
+                <p id="dialect-title" className="mb-2 text-sm font-bold">{text.dialect}</p>
+                <div role="group" aria-labelledby="dialect-title" className="grid grid-cols-2 gap-3">
                   {config.dialects.map((d) => (
                     <Choice key={d.code} selected={dialect === d.code} onClick={() => setDialect(d.code)}>
                       {label(d.label, language)}
@@ -328,8 +328,8 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
           </Step>
 
           <Step number="3" chip="blue" title={`${text.style} & ${text.mode}`}>
-            <p className="mb-2 text-sm font-bold">{text.styleQuestion}</p>
-            <div className="grid grid-cols-2 gap-3">
+            <p id="style-title" className="mb-2 text-sm font-bold">{text.styleQuestion}</p>
+            <div role="group" aria-labelledby="style-title" className="grid grid-cols-2 gap-3">
               {config.interviewer_styles.map((s) => (
                 <Choice key={s.id} selected={style === s.id} onClick={() => setStyle(s.id)}>
                   {label(s.label, language)}
@@ -337,8 +337,8 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
               ))}
             </div>
 
-            <p className="mt-4 mb-2 text-sm font-bold">{text.modeQuestion}</p>
-            <div className="grid grid-cols-2 gap-3">
+            <p id="mode-title" className="mt-4 mb-2 text-sm font-bold">{text.modeQuestion}</p>
+            <div role="group" aria-labelledby="mode-title" className="grid grid-cols-2 gap-3">
               {config.modes.map((m) => (
                 <Choice key={m.id} selected={mode === m.id} onClick={() => setMode(m.id)}>
                   {text.modes[m.id]}
@@ -416,7 +416,8 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
                     {showPaste && (
                       <div className="mt-3">
                         <TextArea
-                          label=""
+                          label={text.application}
+                          hideLabel
                           value={pastedText}
                           onChange={setPastedText}
                           placeholder={text.applicationPastePlaceholder}
@@ -494,6 +495,8 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
                   </button>
                   <button
                     onClick={() => handleDeleteInterview(item.session_id)}
+                    // "Löschen" alone is the same in every row: screen readers also hear which interview
+                    aria-label={`${text.deleteInterview}: ${summaryOf(item.occupation_id, item.occupation_name, item.language, item.mode)}`}
                     className="mr-2 min-h-11 shrink-0 rounded-full px-4 text-sm font-bold text-danger hover:bg-danger-lighter"
                   >
                     {text.deleteInterview}
@@ -510,14 +513,16 @@ export default function SetupScreen({ language, onLanguageChange, onStarted, onO
             {deleting ? (
               <div className="animate-rise-in rounded-2xl bg-white p-4 text-left shadow-card">
                 <p className="mb-3 text-sm">{text.deleteAccountWhy}</p>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder={text.password}
-                  autoComplete="current-password"
-                  className={inputClass}
-                />
+                <label className="block">
+                  <span className="mb-2 block text-sm font-bold">{text.password}</span>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    autoComplete="current-password"
+                    className={inputClass}
+                  />
+                </label>
                 {deleteError && (
                   <Alert className="mt-3">
                     {deleteError}
@@ -672,6 +677,7 @@ function TextArea({
   maxLength,
   rows = 3,
   required,
+  hideLabel,
 }: {
   label: string;
   value: string;
@@ -680,10 +686,12 @@ function TextArea({
   maxLength: number;
   rows?: number;
   required?: boolean;
+  /** The heading above already says what this is: the label is then only for screen readers */
+  hideLabel?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-bold">
+      <span className={hideLabel ? "sr-only" : "mb-2 block text-sm font-bold"}>
         {label}
         {required && <span className="text-danger"> *</span>}
       </span>

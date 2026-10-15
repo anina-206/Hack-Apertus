@@ -16,11 +16,11 @@ import { api, type AppConfig, type LanguageCode, type Voice } from "./api";
 import { canRecord, play, record, unlockAudio, type Playback, type Recording } from "./audio";
 import { canListen, canSpeak, speak, speechChunks, startListening, stopSpeaking, type ListenError } from "./speech";
 
-/** Browser engine: pause after the last recognised word before the answer is sent. */
-export const SILENCE_MS = 3000;
+/** Browser engine: pause after the last recognised word before the answer is sent (long enough to think mid-answer). */
+export const SILENCE_MS = 4500;
 /** Server engine: pause that ends the recording, then the countdown before sending. */
-const RECORD_PAUSE_MS = { handsFree: 1500, manual: 2500 };
-const CONFIRM_MS = 2000;
+const RECORD_PAUSE_MS = { handsFree: 2000, manual: 2500 };
+const CONFIRM_MS = 3500;
 /** Server engine: stop recording if nothing is said for this long. */
 const IDLE_MS = 12000;
 /** Browser engine: microphone restarts in a row without hearing anything before hands-free waits for a tap. */

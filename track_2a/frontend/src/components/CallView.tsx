@@ -93,7 +93,19 @@ export default function CallView(props: Props) {
         {status === "countdown" && countdown !== null && <CountdownRing value={countdown} label={text.sendingSoon} />}
       </div>
 
-      <div className="mt-6 flex w-full max-w-sm gap-3 short:mt-3">
+      {/* "Jetzt senden" gets its own wide row (thumb reach, room for "Envoyer maintenant"); the quieter controls sit below */}
+      {canSend && (
+        <button
+          type="button"
+          onClick={props.onSend}
+          className="mt-6 flex min-h-14 w-full max-w-sm items-center justify-center gap-2 rounded-full bg-brand px-5 text-lg font-bold text-white shadow-button transition hover:bg-brand-dark active:scale-[0.97] short:mt-3 short:min-h-12"
+        >
+          {text.sendNow}
+          <ArrowRight />
+        </button>
+      )}
+
+      <div className={`${canSend ? "mt-3" : "mt-6"} flex w-full max-w-sm gap-3 short:mt-3`}>
         <RoundButton onClick={props.onShowChat} label={text.showChat}>
           <ChatBubble />
         </RoundButton>
@@ -108,11 +120,6 @@ export default function CallView(props: Props) {
         ) : (
           <RoundButton onClick={props.onHold} label={status === "countdown" ? text.wait : text.pause} primary={!canSend}>
             <Pause />
-          </RoundButton>
-        )}
-        {canSend && (
-          <RoundButton onClick={props.onSend} label={text.send} primary>
-            <ArrowRight />
           </RoundButton>
         )}
       </div>

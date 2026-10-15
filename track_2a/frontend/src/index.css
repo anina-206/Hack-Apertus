@@ -29,7 +29,7 @@
   --color-logo-blue: #0f6fe7;
   --color-logo-teal: #1ebda5;
 
-  /* Light yellow surface with dark yellow text: tips and the level "Ausbaufähig" */
+  /* Light yellow surface with dark yellow text: tips and the level "Auf dem Weg" */
   --color-logo-yellow-lighter: hsl(50 90% 90%);
   --color-logo-yellow-dark: hsl(45 100% 22%);
 
@@ -38,6 +38,11 @@
   --color-mint-dark: hsl(170 70% 22%);
   --color-beta-bg: #fbf0b8;
   --color-beta-text: #7a5f00;
+
+  /* Warm amber for the first level "Noch am Anfang": a starting point, not an alarm (red stays for errors) */
+  --color-amber: #f39c32;
+  --color-amber-lighter: hsl(32 100% 92%);
+  --color-amber-dark: hsl(24 85% 28%);
 
   --color-danger: hsl(355 80% 50%);
   --color-danger-lighter: hsl(355 100% 95%);
