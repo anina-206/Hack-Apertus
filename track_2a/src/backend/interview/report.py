@@ -15,8 +15,8 @@ from statistics import mean
 from typing import Optional
 
 from backend import config
+from backend.interview import parsing, rubric, safety
 from backend.interview.parsing import ReportDraft, complete_json
-from backend.interview import rubric, safety
 from backend.interview.phases import has_no_more_questions
 from backend.interview.prompts import CRITERIA, report_messages
 
@@ -137,7 +137,9 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
 
     missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
     if missing:
-        logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing}))
+        # With the raw output, to see whether the model left them out or the parser lost them
+        logger.warning(json.dumps({"event": "report_comments_missing", "session_id": session_id, "criteria": missing,
+                                   "raw": parsing.last_raw}, ensure_ascii=False))
 
     language = state["language"]
     # The model sometimes forgets a list: fall back to the tips from the per-answer analyses
