@@ -178,11 +178,30 @@ JSON in `data/eval/bench/`.
 | Bench | Task | Metric | Baseline |
 |---|---|---|---|
 | `bench_answers` | Score single answers (analysis call) against the experts' annotations; sample spread over language × answer class | MAE, exact and ±1 agreement, bias, coverage of the experts' criteria, follow-up precision/recall, problem-flag detection | Same model with a naive prompt (`--variant baseline`) |
-| `bench_transcripts` | The 13 gold interviews through analysis + report, compared with the reference feedback | Spearman and MAE of the final scores; deterministic checks (du/Sie, wrong language, empty texts, mojibake, quotes); LLM judge on grounding, accuracy, actionable next step, tone, language | Reference feedback |
+| `bench_transcripts` | The 21 gold interviews with reference feedback through analysis + report, compared with the reference feedback | Spearman and MAE of the final scores; deterministic checks (du/Sie, wrong language, empty texts, mojibake, quotes); LLM judge on grounding, accuracy, actionable next step, tone, language | Reference feedback |
 | `bench_interviews` | FHGR scenarios as full interviews; Apertus plays the candidate from the profile's simulation persona | LLM calls per answer (gate), checks, score spread over repeats (consistency), score vs. the persona's quality level, the scenario's success criteria (judge) | — |
 | `bench_dialect` | Does the interviewer write dialect in Mundart mode? | Share of interviewer texts that look like dialect | — |
 
-**Results** (`bench_answers` on the FHGR development data, seed 7, one run each; the LLM is not seeded, repeated runs
+**Results** (Apertus v1.5 8B on CSCS, judge Apertus v1.5 70B, 14-15 October 2026; raw JSON in
+`data/eval/bench/`).
+
+*Scoring single answers* (`bench_answers --sample 120`, scores 1-4 against the FHGR experts):
+
+| Metric | Naive prompt (baseline) | Ours |
+|---|---|---|
+| MAE / exact / ±1 agreement | 0.46 / 0.58 / 0.96 | 0.53 / 0.52 / 0.95 |
+| Bias (negative = stricter than the experts) | -0.10 | -0.15 |
+| Criteria scored that the experts left out ("extra") | 0.67 | 0.51 |
+| Holistic Spearman (answer class vs. mean score) | 0.86 | 0.74 |
+| Follow-up needed: precision / recall | 0.76 / 0.97 | 0.80 / 0.72 |
+| Problem flags (distress, off-topic, manipulation …): precision / recall | – / 0.00 | 0.90 / 0.47 |
+
+The naive prompt scores every criterion on every answer and is slightly closer to the experts on the
+criteria they did score. It never detects a problem, though, so it cannot drive the guardrails or the
+supportive mode. Ours leaves out more criteria the answer gave no evidence for. We kept our prompt for the
+flags. Making its scores as close as the baseline's is open work (section 8).
+
+*Calibration examples and guardrails* (`bench_answers` on the FHGR development data, seed 7, one run each; the LLM is not seeded, repeated runs
 of the same setup differed by about 0.02 in MAE; the raw results are in `docs/benchmarks/`).
 
 *Do expert-scored examples in the analysis prompt help?* 100 annotated answers, spread over language and answer class,
@@ -226,27 +245,87 @@ added to the retrieved ones it was the same. The interview questions are freely 
 dataset question, so the fixed, hand-picked set stays. Putting the flagged examples first lowered the follow-up
 recall to 0.42, so they come last.
 
-*Mundart* (`bench_dialect --runs 4`, 12 interviewer texts per dialect, a rough count of typical dialect words, not a
+*Full feedback on the gold interviews* (`bench_transcripts --repeat 2`, 21 transcripts × 2 runs). The table
+shows how the measurements drove the fixes of the last day ("JSON fixes": the parser repairs below;
+"tone fixes": the encouraging report prompt after the real test run):
+
+| Metric | First run | After the JSON fixes | After the tone fixes |
+|---|---|---|---|
+| Reports that failed (unusable JSON) | 6 / 42 | 0 / 42 | 0 / 42 |
+| Reports with an empty criterion comment | 100 % | 14 % | 7 % |
+| Comments backed by a real quote from the candidate | 0 % | 42 % | 75 % |
+| Judge: grounding / accuracy (1-4) | 1.69 / 2.00 | 2.12 / 2.24 | 2.76 / 2.40 |
+| Judge: actionable / tone / language (1-4) | 3.06 / 2.64 / 3.83 | 3.07 / 2.60 / 3.69 | 3.21 / 2.81 / 3.67 |
+| Final scores vs. reference: MAE / ±1 | 0.89 / – | 0.84 / 0.77 | 0.86 / 0.78 |
+| Overall score vs. the transcript's quality level (Spearman) | – | 0.71 | 0.69 |
+| Spread of the overall score over repeats (std) | – | 0.04 | 0.05 |
+| Wrong language / "Sie" or third person | – | 0 % / 5 % | 0 % / 19 % |
+
+By language (last run), MAE of the final scores: de 0.85, fr 0.72, it 0.70, Swiss German 1.23. The scores did
+not change with the report fixes (they are computed in code); the model is stricter than the reference (bias
+-0.74) and weakest on dialect. The remaining empty comments came from two reports where the model repeated one
+word until the token limit ("pürfekt pürfekt ..."); such a report is now asked once more, with a reminder to write
+"é" directly; if that also breaks off, the missing comments take the tip of the answer that scored lowest on
+that criterion. (A frequency penalty
+against the loop made things worse: it also penalises the JSON keys and quotes, which repeat by design, and the
+share of quoted comments fell from 75 % to 33 %.) The run also showed French texts with a literal `\u00e9` instead of "é" (the model escaped the
+backslash twice); the parser now decodes these, and the mojibake check counts them. More "Sie"/third person
+hits come mostly from the word "man" in the longer, step-by-step tips.
+
+What the logs showed and what we changed: Apertus wrote the report JSON with predictable mistakes. It
+dropped the `{` of every criterion, closed a quote with `\"`, or used invalid escapes. The parser now repairs
+these (`json-repair` plus three patterns we found in the raw output) and reads criterion comments straight
+from the raw text when the structure is lost. The example in the prompt listed only two criteria, so the model
+commented only those two; it now lists every observed one. Quotes count when most of their words appear
+together in one answer, and the report then shows the candidate's exact words.
+
+*Full interviews with a simulated candidate* (`bench_interviews --limit 6 --repeat 2`, FHGR scenarios S-01,
+S-02, S-03, S-05, S-06, S-07 in German and Italian, 12 interviews):
+
+| Metric | Before the report fixes (S-01 to S-05) | Final |
+|---|---|---|
+| LLM calls per answer: average / max (gate < 5) | 1.81-1.83 / 2 | 1.92 / 3 |
+| Overall score vs. the persona's quality level (Spearman) | 0.68-0.94 | 0.54 |
+| Spread of the overall score over repeats (std) | 0.10-0.12 | 0.16 |
+| Comments backed by a real quote | – | 72 % |
+| Judge: scenario success criteria met | 93 % | 95 % |
+| Judge: grounding / accuracy / actionable | 2.67 / 3.0 / 3.33 | 3.67 / 3.92 / 3.42 |
+| Judge: tone / language | 3.33 / 3.67 | 4.08 / 3.92 |
+
+The maximum of 3 calls is a retry (a repeated question, or a candidate question answered only with thanks).
+The transcripts showed two more problems: once the interviewer switched to English, and twice it fell into a
+role play the simulated candidate started (taking the customer's part, arranging a meeting "tomorrow at 3").
+An English reply is now asked again in the interview language; the role-play drift is open.
+
+*Mundart* (`bench_dialect --runs 4`, with the Bernese example sentences, 12 interviewer texts per dialect, a rough count of typical dialect words, not a
 quality measure): 58 % of the texts for Zürich, 83 % for Bern, 58 % for Basel, 67 % for Graubünden and 75 % for
 Valais look like dialect. Asking the model to interview in dialect directly gave Standard German in a manual check;
 the translation step is what made the difference.
+
+A shorter run on the version before the Bernese example sentences (`--runs 2`, 6 texts per dialect): the share of texts that look like dialect
+is 67 % for Zurich and Valais German, 50 % for Bernese and Basel German, and 33 % for Grisons German. The rest
+is Standard German with a few dialect words; the second call sometimes switches to the formal "Si".
 
 *Application letter feedback* (two example letters through a full interview): the letter with a personal reason, a
 trial apprenticeship, an example and a reference to the company got 3.2 of 4, a two-sentence letter without
 salutation 2.2, with comments and quotes that fit the letters. Not validated against teachers' ratings.
 
-**Still pending** (they need the judge model and about an hour of CSCS calls): the naive-prompt baseline
-(`bench_answers --variant baseline`), `bench_transcripts` (final report against the reference feedback) and
-`bench_interviews` (full interviews with simulated candidates, consistency over repeats). Until then there is no
-measurement of the quality of the interviewer's questions or of the report texts; we only know the scoring and the
-guardrails.
+The first runs also found an interviewer that said goodbye in the middle of the interview and then repeated
+the goodbye until the end. A question turn without a question is now asked again, and a question from the
+FHGR question bank stands in if the second try also fails.
+
+**From a real test run** (dictated answers, informatics apprenticeship): dictation sometimes carried the
+previous answer into the next one, the interviewer asked two questions twice, and one question from the
+candidate got only "Danke." as an answer. All three are fixed (results of a stopped dictation are ignored;
+a repeated question is asked once more as a different one; an empty answer is retried, then a fixed line
+answers). The report was found too critical: its comments now start with what worked in one concrete
+answer and give one small next step.
 
 **What is already verified without Apertus:**
 
-- 207 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails and
-  the takeover pattern, JSON repair, the report, the Agent Protocol graph, accounts (login limits, deleting
-  interviews and the account), the application letter, its feedback, the default company, the calibration
-  examples (held out of the benchmark), Mundart, and the voice endpoints.
+- 284 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails,
+  JSON repair, the report, the Agent Protocol graph, accounts, the application letter, Mundart, and the voice
+  endpoints.
 - The call budget follows from the code (section 3) and is logged per answer in every real run.
 - Voice on a laptop CPU (Apple M-series, 8 cores): Piper about 1.4 s per sentence; Whisper (Swiss German model)
   about 4.3 s for 5 s of speech. A round trip Piper → Whisper returned the sentence word for word.
@@ -255,9 +334,10 @@ guardrails.
 
 ## 6. Limitations
 
-- **Benchmarks:** the scoring and the guardrails are measured (section 5), the quality of the interviewer's
-  questions and of the report texts is not yet, and everything is measured on the FHGR development data, which is
-  synthetic and not yet reviewed by experts; the hidden judge benchmark may differ. Single runs, small samples.
+- **Benchmarks** are measured on the FHGR development data, which is synthetic and not yet reviewed by experts;
+  the hidden judge benchmark may differ. Our judge is Apertus 70B with our own prompt, not the official one.
+- **Scores** are stricter than the experts' (bias -0.7 on full interviews) and least reliable in Swiss German.
+  The naive baseline prompt matches the experts' single scores slightly better than ours (MAE 0.46 vs. 0.53).
 - **Guardrails:** rude tone (43 %) and off-topic answers are still often missed, and the model sometimes flags
   ordinary answers. Takeover attempts are only caught for the classic phrases; a cleverly worded one depends on the
   model.
@@ -311,8 +391,9 @@ guardrails.
 
 ## 8. Next steps
 
-- Run the judge benches and the baseline, then improve the interviewer's questions (less praise, one question at a
-  time, concrete situations from the occupation's tasks) and check the report's strictness against them.
+- Close the gap to the baseline on single scores while keeping the problem flags (e.g. a separate flag
+  check, or the baseline's scoring wording), and reduce the strictness on dialect answers.
+- Keep the interviewer in its role when the candidate starts a role play or asks it to plan a meeting.
 - Validate the scoring, the letter feedback and the guardrails with teachers and career counsellors (Profolio),
   and calibrate the analysis on reviewed data; add more flagged examples for rude tone and off-topic answers.
 - Mundart with native speakers: review the dialect examples, test speech-to-text with real Swiss German

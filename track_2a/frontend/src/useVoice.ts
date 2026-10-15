@@ -227,12 +227,16 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
   /** Browser engine: live recognition, the countdown starts after the last word. */
   function startBrowserListening() {
     if (!canListen) return;
+    const round = ++listenRound.current;
     setListening(true);
     // Dictated text is added to what is already in the input field
     const base = latest.current.draft.trim();
     stopRecognition.current = startListening(
       latest.current.language,
       (spoken) => {
+        // After stop() the browser still delivers the last result. Without this check, an answer that was
+        // already sent came back into the input field and the next answer was added to it.
+        if (round !== listenRound.current) return;
         setDraft(base ? `${base} ${spoken}` : spoken);
         quietRestarts.current = 0;
         if (latest.current.handsFree) restartCountdown(SILENCE_MS);
