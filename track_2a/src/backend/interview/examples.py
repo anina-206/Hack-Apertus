@@ -219,3 +219,24 @@ def _fixed_examples() -> list[tuple[dict, dict]]:
     answers = {a["id"]: a for a in _jsonl("answers/answers.jsonl") if a["id"] in EXAMPLE_IDS}
     annotations = {a["answer_id"]: a for a in _jsonl("annotations/annotations.jsonl") if a["answer_id"] in EXAMPLE_IDS}
     return [(answers[i], annotations[i]) for i in EXAMPLE_IDS]
+
+
+# Our phase -> FHGR flow stage of the questions that may stand in for a failed interviewer reply
+_FLOW_STAGE = {"intro": "introduction", "motivation": "motivation", "strengths_weaknesses": "strengths_weaknesses",
+               "situational": "situational"}
+
+
+@lru_cache
+def _bank_questions(phase: str, language: str) -> tuple[str, ...]:
+    """General FHGR questions of a phase (no small talk, no occupation-specific ones), in one language."""
+    return tuple(q["text"][language] for q in _jsonl("questions/questions.jsonl")
+                 if q["flow_stage"] == _FLOW_STAGE.get(phase) and q["situation"] == "apprenticeship_interview"
+                 and q["category"] in ("general", "situational") and q["type"] != "smalltalk"
+                 and q["id"] != "Q-01-05"  # "before the interview starts": wrong in the middle of it
+                 and q["text"].get(language))
+
+
+def bank_question(phase: str, language: str, asked: list[str]) -> str:
+    """The first question of the phase from the FHGR question bank that was not asked yet ("" if none fits)."""
+    said = " ".join(asked).lower()
+    return next((q for q in _bank_questions(phase, language) if q.lower() not in said), "")

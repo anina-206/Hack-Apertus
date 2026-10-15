@@ -10,6 +10,7 @@ if they really appear in the candidate's answers.
 import json
 import logging
 import re
+from difflib import SequenceMatcher
 from statistics import mean
 from typing import Optional
 
@@ -31,11 +32,64 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[\"'„“”«»‘’]", "", text)).strip().lower()
 
 
+_WORD = re.compile(r"\w+")
+
+# A quote counts if this share of its words appears close together in one answer (at least MIN_QUOTE_WORDS words)
+QUOTE_MATCH = 0.7
+MIN_QUOTE_WORDS = 3
+
+
 def _verified_evidence(quote: str, candidate_texts: list[str]) -> str:
+    """The quote as the candidate really said it, or "" if they did not say it.
+
+    The 8B model rarely quotes word for word ("Ich mag Mathe" for "Mathe mag ich schon"), so an exact
+    match kept no quote at all (bench_transcripts: evidence share 0). Now it is enough that most of the
+    quote's words appear close together in one answer; the evidence shown is that part of the answer, so it is
+    always what the candidate said.
+    """
     quote = quote.strip().strip("\"'„“”«»…. ")
-    if quote and any(_norm(quote) in _norm(text) for text in candidate_texts):
+    if not quote:
+        return ""
+    if any(_norm(quote) in _norm(text) for text in candidate_texts):
         return quote
+    wanted = [w.lower() for w in _WORD.findall(quote)]
+    best, best_text, best_span = 0, "", (0, 0)
+    for text in candidate_texts:
+        words = list(_WORD.finditer(text))
+        blocks = [b for b in SequenceMatcher(None, [w.group().lower() for w in words], wanted,
+                                             autojunk=False).get_matching_blocks() if b.size]
+        matched = sum(b.size for b in blocks)
+        if not blocks or matched <= best:
+            continue
+        first, last = blocks[0].a, blocks[-1].a + blocks[-1].size - 1
+        if last - first + 1 <= 2 * len(wanted):  # the words must be close together, not spread over the answer
+            best, best_text, best_span = matched, text, (words[first].start(), words[last].end())
+    if best >= max(MIN_QUOTE_WORDS, QUOTE_MATCH * len(wanted)):
+        return best_text[best_span[0]:best_span[1]]
     return ""
+
+
+# "Der Kandidat verknüpft ...", "Er zeigt ...": the report must speak to the candidate (du/tu), not about them.
+_THIRD_PERSON = re.compile(
+    r"\b(der|die|dem|den) (kandidat|kandidatin|bewerber|bewerberin)\b|(^|[.!] )(er|sie) [a-zäöü]+t\b|"
+    r"\b(le|la) (candidat|candidate)\b|"
+    r"\b(il|la) candidat[oa]\b",
+    re.IGNORECASE,
+)
+_THIRD_PERSON_FIX = ("IMPORTANT: Write every text directly to the candidate with 'du' (fr/it: 'tu'), e.g. 'Du hast ...'. "
+                     "Never write 'der Kandidat', 'er' or 'sie' about them.")
+
+# An example answer is what the candidate could say ("Ich ..."), not a description of what is missing.
+_FIRST_PERSON = re.compile(r"\b(ich|mir|mich|mein\w*|je|j'|moi|mon|ma|mes|io|mi|il mio|la mia)\b", re.IGNORECASE)
+
+
+def _texts(draft: ReportDraft) -> list[str]:
+    return ([draft.closing, *draft.strengths] + [i.tip for i in draft.improvements]
+            + [n.comment for n in draft.criteria.values()])
+
+
+def _in_third_person(draft: ReportDraft) -> bool:
+    return any(_THIRD_PERSON.search(text) for text in _texts(draft) if text)
 
 
 def final_scores(state: dict) -> tuple[dict[str, int], dict[str, float]]:
@@ -65,19 +119,21 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
     transcript = state.get("transcript", [])
     candidate_texts = [t["text"] for t in transcript if t["role"] == "candidate"]
 
+    messages = report_messages(occupation or config.occupation_for(state.get("occupation_id"), state.get("posting_id"),
+                                                                  state.get("occupation_name")),
+                               state["language"], scores, analyses, transcript, config.posting_for(state))
     draft: Optional[ReportDraft]
-    draft, _, error = await complete_json(
-        report_messages(occupation or config.occupation_for(state.get("occupation_id"), state.get("posting_id"),
-                                                           state.get("occupation_name")),
-                        state["language"], scores,
-                        analyses, transcript, config.posting_for(state)),
-        ReportDraft,
-        purpose="report",
-        temperature=0.4,
-        max_tokens=2500,
-    )
+    def ask():
+        return complete_json(messages, ReportDraft, purpose="report", temperature=0.4, max_tokens=2500)
+
+    draft, _, error = await ask()
     if draft is None:
         raise ReportUnavailable(f"Report could not be generated: {error}")
+    if _in_third_person(draft):  # one more try; the first draft is kept if the second is no better
+        messages[0] = {**messages[0], "content": messages[0]["content"] + "\n" + _THIRD_PERSON_FIX}
+        retry, _, _ = await ask()
+        if retry is not None and not _in_third_person(retry):
+            draft = retry
 
     missing = [key for key in scores if not (draft.criteria.get(key) and draft.criteria[key].comment)]
     if missing:
@@ -89,6 +145,16 @@ async def build_report(session_id: str, state: dict, occupation: Optional[dict] 
     if not improvements:
         tips = list(dict.fromkeys(a["short_tip"] for a in analyses if a.get("short_tip")))[:3]
         improvements = [{"tip": tip, "example_answer": ""} for tip in tips]
+    for item in improvements:
+        # Italian drops the subject pronoun ("Ho fatto uno stage"), so the check only works for DE/FR
+        if language != "it" and not _FIRST_PERSON.search(item["example_answer"]):
+            item["example_answer"] = ""
+
+    rejected = {key: note.evidence for key, note in draft.criteria.items()
+                if key in scores and note.evidence.strip() and not _verified_evidence(note.evidence, candidate_texts)}
+    if rejected:  # quotes the candidate did not say (to tune _verified_evidence)
+        logger.warning(json.dumps({"event": "evidence_rejected", "session_id": session_id, "quotes": rejected},
+                               ensure_ascii=False))
 
     criteria = []
     for key in CRITERIA:  # all 11 in rubric order; not observed ones have score None

@@ -13,7 +13,8 @@ import logging
 import re
 from typing import Optional, TypeVar
 
-from pydantic import BaseModel, ValidationError, field_validator
+from json_repair import repair_json
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 from backend import llm
 from backend.interview import rubric, safety
@@ -104,6 +105,20 @@ class ReportDraft(BaseModel):
     improvements: list[Improvement] = []
     closing: str = ""
 
+    @model_validator(mode="before")
+    @classmethod
+    def _stray_criteria(cls, raw):
+        # The model often closes "criteria" one brace too early ('..."evidence": "..."}}, "relevance": {...}').
+        # The criteria after it then end up at the top level; move them back.
+        if not isinstance(raw, dict):
+            return raw
+        stray = {k: v for k, v in raw.items() if k not in cls.model_fields and _CRITERION_ALIASES.get(_norm_key(k))}
+        if not stray:
+            return raw
+        criteria = raw.get("criteria") if isinstance(raw.get("criteria"), dict) else {}
+        rest = {k: v for k, v in raw.items() if k not in stray}
+        return {**rest, "criteria": {**stray, **criteria}}
+
     @field_validator("closing", mode="before")
     @classmethod
     def _text_only(cls, raw):
@@ -152,11 +167,13 @@ def _to_score(value) -> Optional[int]:
 
 def _candidates(text: str):
     """Yield substrings that may contain the JSON object, best guesses first."""
-    if "</think>" in text:
-        text = text.rsplit("</think>", 1)[1]
-    text = text.replace("“", '"').replace("”", '"')
     for fenced in re.findall(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL):
         yield fenced.strip()
+    # From the first "{" to the last "}": with one "}" too many, the first balanced span below
+    # ends too early and drops the rest of the object (bench_transcripts: most criterion comments lost).
+    first, last = text.find("{"), text.rfind("}")
+    if 0 <= first < last:
+        yield text[first:last + 1]
     # Balanced {...} spans, scanning while respecting string literals.
     depth, start, in_str, escape = 0, None, False, False
     for i, ch in enumerate(text):
@@ -181,26 +198,66 @@ def _candidates(text: str):
         yield text[start:] + "}" * depth
 
 
+def _escape_inner_quotes(text: str) -> str:
+    """Escape '"' inside strings that does not end the string (`"evidence": "Ich sagte "Lego""`).
+
+    A quote ends a string only if the next non-space character is , : } ] or the end of the text.
+    """
+    out, in_str, escape = [], False, False
+    for i, ch in enumerate(text):
+        if in_str and escape:
+            escape = False
+        elif in_str and ch == "\\":
+            escape = True
+        elif ch == '"':
+            if not in_str:
+                in_str = True
+            else:
+                rest = text[i + 1:].lstrip()
+                if rest and rest[0] not in ",:}]":
+                    out.append('\\"')
+                    continue
+                in_str = False
+        out.append(ch)
+    return "".join(out)
+
+
+# The last error of _loads, with the text around it, for the log (see complete_json)
+_last_syntax_error = ""
+
+
 def _loads(candidate: str):
-    try:
-        return json.loads(candidate)
-    except json.JSONDecodeError:
-        pass
+    global _last_syntax_error
     fixed = re.sub(r",\s*([}\]])", r"\1", candidate)  # trailing commas
-    try:
-        return json.loads(fixed)
-    except json.JSONDecodeError:
-        pass
+    # strict=False: line breaks inside strings, which the model often writes in longer texts
+    for text in (candidate, fixed, _escape_inner_quotes(fixed)):
+        try:
+            return json.loads(text, strict=False)
+        except json.JSONDecodeError as exc:
+            if text is candidate:
+                _last_syntax_error = f"{exc.msg} at {exc.pos}/{len(text)}: ...{text[max(0, exc.pos - 60):exc.pos + 20]!r}"
     try:  # Python-style dict: single quotes, True/False/None
         pythonic = re.sub(r"\btrue\b", "True", re.sub(r"\bfalse\b", "False", re.sub(r"\bnull\b", "None", fixed)))
         return ast.literal_eval(pythonic)
-    except (ValueError, SyntaxError):
+    except (ValueError, SyntaxError, MemoryError, RecursionError):
+        pass
+    # Last resort, measured on bench_transcripts: about 1 report in 6 had wrong closing brackets ("}}]}"),
+    # a quote closed with \" or invalid escapes (\' and \u00er). json_repair fixes all of these.
+    try:
+        return repair_json(candidate.replace("\\'", "'"), return_objects=True)
+    except Exception:  # json_repair does not promise not to raise on odd input
         return None
 
 
 def parse_json(text: str, model: type[M]) -> M:
     last_error = "no JSON object found"
-    for candidate in _candidates(text or ""):
+    text = text or ""
+    if "</think>" in text:
+        text = text.rsplit("</think>", 1)[1]
+    # Curly quotes are usually German quotation marks inside a string („Lego“), which are valid JSON.
+    # Only if that fails, read them as JSON quotes (some outputs use “key”: “value”).
+    variants = [text] + ([text.replace("“", '"').replace("”", '"')] if "“" in text or "”" in text else [])
+    for candidate in (c for variant in variants for c in _candidates(variant)):
         data = _loads(candidate)
         if not isinstance(data, dict):
             last_error = "invalid JSON syntax"
@@ -242,5 +299,6 @@ async def complete_json(messages: list[dict], model: type[M], purpose: str,
             return parse_json(raw, model), attempt, None
         except JSONParseError as exc:
             error = str(exc)
-            logger.warning(json.dumps({"event": "json_parse_failed", "purpose": purpose, "attempt": attempt, "error": error}))
+            logger.warning(json.dumps({"event": "json_parse_failed", "purpose": purpose, "attempt": attempt, "error": error,
+                                       "detail": _last_syntax_error, "length": len(raw or "")}, ensure_ascii=False))
     return None, MAX_JSON_ATTEMPTS, error

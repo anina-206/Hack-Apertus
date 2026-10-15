@@ -45,17 +45,23 @@ LETTER_REVIEW_OUTPUT = json.dumps({
     "strengths": ["Persönlicher Grund", "Konkretes Beispiel"],
     "improvements": [{"tip": "Nenne die Firma konkret.", "example_answer": "Mich spricht an, dass [Firma] ..."}],
 }, ensure_ascii=False)
+COMPANY_OUTPUT = (
+    "COMPANY: Strassenbau Gerber AG\nABOUT: Wir bauen Strassen und Plätze in der Region, mit 40 Mitarbeitenden.\n"
+    "TASKS: Lernende teeren, pflästern und bedienen kleine Baumaschinen.\n"
+    "- Die Lernenden bauen jedes Jahr einen Pausenplatz für eine Schule.\n- Arbeitsbeginn ist um 7 Uhr.")
 
 
 class FakeLLM:
     """Stands in for the OpenAI client; answers by prompt type from scripted queues."""
 
-    def __init__(self, analysis_outputs=(), report_outputs=()):
+    def __init__(self, analysis_outputs=(), report_outputs=(), interviewer_outputs=()):
         self.analysis_outputs = list(analysis_outputs)
         self.report_outputs = list(report_outputs)
+        self.interviewer_outputs = list(interviewer_outputs)
         self.calls = []
         self.application_output = APPLICATION_OUTPUT
         self.review_output = LETTER_REVIEW_OUTPUT
+        self.company_output = COMPANY_OUTPUT
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
     async def create(self, model, messages, **kwargs):
@@ -69,6 +75,10 @@ class FakeLLM:
         elif "You read the application documents" in system:
             self.calls.append("application")
             content = self.application_output
+        elif "You invent a small, realistic, FICTIONAL Swiss company" in system:
+            self.calls.append("company")
+            self.last_company_system = system
+            content = self.company_output
         elif "You translate Standard German into Swiss German" in system:
             self.calls.append("dialect")
             self.last_dialect_system = system
@@ -82,7 +92,7 @@ class FakeLLM:
         else:
             self.calls.append("interviewer")
             self.last_interviewer_system = system
-            content = f"Frage {len(self.calls)}?"
+            content = self.interviewer_outputs.pop(0) if self.interviewer_outputs else f"Frage {len(self.calls)}?"
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))], usage=None)
 
 
@@ -368,14 +378,70 @@ def test_interviewer_may_only_say_goodbye_when_closing():
 
 def test_occupation_name_gets_a_fictional_default_company(fake, api):
     fake()
-    resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Koch/Köchin EFZ"})
+    client = fake()
+    client.company_output = "Das kann ich nicht."  # the company generation gives nothing usable
+    resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Strassenbauer/in EFZ"})
     assert resp.status_code == 201, resp.text
     body = resp.json()
-    # no letter, no FHGR posting: the default company of the field "Gastgewerbe, Hotellerie" and a named person
-    assert body["company"] == {"name": "Hotel Alpenblick", "place": "Chur"}
+    # no letter, no FHGR posting, no generated company: the default company of the occupation's field (Bau) and a named person
+    assert body["company"] == {"name": "Brunner Bau AG", "place": "Chur"}
     assert body["interviewer"]["name"] in ("Frau Keller", "Herr Meier") and body["interviewer"]["voice"] in ("female", "male")
     state = api.get(f"/api/v1/sessions/{body['session_id']}").json()
-    assert state["occupation_name"] == "Koch/Köchin EFZ"
+    assert state["occupation_name"] == "Strassenbauer/in EFZ"
+
+
+def test_an_apprenticeship_given_by_name_gets_an_fhgr_posting_in_the_interview_language(fake, api):
+    fake()
+    # Frontend spelling "Coiffeur/Coiffeuse", posting spelling "Coiffeur/-euse": the same apprenticeship
+    for language, posting_id in (("de", "P-33"), ("fr", "P-17"), ("it", "P-57")):
+        body = api.post("/api/v1/sessions", json={"language": language, "occupation_name": "Coiffeur/Coiffeuse EFZ"}).json()
+        from backend import config
+        assert body["company"]["name"] == config.postings()[posting_id]["company"]["name"]
+        assert body["interviewer"]["name"] == config.postings()[posting_id]["interviewer"]["name"]
+
+
+def test_without_a_posting_apertus_invents_a_company_with_the_random_interviewer(fake, api):
+    client = fake()
+    body = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Strassenbauer/in EFZ"}).json()
+    from backend import config
+    from backend.interview import company
+    assert client.calls[0] == "company" and "Strassenbauer/in EFZ" in client.last_company_system
+    assert body["company"]["name"] == "Strassenbau Gerber AG" and body["company"]["place"] in company.TOWNS["de"]
+    assert (body["interviewer"]["name"], body["interviewer"]["role"]) in config.INTERVIEWERS["de"]
+    # The interviewer speaks as this company and knows its facts, but it is not marked as the candidate's own text
+    assert "Strassenbau Gerber AG" in client.last_interviewer_system
+    assert "taken from the candidate's application letter" not in client.last_interviewer_system
+    posting = config.posting_from_company({**company.parse(COMPANY_OUTPUT), "generated": True})
+    assert "Arbeitsbeginn ist um 7 Uhr." in posting["insider_facts"] and not posting["user_provided"]
+
+
+def test_a_known_posting_or_a_failing_call_needs_no_generated_company(fake, api, monkeypatch):
+    client = fake()
+    api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Coiffeur/Coiffeuse EFZ"})
+    assert "company" not in client.calls  # P-33 exists
+
+    async def broken(*_args, **_kwargs):
+        raise RuntimeError("LLM down")
+    from backend.interview import company
+    monkeypatch.setattr(company, "generate", broken)
+    resp = api.post("/api/v1/sessions", json={"language": "de", "occupation_name": "Strassenbauer/in EFZ"})
+    # the failing call is not fatal: the fictional default company is used (company is never null)
+    assert resp.status_code == 201 and resp.json()["company"]["name"] and resp.json()["interviewer"]["name"]
+
+
+def test_the_random_interviewer_introduces_themselves_by_that_name():
+    from backend.interview.prompts import interviewer_messages
+    system = interviewer_messages({"label": {"de": "Koch"}, "description": "x"}, {"prompt": "Be friendly.", "formal": False},
+                                  "de", None, "intro", "opening", 1, [], None,
+                                  persona={"name": "Marco Brunner", "role": "Berufsbildner"})[0]["content"]
+    assert "You are Marco Brunner, Berufsbildner, the interviewer" in system
+
+
+def test_repeated_sentences_are_dropped_from_the_interviewer_reply():
+    from backend.interview.graph import _drop_repeats
+    assert _drop_repeats("Danke. Danke. Danke. Danke.") == "Danke."
+    assert _drop_repeats("Okay. Was machst du gern? Okay. Was machst du gern?") == "Okay. Was machst du gern?"
+    assert _drop_repeats("Danke. Erzähl mir von deiner Schnupperlehre.") == "Danke. Erzähl mir von deiner Schnupperlehre."
 
 
 def test_the_default_company_fits_the_occupation_and_the_language(fake, api):
@@ -831,3 +897,52 @@ def test_knowledge_reaches_the_prompts_and_situations_are_based_on_tasks(fake, a
     assert "base it on one of these tasks" in situational
     intro = interviewer_messages(occupation, style, "de", None, "intro", "next_question", 1, [])[0]["content"]
     assert "base it on one of these tasks" not in intro
+
+
+def test_a_question_turn_that_says_goodbye_is_asked_again(fake, api):
+    client = fake(interviewer_outputs=["Frage 1?", "Danke, Lara. Wir melden uns in zwei Wochen bei dir.",
+                                       "Was machst du gerne in deiner Freizeit?"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Was machst du gerne in deiner Freizeit?"
+    assert "IMPORTANT: The interview is NOT over" in client.last_interviewer_system
+    assert body["meta"]["llm_calls"] == 3
+
+
+def test_a_fixed_question_from_the_fhgr_bank_stands_in_when_the_model_keeps_saying_goodbye(fake, api):
+    fake(interviewer_outputs=["Frage 1?", "Bis in zwei Wochen!", "Okay. Alles Gute!"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    from backend.interview.examples import _bank_questions
+    assert body["question"]["text"] in _bank_questions("intro", "de")
+
+
+def test_an_imperative_question_needs_no_second_call(fake, api):
+    client = fake(interviewer_outputs=["Frage 1?", "Okay. Erzähl mir von deiner Schnupperlehre."])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Okay. Erzähl mir von deiner Schnupperlehre."
+    assert client.calls.count("interviewer") == 2
+
+
+def test_long_school_levels_from_the_fhgr_profiles_are_accepted(fake, api):
+    fake()
+    level = "École obligatoire terminée (11H, niveau 1 en mathématiques et en allemand); actuellement semestre de motivation (SeMo)"
+    start(api, candidate={"first_name": "Léa", "school_level": level})
+
+
+def test_report_prompt_asks_for_a_comment_on_every_observed_criterion():
+    from backend.interview.prompts import report_messages
+    scores = {"clarity": 3, "preparation": 2, "initiative": 1}
+    system = report_messages({"label": {"de": "Informatiker/in EFZ"}, "description": ""}, "de", scores, [], [])[0]["content"]
+    example = json.loads(system[system.index('{"strengths"'):])
+    assert list(example["criteria"]) == list(scores)
+
+
+def test_report_keeps_a_loose_quote_as_the_words_the_candidate_really_said():
+    from backend.interview.report import _verified_evidence
+    said = ["Also, ich mag Mathe schon, weil man dort immer ein klares Resultat sieht."]
+    assert _verified_evidence("Ich mag Mathe, weil man immer ein klares Resultat sieht", said) == \
+        "ich mag Mathe schon, weil man dort immer ein klares Resultat sieht"
+    assert _verified_evidence("Ich liebe Physik", said) == ""
+    assert _verified_evidence("<words the candidate said>", said) == ""

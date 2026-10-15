@@ -36,7 +36,13 @@ export type Playback = { stop: () => void; done: Promise<void> };
 /** Plays an audio file. `done` resolves when it has finished or was stopped. */
 export async function play(audio: Blob): Promise<Playback> {
   const ctx = audioContext();
-  if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+  // Without a recent tap the browser can keep the audio blocked, and resume() then waits forever.
+  // Give up after a moment, so the caller can fall back to the browser voice instead of staying silent.
+  if (ctx.state !== "running") {
+    await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 1000))]);
+    // (state changes while we wait; TypeScript does not know that, hence the cast)
+    if ((ctx.state as AudioContextState) !== "running") throw new Error("Audio is blocked by the browser");
+  }
   const buffer = await ctx.decodeAudioData(await audio.arrayBuffer());
 
   const source = ctx.createBufferSource();
@@ -77,8 +83,11 @@ export async function play(audio: Blob): Promise<Playback> {
 // ---------- recording ----------
 
 /** How the recorder decides that the candidate started and stopped speaking. */
-const SPEECH_LEVEL = 0.02; // minimum loudness that counts as speech (above the room noise)
+const SPEECH_LEVEL = 0.01; // minimum loudness that counts as speech (above the room noise)
 const MIN_SPEECH_MS = 300; // this much speech before a pause can end the answer
+// Quiet microphones may never pass SPEECH_LEVEL. A recording at least this long is still sent,
+// and Whisper decides whether something was said (it returns "" for silence).
+const MIN_RECORDING_MS = 800;
 
 export type RecorderEvents = {
   /** The candidate has been quiet for `silenceMs` after speaking. */
@@ -88,7 +97,7 @@ export type RecorderEvents = {
 };
 
 export type Recording = {
-  /** Stops and returns the recording (null if nothing was said). */
+  /** Stops and returns the recording (null if it was too short to hold an answer). */
   stop: () => Promise<Blob | null>;
   /** Stops and throws the recording away. */
   cancel: () => void;
@@ -130,7 +139,7 @@ export async function record(silenceMs: number, idleMs: number, events: Recorder
     const now = performance.now();
     const level = loudness(analyser, samples);
     meter.mic = Math.min(1, level * 6);
-    const speaking = level > Math.max(SPEECH_LEVEL, noise * 3);
+    const speaking = level > Math.max(SPEECH_LEVEL, noise * 2.5);
     if (speaking) {
       speechMs += now - last;
       lastSpeech = now;
@@ -156,7 +165,7 @@ export async function record(silenceMs: number, idleMs: number, events: Recorder
     stop: () =>
       new Promise((resolve) => {
         if (finished) return resolve(null);
-        const saidSomething = speechMs >= MIN_SPEECH_MS;
+        const saidSomething = speechMs >= MIN_SPEECH_MS || performance.now() - started >= MIN_RECORDING_MS;
         recorder.onstop = () => resolve(saidSomething ? new Blob(chunks, { type: recorder.mimeType }) : null);
         recorder.stop();
         release();

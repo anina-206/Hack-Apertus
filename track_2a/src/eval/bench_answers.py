@@ -1,4 +1,4 @@
-"""Bench 1: the analysis call against the 706 expert-annotated FHGR answers.
+"""Bench 1: the analysis call against the 816 expert-annotated FHGR answers.
 
 For each answer, our analysis call (the same code as in the interview) scores the answer;
 we compare its 1-4 scores with the annotation's criteria_scores, its follow_up flag with
@@ -143,7 +143,7 @@ async def run(sample: Optional[int], variant: str, concurrency: int, log=print, 
 
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--sample", type=int, default=120, help="answers to use, spread over language x class (0 = all 706)")
+    parser.add_argument("--sample", type=int, default=120, help="answers to use, spread over language x class (0 = all 816)")
     parser.add_argument("--variant", default="pipeline", choices=["pipeline", "fixed", "basic", "similar", "mixed", "no-examples", "baseline"])
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--focus", default="", choices=["", "flags"],

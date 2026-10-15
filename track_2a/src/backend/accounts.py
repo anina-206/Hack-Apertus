@@ -210,7 +210,7 @@ class Store:
                 "occupation_name": state.get("occupation_name"),
                 "interviewer_style": state["interviewer_style"], "mode": state["mode"],
                 "candidate": state.get("candidate"), "posting_id": state.get("posting_id"),
-                "company_input": state.get("company"),
+                "company_input": state.get("company"), "persona": state.get("persona"),
                 "done": bool(state.get("done")),
                 "phase": pos.phase, "progress": progress(pos), "history": state.get("transcript", []),
                 "current_question_id": (state.get("current_question") or {}).get("id"),
@@ -254,7 +254,7 @@ class Store:
         posting = config.posting_for({"company": d.get("company_input"), "posting_id": d.get("posting_id"),
                                       "language": d["language"], "occupation_id": d["occupation_id"],
                                       "occupation_name": d.get("occupation_name")})
-        company, interviewer = config.company_of(posting), config.interviewer_of(posting)
+        company, interviewer = config.company_of(posting), config.interviewer_of(posting, d.get("persona"))
         return {"session_id": session_id, "language": d["language"], "occupation_id": d["occupation_id"],
                 "occupation_name": d.get("occupation_name"),
                 "interviewer_style": d["interviewer_style"], "mode": d["mode"], "candidate": d.get("candidate"),

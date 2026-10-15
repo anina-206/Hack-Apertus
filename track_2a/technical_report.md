@@ -78,8 +78,9 @@ for about 200 of them the interviewer knows the typical tasks, the duration and 
    the place and the contact person from it (for example from "Sehr geehrte Frau Keller") and picks 2-5 vague or
    incomplete points to ask about. The interviewer quotes the letter ("In deiner Bewerbung steht …") and asks what
    exactly is meant. The letter text itself is not stored, only a short summary without contact data;
-2. one of the 30 **FHGR postings** (fictional company, real occupation, named trainer) that belongs to the occupation;
-3. a **fictional default company** that fits the occupation's field with a named trainer
+2. one of the 60 **FHGR postings** (fictional company, real occupation, named trainer) that belongs to the occupation;
+3. a **fictional company invented by Apertus** at the start (one extra call, with a randomly picked trainer);
+4. if that call gives nothing usable, a **fictional default company** that fits the occupation's field with a named trainer
    (`data/default_companies.yaml`: only a name, a place and a person, no invented facts), so the interviewer always
    has a company and a name.
 
@@ -153,7 +154,7 @@ neural voices instead of Piper (an external cloud service, off by default).
 
 | Data | Source | Licence / status | Use |
 |---|---|---|---|
-| `datasets/` (rubric, 242 questions, 706 annotated answers, 24 candidate profiles, 30 postings, 28 scenarios, 15 transcripts (13 with reference feedback), feedback rules and examples) | FHGR challenge repository [fhgr/Hackapertus](https://github.com/fhgr/Hackapertus), copied unchanged (`datasets/SOURCE.md`) | Provided for the challenge; synthetic, persons and companies are fictional, occupation data from berufsberatung.ch | Rubric, postings, dialect examples, calibration examples in the analysis prompt, benchmarks |
+| `datasets/` (rubric, 242 questions, 816 annotated answers, 24 candidate profiles, 60 postings, 28 scenarios, 23 transcripts (21 with reference feedback), feedback rules and examples) | FHGR challenge repository [fhgr/Hackapertus](https://github.com/fhgr/Hackapertus), copied unchanged (`datasets/SOURCE.md`) | Provided for the challenge; synthetic, persons and companies are fictional, occupation data from berufsberatung.ch | Rubric, postings, dialect examples, calibration examples in the analysis prompt, benchmarks |
 | `fhgr/` | Same repository: README, slides, project template | As above | Reference |
 | `data/*.yaml` | Our configuration: occupations, interviewer styles, interviewer voices, fictional default companies and trainers | Ours | Setup options |
 | `data/models/` | Speech models, downloaded at runtime | See section 3 | Voice |

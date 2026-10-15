@@ -49,6 +49,20 @@ export function sentences(text: string): string[] {
   return (text.match(/[^.!?…]+[.!?…]*["»«]*\s*/g) ?? [text]).map((s) => s.trim()).filter(Boolean);
 }
 
+/**
+ * Splits a text into pieces of whole sentences for the server voice, so the first piece can play
+ * while the next one is made. Very short sentences ("Super!") are joined with the next one.
+ */
+export function speechChunks(text: string, minLength = 40): string[] {
+  const chunks: string[] = [];
+  for (const sentence of sentences(text)) {
+    const last = chunks.length - 1;
+    if (last >= 0 && chunks[last].length < minLength) chunks[last] += ` ${sentence}`;
+    else chunks.push(sentence);
+  }
+  return chunks;
+}
+
 /** Reads a text aloud. `onEnd` is called when it is finished or stopped. */
 export function speak(text: string, language: LanguageCode, onEnd?: () => void) {
   if (!canSpeak) {
@@ -62,7 +76,9 @@ export function speak(text: string, language: LanguageCode, onEnd?: () => void) 
     const utterance = new SpeechSynthesisUtterance(part);
     utterance.lang = voice?.lang ?? speechLang[language];
     if (voice) utterance.voice = voice;
-    utterance.rate = 0.95; // a little slower than normal, easier to follow
+    // normal speed and a slightly higher voice sound friendlier and less monotone
+    utterance.rate = 1.0;
+    utterance.pitch = 1.1;
     if (i === parts.length - 1) {
       utterance.onend = () => onEnd?.();
       utterance.onerror = () => onEnd?.();
@@ -98,8 +114,8 @@ const RecognitionClass: (new () => Recognition) | undefined =
 
 export const canListen = RecognitionClass !== undefined;
 
-/** Why dictation stopped: normally (null), no microphone permission, or another problem. */
-export type ListenError = "not-allowed" | "other" | null;
+/** Why dictation stopped: normally (null), no microphone permission, nothing understood, or another problem. */
+export type ListenError = "not-allowed" | "nothing" | "other" | null;
 
 /**
  * Starts dictation. `onText` gets everything spoken so far, `onEnd` is called when it stops.

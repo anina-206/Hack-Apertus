@@ -26,7 +26,8 @@ ACTIONS = {"continue", "probe", "redirect", "support_and_refer"}
 SITUATIONS = {"apprenticeship_interview", "phone_call_trial", "trial_interview", "online_interview",
               "assessment", "follow_up_interview"}
 FAILURE_MODES = {"harsh", "overpraise", "vague", "personality_label", "jargon", "fear", "hallucinated_evidence",
-                 "too_long", "no_next_step", "comparison", "wrong_language", "ignores_distress", "grading_not_coaching"}
+                 "too_long", "no_next_step", "comparison", "wrong_language", "ignores_distress", "grading_not_coaching",
+                 "invented_criticism"}
 
 errors = []
 
@@ -72,9 +73,19 @@ def ref_sets():
 
 
 QIDS, GLIDS = ref_sets()
-CIDS = {f"C-{i:02d}" for i in range(1, 25)}
-PIDS = {f"P-{i:02d}" for i in range(1, 31)}
-SIDS = {f"S-{i:02d}" for i in range(1, 29)}
+# Rosters: the ids in the published files (the dataset grows, so they are not fixed lists)
+def _roster(path, pattern):
+    p = ROOT / path
+    found = {r["id"] for r in load(p)} if p.exists() else set()
+    for i in sorted(found):
+        if not re.match(pattern, i):
+            err(path, f"bad id format {i}")
+    return found
+
+
+CIDS = _roster("profiles/candidates.jsonl", r"^C-\d{2}$")
+PIDS = _roster("profiles/postings.jsonl", r"^P-\d{2}$")
+SIDS = _roster("scenarios/scenarios.jsonl", r"^S-\d{2}$")
 
 
 def v_answers(recs, name):
@@ -151,8 +162,6 @@ def v_candidates(recs, name):
         req(r, ["id", "first_name", "age", "gender", "canton", "place", "interview_language", "dialect", "languages",
                 "school", "hobbies", "experiences", "target_posting_id", "career_choice_story", "strengths",
                 "development_areas", "future_plans", "simulation_persona", "coach_focus", "synthetic"], w)
-        if r.get("id") not in CIDS:
-            err(w, "id not in roster")
         if r.get("target_posting_id") not in PIDS:
             err(w, "unknown target_posting_id")
         if r.get("dialect") is not None and r["dialect"] not in DIALECTS:
@@ -164,8 +173,6 @@ def v_postings(recs, name):
         w = f"{name}:{r.get('id')}"
         req(r, ["id", "occupation", "lang", "company", "posting_text", "requirements", "offers", "bm_possible",
                 "start_date", "selection_process", "interviewer", "insider_facts", "synthetic"], w)
-        if r.get("id") not in PIDS:
-            err(w, "id not in roster")
         if r.get("lang") not in ("de", "fr", "it"):
             err(w, "bad lang")
 
@@ -175,8 +182,6 @@ def v_scenarios(recs, name):
         w = f"{name}:{r.get('id')}"
         req(r, ["id", "title", "situation", "candidate_id", "posting_id", "lang", "planned_question_ids",
                 "adaptive_hooks", "evaluation_focus", "difficulty", "success_criteria_for_coach", "synthetic"], w)
-        if r.get("id") not in SIDS:
-            err(w, "id not in roster")
         if r.get("situation") not in SITUATIONS:
             err(w, f"bad situation {r.get('situation')}")
         for q in r.get("planned_question_ids") or []:

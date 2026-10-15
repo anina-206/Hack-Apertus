@@ -2,6 +2,7 @@
 
 import csv
 import json
+import random
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -91,18 +92,20 @@ def contact_voice(name: str, role: str) -> str:
     return _interviewer_voices()["default"]
 
 
-def posting_from_company(company: dict, user_provided: bool = True) -> dict:
-    """A posting-shaped dict (like an FHGR posting) from a company name, place and contact person.
+def posting_from_company(company: dict, user_provided: Optional[bool] = None) -> dict:
+    """A posting-shaped dict (like an FHGR posting) from a company name, place and contact person: from the candidate's
+    application letter, from a company Apertus invented at the start (interview/company.py, `generated: true`) or
+    from the fictional default company (default_company).
 
-    All prompts work with this shape. Nothing is invented: only the given details are filled in.
-    Keys of `company`: name, place, contact_name, contact_role (and optionally about, apprentice_tasks).
-    `user_provided`: the details come from the candidate's application letter (False: the default company).
+    All prompts work with this shape. From a letter only what the letter says is filled in; nothing is invented.
+    Keys of `company`: name, place, contact_name, contact_role (and optionally about, apprentice_tasks, facts, generated).
+    `user_provided`: the details come from the candidate's letter (default: not generated).
     """
     about = company.get("about") or ""
     tasks = company.get("apprentice_tasks") or ""
     return {
         "id": None,
-        "user_provided": user_provided,
+        "user_provided": (not company.get("generated")) if user_provided is None else user_provided,
         "company": {"name": company.get("name") or "", "place": company.get("place") or "", "description": about},
         "interviewer": {"name": company.get("contact_name") or "", "role": company.get("contact_role") or "",
                         "style": "friendly and professional",
@@ -110,7 +113,8 @@ def posting_from_company(company: dict, user_provided: bool = True) -> dict:
         "offers": [],  # the tasks are in insider_facts; listing them twice made the answers repeat them
         "selection_process": [],
         # What a well-prepared candidate could know: everything the candidate told us about the company
-        "insider_facts": [f for f in (about, f"Tasks in the apprenticeship: {tasks}" if tasks else "") if f],
+        "insider_facts": [f for f in (about, f"Tasks in the apprenticeship: {tasks}" if tasks else "") if f]
+                         + list(company.get("facts") or []),
     }
 
 
@@ -145,27 +149,31 @@ def _german_occupation_name(state: dict) -> Optional[str]:
     return known["label"]["de"] if known and not known.get("hidden") else None
 
 
-def posting_for(state: dict) -> Optional[dict]:
+def posting_for(state: dict, fallback: bool = True) -> Optional[dict]:
     """The company the interviewer works for, in this order of what is known:
 
     1. the details from the candidate's application letter (company, place, contact person);
     2. the FHGR posting (default per occupation, or the one asked for);
     3. a fictional default company that fits the occupation (default_company), so there is always a company and a
-       named interviewer. A letter that names only the company or only the person is completed with the default.
+       named interviewer. A letter (or a generated company) that names only the company or only the person is
+       completed with the default. `fallback=False`: no default, None instead (to see whether a company is missing).
     """
     letter = {k: v for k, v in (state.get("company") or {}).items() if v}
     if not letter:
         posting = postings().get(state.get("posting_id") or "")
         if posting:
             return posting
+    if not letter and not fallback:
+        return None
     if not (letter or state.get("occupation_id") or state.get("occupation_name")):
         return None
     company = default_company(state.get("language") or "de", _german_occupation_name(state))
+    extra = {k: v for k, v in letter.items() if k not in ("name", "place", "contact_name", "contact_role")}
     if letter.get("name"):
         company["name"], company["place"] = letter["name"], letter.get("place", "")
     if letter.get("contact_name"):
         company["contact_name"], company["contact_role"] = letter["contact_name"], letter.get("contact_role", "")
-    return posting_from_company(company, user_provided=bool(letter))
+    return posting_from_company({**company, **extra}, user_provided=bool(letter) and not letter.get("generated"))
 
 
 def company_of(posting: Optional[dict]) -> Optional[dict]:
@@ -175,8 +183,28 @@ def company_of(posting: Optional[dict]) -> Optional[dict]:
     return {"name": posting["company"]["name"], "place": posting["company"].get("place") or ""}
 
 
-def interviewer_of(posting: Optional[dict]) -> Optional[dict]:
-    """`interviewer` of the API responses (null if the interviewer has no name)."""
+# Interviewers for apprenticeships without an FHGR posting (or a letter without a contact person), so it is not
+# always the same person. The role's ending gives the voice (contact_voice): "-in"/"-rice" female, "-er"/"-eur"/"-ore" male.
+INTERVIEWERS = {
+    "de": [("Sandra Keller", "Berufsbildnerin"), ("Marco Brunner", "Berufsbildner"), ("Nicole Frei", "Berufsbildnerin"),
+           ("Thomas Huber", "Berufsbildner"), ("Lea Baumann", "Berufsbildnerin"), ("Daniel Gerber", "Berufsbildner")],
+    "fr": [("Émilie Bovet", "Formatrice"), ("Yann Chappuis", "Formateur"), ("Céline Dubois", "Formatrice"),
+           ("Mathieu Girard", "Formateur")],
+    "it": [("Alessia Cattaneo", "Formatrice"), ("Paolo Ferrari", "Formatore"), ("Martina Rossi", "Formatrice"),
+           ("Andrea Colombo", "Formatore")],
+}
+
+
+def random_interviewer(language: str) -> dict:
+    """A name and role for the interviewer, picked at random (state key "persona")."""
+    name, role = random.choice(INTERVIEWERS["de" if language == "gsw" else language])
+    return {"name": name, "role": role}
+
+
+def interviewer_of(posting: Optional[dict], persona: Optional[dict] = None) -> Optional[dict]:
+    """`interviewer` of the API responses: the posting's contact person, else `persona`, else null."""
+    if (not posting or not posting["interviewer"].get("name")) and persona:
+        return {**persona, "voice": contact_voice(persona["name"], persona["role"])}
     if not posting or not posting["interviewer"].get("name"):
         return None
     name, role = posting["interviewer"]["name"], posting["interviewer"].get("role") or ""
@@ -242,6 +270,17 @@ def _knowledge(row: Optional[dict]) -> str:
     return " ".join(parts)
 
 
+def posting_for_name(name: str, language: str) -> Optional[str]:
+    """An FHGR posting for the apprenticeship `name` (e.g. "Koch/Köchin EFZ") in the interview language, or None.
+
+    With several postings (e.g. two Detailhandel companies) one is picked at random, for variety.
+    """
+    key, lang = _occupation_key(name), "de" if language == "gsw" else language
+    matches = [p["id"] for p in postings().values()
+               if p["lang"] == lang and _occupation_key(p["occupation"]["name_de"]) == key]
+    return random.choice(matches) if matches else None
+
+
 def occupation_knowledge(name: Optional[str] = None, csv_id: Optional[str] = None) -> str:
     """What is known about the apprenticeship `name` (e.g. "Koch/Köchin EFZ", the names of lehrberufe.ts) or the
     occupation with this id in occupations.csv. An empty string if the occupation is not in the data."""
@@ -255,7 +294,7 @@ def occupation_knowledge(name: Optional[str] = None, csv_id: Optional[str] = Non
 
 
 def occupation_for(occupation_id: Optional[str], posting_id: Optional[str], occupation_name: Optional[str] = None) -> dict:
-    """The occupation for the prompts: from the posting if there is one (any of the 30), else data/occupations.yaml.
+    """The occupation for the prompts: from the posting if there is one, else data/occupations.yaml.
 
     `occupation_name` (free text, e.g. "Koch/Köchin EFZ") is for occupations that are not in data/occupations.yaml:
     the interviewer then only knows the name, not the details of the apprenticeship.

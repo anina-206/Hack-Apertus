@@ -105,3 +105,35 @@ def test_voice_of_a_contact_person_from_the_letter():
     assert config.contact_voice("Luca Rossi", "formatore") == "male"  # from the role
     assert config.contact_voice("Andrea Meier", "Berufsbildnerin, Logistik") == "female"
     assert config.contact_voice("Sam Keller", "") == "female"  # nothing to go by: the default
+
+
+def test_spoken_text_is_cleaned_up():
+    assert tts.spoken_text("**Super!** 😀 Wie war z.B. der Tag als Berufsbildner:in?", "de") == \
+        "Super! Wie war zum Beispiel der Tag als Berufsbildner?"
+    assert tts.spoken_text("Die Lehre als Informatiker EFZ, d.h. 4 Jahre.", "gsw") == \
+        "Die Lehre als Informatiker E F Z, das heisst 4 Jahre."
+    assert tts.spoken_text("Un CFC, p. ex. en informatique.", "fr") == "Un C F C, par exemple en informatique."
+    assert tts.spoken_text("Mehr unter https://example.ch und/oder bei uns.", "de") == "Mehr unter und/oder bei uns."
+
+
+def test_piper_audio_starts_with_a_short_silence_so_the_first_syllable_is_not_cut_off():
+    import io
+    import wave
+
+    from backend.voice.tts import LEAD_IN_SECONDS, _with_lead_in
+    original = io.BytesIO()
+    with wave.open(original, "wb") as wav:
+        wav.setnchannels(1), wav.setsampwidth(2), wav.setframerate(16000)
+        wav.writeframes(b"\x01\x02" * 1000)
+    with wave.open(io.BytesIO(_with_lead_in(original.getvalue())), "rb") as padded:
+        assert padded.getnframes() == 1000 + int(16000 * LEAD_IN_SECONDS)
+        assert padded.readframes(1) == b"\0\0"
+
+
+def test_whisper_phantom_lines_on_silence_are_dropped():
+    from backend.voice.stt import drop_hallucinations
+    for phantom in ("Danke.", "Vielen Dank.", "Vielen Dank fürs Zuschauen!", "Untertitel im Auftrag des ZDF, 2020",
+                    "Merci.", "Sous-titres réalisés par la communauté d'Amara.org", "Grazie.", ""):
+        assert drop_hallucinations(phantom) == "", phantom
+    assert drop_hallucinations("Danke, ich heisse Lara und gehe in die 3. Sek.") == "Danke, ich heisse Lara und gehe in die 3. Sek."
+    assert drop_hallucinations("Ich mag Mathe. Untertitel der Amara.org-Community") == "Ich mag Mathe."

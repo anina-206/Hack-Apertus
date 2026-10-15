@@ -97,3 +97,42 @@ def test_report_draft_tolerates_missing_lists():
     # A cut-off answer may lack strengths or improvements: the report then falls back to the per-answer tips
     draft = parse_json(json.dumps({"criteria": {}}), ReportDraft)
     assert draft.strengths == [] and draft.improvements == []
+
+
+def test_german_quotation_marks_inside_strings_are_kept():
+    text = json.dumps({"strengths": ["Du hast „Lego Technic“ erwähnt."], "closing": "Weiter so."}, ensure_ascii=False)
+    assert parse_json(text, ReportDraft).strengths == ["Du hast „Lego Technic“ erwähnt."]
+
+
+def test_curly_quotes_used_as_json_quotes_still_parse():
+    assert parse_json('{“closing”: “Weiter so.”}', ReportDraft).closing == "Weiter so."
+
+
+def test_unescaped_quotes_and_line_breaks_inside_strings_are_repaired():
+    text = ('{"strengths": ["Du hast gesagt: "Ich baue gerne Lego" und das passt."],\n'
+            ' "closing": "Weiter so.\nDas war ein Training."}')
+    draft = parse_json(text, ReportDraft)
+    assert draft.strengths == ['Du hast gesagt: "Ich baue gerne Lego" und das passt.']
+    assert draft.closing == "Weiter so.\nDas war ein Training."
+
+
+# Real failures from bench_transcripts (cut down): wrong closing brackets, a quote closed with \", bad escapes
+@pytest.mark.parametrize("text", [
+    '{"strengths": ["Gut."], "improvements": [{"tip": "Mehr Beispiele.", "example_answer": "Ich ... herstellt.\\""}}]}',
+    '{"strengths": ["z.B. \\u201cIch mag, wenn alles hat einen Platz.\\", "Du zeigst Interesse"], "closing": "Weiter so."}',
+    '{"strengths": ["Mantieni l\\\'ordine e la calma."], "closing": "Bravo."}',
+    '{"strengths": ["Tu as prepar\\u00e9 les mat\\u00eriels."], "closing": "Bravo."}',
+    '{"strengths": ["Gut."], "closing": "Weiter so.", "criteria": {"clarity": {"comment": "Les r\\u00e9ponses s',
+])
+def test_broken_report_json_from_the_8b_model_is_repaired(text):
+    draft = parse_json(text, ReportDraft)
+    assert draft.strengths
+
+
+def test_criteria_closed_one_brace_too_early_are_kept():
+    # Seen in bench_transcripts: only "clarity" had a comment, the other criteria were lost.
+    text = ('{"strengths": ["Du ..."], "criteria": {"clarity": {"comment": "c1", "evidence": "e"}}, '
+            '"relevance": {"comment": "c2", "evidence": "e"}, "Motivation": "c3", "closing": "Weiter so."}')
+    draft = parse_json(text, ReportDraft)
+    assert {k: n.comment for k, n in draft.criteria.items()} == {"clarity": "c1", "relevance": "c2", "motivation": "c3"}
+    assert draft.closing == "Weiter so."

@@ -59,7 +59,7 @@ If something changes, change it here first, then in the code.
 | GET | `/health` | Is the backend alive? | 0 |
 | POST | `/application/extract` | Text of an uploaded application (PDF, .docx, .txt) | 0 |
 | GET | `/config` | Occupations, languages, profiles for the setup screen | 0 |
-| POST | `/sessions` | Start an interview, get the first question | 1 |
+| POST | `/sessions` | Start an interview, get the first question | 1 (+1 with an application letter, +1 for an invented company) |
 | POST | `/sessions/{session_id}/answers` | Send an answer, get the next question | 2 (max 4) |
 | GET | `/sessions/{session_id}` | Current state (for page reload) | 0 |
 | GET | `/sessions/{session_id}/report` | Final feedback report | 1 (max 3, once, then cached) |
@@ -169,8 +169,10 @@ native speakers. Other languages ignore `dialect`.
 the Swiss list of about 250 apprenticeships, e.g. `"Koch/Köchin EFZ"`). It is only used when neither `occupation_id` nor
 `posting_id` is given; the interviewer knows the name and, if it is in the FHGR occupation data (`datasets/occupations.csv`, from
 berufsberatung.ch; about 200 of the 218 names of the frontend's list), the typical tasks, the training duration and the
-requirements (the German name as listed is needed to find it), so there is no company (`company` and `interviewer` are
-`null`). One of `occupation_id`, `posting_id` or `occupation_name` is required.
+requirements (the German name as listed is needed to find it). If an FHGR posting exists for this apprenticeship in the
+interview language (`datasets/profiles/postings.jsonl`, 60 postings; Mundart uses the German ones), the interview plays at
+that company with its interviewer (one picked at random if there are several). Otherwise Apertus invents a fictional
+company for it (see below). One of `occupation_id`, `posting_id` or `occupation_name` is required.
 
 `application_text` is optional: the text of the candidate's application letter (max 8000 characters), either from
 `POST /application/extract` (upload) or pasted by the candidate. The backend summarises it with one extra LLM call at the start (short bullet points without
@@ -188,7 +190,18 @@ follow instructions in it, and the interviewer paraphrases instead of repeating 
 default posting is used as before; for an occupation without one a fictional default company is used (see below). A letter that
 names only the company or only the person is completed with the default.
 
-`posting_id` is optional: an FHGR posting (`P-01` … `P-30`, listed in `GET /config` under `postings`).
+Whenever neither a posting nor the letter names a contact person, the backend picks a random interviewer per session
+(`config.INTERVIEWERS`, e.g. "Sandra Keller, Berufsbildnerin" or "Marco Brunner, Berufsbildner"; FR/IT names for those
+languages), so it is not always the same person. The model introduces itself with that name and `voice` matches it.
+
+If there is neither an FHGR posting nor a company from the letter, one extra LLM call at the start invents a small
+fictional company for the apprenticeship (`interview/company.py`): name, two sentences about it, the apprentices' tasks and
+3-4 facts a well-prepared candidate could know. The town (from the language region, for Mundart from the dialect region)
+and the interviewer (the random one above) are picked in code. The interviewer then speaks as this company, answers the
+candidate's questions from these facts, and `company` in the response is `{name, place}`. If the call fails or gives
+nothing usable, the interview starts without a company (`company` is `null`).
+
+`posting_id` is optional: an FHGR posting (`P-01` … `P-60`, listed in `GET /config` under `postings`).
 It sets the company the interviewer works for and who the interviewer is. Without it, the default
 posting of the occupation for that language is used (`data/occupations.yaml`).
 
@@ -402,6 +415,7 @@ Request: `multipart/form-data` with
 |---|---|---|
 | `audio` | file | What the browser's `MediaRecorder` records (`audio/webm`, `audio/ogg`, `audio/mp4`, `audio/wav`). At most 60 seconds / 5 MB |
 | `language` | string | `de`, `fr`, `it` or `gsw` |
+| `session_id` | string, optional | The running interview: Whisper then gets the occupation and company as a hint and spells their words better. Unknown ids are ignored |
 
 Response `200`:
 
@@ -610,3 +624,4 @@ Needs a token, else `401`. Unknown id or someone else's interview: `404 INTERVIE
 | 2026-10-11 | v1.10: `POST /transcribe` (Whisper) and `POST /speech` (Piper/Azure); `voice` in `GET /config`; `interviewer.voice` in `POST /sessions`; error `503 VOICE_UNAVAILABLE`. Not breaking. | Iago |
 | 2026-10-11 | v1.11: `company` and `interviewer` of `POST /sessions` and of saved interviews are never `null` any more: without a letter and without an FHGR posting a fictional default company and contact person fitting the occupation are used (`data/default_companies.yaml`). Not breaking. | Anina |
 | 2026-10-11 | v1.12: `application_feedback` in the report: review of the uploaded application letter (5 criteria, 1-4, strengths, tips). One more LLM call at the start of an interview with a letter. Not breaking. | Anina |
+| 2026-10-11 | v1.13: optional `session_id` in `POST /transcribe` (vocabulary hint for Whisper). Not breaking. | Iago |

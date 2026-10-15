@@ -7,7 +7,10 @@ Three levels, decided in code:
   warmly, points to a person they trust and asks an easier question on the same topic.
 - redirect: manipulation attempts, off-topic, impolite or discriminatory answers -> the
   interviewer stays in role, calmly brings the talk back and asks the question again.
-Support and redirect happen at most once per question, so an interview can't get stuck.
+- clarify: the answer can't be understood (garbled speech recognition) or is a question about the
+  interview itself ("may I answer in Mundart?") -> short answer or "please say it again", same question.
+  Such an answer is not scored.
+Support, redirect and clarify happen at most once per question, so an interview can't get stuck.
 """
 
 import re
@@ -23,9 +26,12 @@ PROBLEM_FLAGS = {
     "badmouthing": "speaks badly about former teachers, companies or others",
     "dishonesty": "obviously untrue claims or bragging",
     "privacy_oversharing": "shares very private data (health, family problems, passwords)",
+    "unclear_or_meta": ("the answer makes no sense (e.g. garbled speech recognition) or the candidate asks something "
+                        "about the interview itself (may I answer in dialect, can you repeat the question)"),
 }
 SUPPORT_FLAGS = {"distress_signal"}
 REDIRECT_FLAGS = {"manipulation_attempt", "off_topic", "inappropriate_tone", "discriminatory"}
+CLARIFY_FLAGS = {"unclear_or_meta"}
 
 _CRISIS = re.compile(
     r"suizid|selbstmord|mich umbringen|nicht mehr leben|nümme lebe|\britz(e|en)\b|\bgeritzt\b|"
@@ -50,6 +56,18 @@ _INJECTION = re.compile(
     r"you are now (a|an|no longer)",
     re.IGNORECASE,
 )
+
+# Short questions about the interview itself; the model does not always flag them, then it invents an answer
+# ("Das ist korrekt, in der Schweiz sagt man ..."). Only short answers, a real answer may mention Mundart.
+_META = re.compile(
+    r"schweizerdeutsch|schwiizerdütsch|mundart|dialekt|hochdeutsch|"
+    r"(frage|frag)\s+(nochmal|nomal|noch einmal|wiederholen)|nochmal (sagen|wiederholen)|"
+    r"(verstehe|verstah|versteh) (die frage|d frag|das) nicht|was meinst du|wie meinst du|"
+    r"en suisse allemand|en dialecte|répéter la question|pas compris la question|"
+    r"in dialetto|ripetere la domanda|non ho capito la domanda",
+    re.IGNORECASE,
+)
+MAX_META_WORDS = 15
 
 CRISIS_MESSAGE = {
     "de": ("Danke, dass du das sagst. Das ist wichtiger als jedes Bewerbungsgespräch. Bitte sprich mit jemandem, "
@@ -94,12 +112,30 @@ def with_injection(flags: list[str], answer: Optional[str]) -> list[str]:
     return flags
 
 
+def is_meta(text: Optional[str]) -> bool:
+    return bool(text and len(text.split()) <= MAX_META_WORDS and _META.search(text))
+
+
+def with_meta(flags: list[str], answer: Optional[str]) -> list[str]:
+    """The flags plus unclear_or_meta if the answer is a short question about the interview itself."""
+    if is_meta(answer) and "unclear_or_meta" not in flags:
+        return [*flags, "unclear_or_meta"]
+    return flags
+
+
+def answer_flags(flags: list[str], answer: Optional[str]) -> list[str]:
+    """The analysis flags plus the ones the code detects itself in the answer (takeover phrase, meta question)."""
+    return with_meta(with_injection(flags, answer), answer)
+
+
 def guard_mode(flags: list[str], current_question: Optional[dict]) -> Optional[str]:
-    """'support' or 'redirect' for a flagged answer, else None. Never twice in a row for one question."""
+    """'support', 'redirect' or 'clarify' for a flagged answer, else None. Never twice in a row for one question."""
     if (current_question or {}).get("guard"):
         return None
     if SUPPORT_FLAGS & set(flags):
         return "support"
     if REDIRECT_FLAGS & set(flags):
         return "redirect"
+    if CLARIFY_FLAGS & set(flags):
+        return "clarify"
     return None

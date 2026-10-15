@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import type { LanguageCode } from "../api";
 import { LEHRBERUFE, type Lehrberuf } from "../data/lehrberufe";
 import { occupationLabel, occupationName, qualification } from "../occupation";
@@ -11,6 +11,8 @@ type Props = {
   placeholder: string;
   noResults: string;
   className?: string;
+  /** id of the visible heading that names this field (for screen readers) */
+  labelledBy?: string;
 };
 
 /** Lower case without accents, so "koechin" is not needed but "kochin" and "Köchin" both match. */
@@ -26,7 +28,7 @@ function listFor(language: LanguageCode) {
 }
 
 /** Searchable dropdown (combobox) with all Swiss apprenticeships from lehrberufe.ts. */
-export default function OccupationPicker({ language, value, onChange, placeholder, noResults, className = "" }: Props) {
+export default function OccupationPicker({ language, value, onChange, placeholder, noResults, className = "", labelledBy }: Props) {
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -38,6 +40,11 @@ export default function OccupationPicker({ language, value, onChange, placeholde
     const words = normalize(query).split(/\s+/).filter(Boolean);
     return sorted.filter((item) => words.every((w) => item.search.includes(w))).map((item) => item.o);
   }, [query, sorted]);
+
+  // Keep the option chosen with the arrow keys visible in the scrolling list
+  useEffect(() => {
+    if (open) document.getElementById(`${listId}-${active}`)?.scrollIntoView({ block: "nearest" });
+  }, [open, active, listId]);
 
   function choose(o: Lehrberuf) {
     onChange(o);
@@ -68,6 +75,7 @@ export default function OccupationPicker({ language, value, onChange, placeholde
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
+        aria-labelledby={labelledBy}
         aria-activedescendant={open && results[active] ? `${listId}-${active}` : undefined}
         value={open ? query : value ? occupationLabel(value, language) : ""}
         placeholder={placeholder}

@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type AppConfig, type LanguageCode, type Voice } from "./api";
 import { canRecord, play, record, unlockAudio, type Playback, type Recording } from "./audio";
-import { canListen, canSpeak, speak, startListening, stopSpeaking, type ListenError } from "./speech";
+import { canListen, canSpeak, speak, speechChunks, startListening, stopSpeaking, type ListenError } from "./speech";
 
 /** Browser engine: pause after the last recognised word before the answer is sent. */
 export const SILENCE_MS = 3000;
@@ -47,6 +47,8 @@ function loadServerVoice(): Promise<ServerVoice> {
 
 type Options = {
   language: LanguageCode;
+  /** Lets Whisper know the occupation and company, so it gets their words right */
+  sessionId?: string;
   /** The interviewer's voice for POST /speech */
   voice: Voice;
   draft: string;
@@ -57,7 +59,7 @@ type Options = {
   onRepeat: () => void;
 };
 
-export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }: Options) {
+export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, onRepeat }: Options) {
   const [handsFree, setHandsFree] = useState(() => canSpeak && loadHandsFree());
   /** Key of the text that is being read aloud (the message index), or null */
   const [speakingKey, setSpeakingKey] = useState<number | null>(null);
@@ -73,8 +75,8 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
   const [server, setServer] = useState<{ stt: boolean; tts: boolean }>({ stt: false, tts: false });
 
   // The speech callbacks run later, so they read the current values from here
-  const latest = useRef({ language, voice, draft, handsFree, onSend, onRepeat });
-  latest.current = { language, voice, draft, handsFree, onSend, onRepeat };
+  const latest = useRef({ language, sessionId, voice, draft, handsFree, onSend, onRepeat });
+  latest.current = { language, sessionId, voice, draft, handsFree, onSend, onRepeat };
 
   const stopRecognition = useRef<(() => void) | null>(null); // browser engine
   const recording = useRef<Recording | null>(null); // server engine
@@ -144,12 +146,8 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
     try {
       const rec = await record(pause, IDLE_MS, {
         onSilence: () => finishRecording(round),
-        onIdle: () => {
-          recording.current?.cancel();
-          recording.current = null;
-          setListening(false);
-          if (latest.current.handsFree) setPaused(true);
-        },
+        // No speech noticed for a while: the microphone may just be quiet, so let Whisper listen anyway
+        onIdle: () => finishRecording(round),
       });
       if (round !== listenRound.current) return rec.cancel(); // stopped while the microphone was starting
       recording.current = rec;
@@ -166,15 +164,17 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
     setListening(false);
     const audio = await rec.stop();
     if (!audio) {
+      setMicError("nothing");
       if (latest.current.handsFree) setPaused(true);
       return;
     }
     setTranscribing(true);
     try {
-      const { text } = await api.transcribe(audio, latest.current.language);
+      const { text } = await api.transcribe(audio, latest.current.language, latest.current.sessionId);
       if (round !== listenRound.current) return; // stopped in the meantime
       const base = latest.current.draft.trim();
       if (!text.trim()) {
+        setMicError("nothing");
         if (latest.current.handsFree) setPaused(true);
         return;
       }
@@ -258,24 +258,36 @@ export function useVoice({ language, voice, draft, setDraft, onSend, onRepeat }:
 
   /** Reads a text aloud. With `thenListen`, the microphone starts when reading is done. */
   async function say(key: number, text: string, thenListen = false) {
+    unlockAudio(); // still inside the tap on "Vorlesen": later, after loading the audio, it would be too late
     stopMic();
     const current = ++reading.current;
     setSpeakingKey(key);
     const { tts } = await loadServerVoice();
-    let spoken = false;
-    if (tts) {
-      try {
-        const audio = await api.speech(text, latest.current.language, latest.current.voice);
+    // Sentence by sentence: the first one plays while the server makes the next one
+    const chunks = speechChunks(text);
+    let done = 0; // chunks already played
+    const load = (i: number) => {
+      const audio = api.speech(chunks[i], latest.current.language, latest.current.voice);
+      audio.catch(() => {}); // handled when it is awaited; avoids a warning if reading stops first
+      return audio;
+    };
+    try {
+      let next = tts && chunks.length ? load(0) : null;
+      while (next) {
+        const audio = await next;
         if (reading.current !== current) return;
+        next = done + 1 < chunks.length ? load(done + 1) : null;
         playback.current = await play(audio);
         await playback.current.done;
-        spoken = true;
-      } catch {
-        // server voice failed: the browser reads it instead
+        if (reading.current !== current) return;
+        done++;
       }
+    } catch {
+      // server voice failed: the browser reads the rest instead
     }
-    if (!spoken && reading.current === current) {
-      await new Promise<void>((resolve) => speak(text, latest.current.language, resolve));
+    // Without a server voice (or after it failed) the browser reads what is left
+    if (done < chunks.length && reading.current === current) {
+      await new Promise<void>((resolve) => speak(chunks.slice(done).join(" "), latest.current.language, resolve));
     }
     if (reading.current !== current) return; // stopped or replaced by a newer reading
     playback.current = null;

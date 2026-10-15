@@ -25,6 +25,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from backend import config, llm
 from backend.accounts import AccountError, Limits, Store
 from backend.interview import application, dialect, letter_review
+from backend.interview import company as company_generator
 from backend.interview.graph import InterviewEngine, position
 from backend.interview.phases import progress
 from backend.interview.prompts import CRITERIA
@@ -177,7 +178,7 @@ async def _session(session_id: str) -> dict:
 
 class Candidate(BaseModel):
     first_name: Optional[str] = Field(default=None, max_length=50)
-    school_level: Optional[str] = Field(default=None, max_length=50)
+    school_level: Optional[str] = Field(default=None, max_length=200)  # FHGR profiles have up to ~120 chars
     interests: Optional[str] = Field(default=None, max_length=300)
 
 
@@ -299,12 +300,30 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
     if company and not company.get("name") and (default_posting or req.posting_id):
         company = {}  # a contact person alone does not replace the FHGR company (with a fictional default it does)
     setup["company"] = company or None
-    # Without a company in the letter the default FHGR posting of the occupation is used (an explicit posting_id wins).
-    # Without that, config.posting_for makes up a fictional default company.
-    setup["posting_id"] = req.posting_id or (default_posting if not company else None)
+    # Without a company in the letter an FHGR posting of the occupation is used (an explicit posting_id wins):
+    # the default one of a known occupation, else one found by the apprenticeship's name
+    if req.posting_id or company:
+        setup["posting_id"] = req.posting_id
+    elif setup["occupation_name"]:
+        setup["posting_id"] = config.posting_for_name(setup["occupation_name"], req.language)
+    else:
+        setup["posting_id"] = config.default_posting_id(setup["occupation_id"], req.language)
     setup["application_summary"] = application_summary
     setup["application_review"] = letter_feedback  # shown with the report; the letter itself is not kept
     setup["application_asks"] = application_asks  # points the interviewer asks about, one per question
+    # No contact person from a posting or the letter: a random interviewer, so it is not always the same one
+    setup["persona"] = (None if config.interviewer_of(config.posting_for(setup, fallback=False))
+                        else config.random_interviewer(req.language))
+    if not setup["posting_id"] and not setup["company"]:
+        # No FHGR posting for this apprenticeship and no letter: Apertus invents a company (one call), with the
+        # random interviewer as the contact person. Without it the interview simply has no company.
+        try:
+            setup["company"] = await company_generator.generate(
+                config.occupation_for(setup["occupation_id"], None, setup["occupation_name"]), req.language,
+                company_generator.town(req.language, setup["dialect"]),
+                setup["persona"]["name"], setup["persona"]["role"]) or None
+        except Exception:
+            logger.exception("Company generation failed")
     state = await _llm(engine.start(session_id, setup))
     question = state["current_question"]
     posting = config.posting_for(state)
@@ -316,7 +335,7 @@ async def create_session(req: SessionRequest, request: Request) -> dict:
         "progress": progress(position(state)),
         "question": {"id": question["id"], "text": question["text"]},
         "company": config.company_of(posting),
-        "interviewer": config.interviewer_of(posting),
+        "interviewer": config.interviewer_of(posting, state.get("persona")),
         "application_summary": application_summary,
     }
 
@@ -483,18 +502,30 @@ VoiceLanguage = Literal["de", "fr", "it", "gsw"]
 
 
 @api.post("/transcribe")
-async def transcribe(audio: UploadFile = File(...), language: VoiceLanguage = Form(...)) -> dict:
+async def transcribe(audio: UploadFile = File(...), language: VoiceLanguage = Form(...),
+                     session_id: Optional[str] = Form(None)) -> dict:
     data = await audio.read(MAX_AUDIO_BYTES + 1)
     if not data:
         raise ApiError(400, "INVALID_REQUEST", "audio: empty file")
     if len(data) > MAX_AUDIO_BYTES:
         raise ApiError(400, "INVALID_REQUEST", "audio: larger than 5 MB")
     try:
-        return await asyncio.to_thread(stt.transcribe, data, language)
+        return await asyncio.to_thread(stt.transcribe, data, language, await _vocabulary_hint(session_id, language))
     except ValueError as exc:
         raise ApiError(400, "INVALID_REQUEST", f"audio: {exc}")
     except VoiceUnavailable as exc:
         raise ApiError(503, "VOICE_UNAVAILABLE", str(exc))
+
+
+async def _vocabulary_hint(session_id: Optional[str], language: str) -> str:
+    """Occupation and company of the session for Whisper; empty without (or with an unknown) session."""
+    state = await engine.get_state(session_id) if session_id else None
+    if not state:
+        return ""
+    occupation = config.occupation_for(state.get("occupation_id"), state.get("posting_id"), state.get("occupation_name"))
+    label = occupation["label"].get("de" if language == "gsw" else language) or occupation["label"]["de"]
+    company = config.company_of(config.posting_for(state))
+    return stt.vocabulary_hint(language, label, company["name"] if company else "")
 
 
 class SpeechRequest(BaseModel):
