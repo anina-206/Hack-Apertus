@@ -1,0 +1,480 @@
+{
+  "bench": "transcripts",
+  "judge_model": "swiss-ai/Apertus-v1.5-70B",
+  "summary": {
+    "transcripts": 1,
+    "runs": 2,
+    "avg_calls_per_answer": 1.0,
+    "levels": {
+      "pairs": 16,
+      "mae": 0.75,
+      "exact": 0.5,
+      "within_1": 0.75,
+      "bias": -0.25,
+      "coverage": 0.73,
+      "extra": 0.0
+    },
+    "checks": {
+      "reports_with_empty_comments": 0.0,
+      "reports_with_formal_or_third_person": 0.0,
+      "reports_with_mojibake": 0.5,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.94
+    },
+    "overall_vs_quality_spearman": null,
+    "levels_by_lang": {
+      "fr": {
+        "pairs": 16,
+        "mae": 0.75,
+        "exact": 0.5,
+        "within_1": 0.75,
+        "bias": -0.25,
+        "coverage": 0.73,
+        "extra": 0.0
+      }
+    },
+    "overall_std_across_repeats": 0.0,
+    "judge": {
+      "grounding": 3,
+      "accuracy": 3,
+      "actionable": 3.5,
+      "tone": 2.5,
+      "language": 3,
+      "violations": {
+        "T1": 1,
+        "T2": 1,
+        "B1": 1,
+        "B2": 1,
+        "E1": 1,
+        "L1": 1,
+        "L2": 1,
+        "T3 (exagérée praise: 'bonne force' et 'bon entraînement' sont trop positifs; 'défaut' est un mot fort pour un jeune de 15-17 ans": 1,
+        "B2 (diagnostic implicite: 'histoire où tu as appris quelque chose' suggère un problème de fond)": 1,
+        "E2 (utilise 'c'était un bon entraînement' au lieu de 'c'est une étape de progression')": 1,
+        "L2 (création de peur implicite: 'au prochain entretien, elle deviendra un de tes points forts!' peut être perçu comme une pression)": 1,
+        "R2 (trop de points listés: 11 critères avec commentaires détaillés, ce qui surcharge le jeune)": 1
+      }
+    },
+    "reports_failed": 0,
+    "failed": []
+  },
+  "records": [
+    {
+      "transcript_id": "T-12",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 4,
+        "self_reflection": 3,
+        "communication": 2,
+        "concrete_examples": 4,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": 3,
+        "difficult_questions": 3,
+        "initiative": 3
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "overall_score": 2.8,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 8,
+      "both_seen": 8,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 1,
+        "wrong_language": 0,
+        "evidence_share": 0.88,
+        "observed_criteria": 8
+      },
+      "report": {
+        "session_id": "T-12",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.8,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as expliqué ton changement concernant les retards et les mesures que tu as prises, ce qui montre une bonne compréhension.",
+            "evidence": "Depuis mars, je mets deux réveils, je prends le bus d'avant et je prépare mes affaires le soir"
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 3,
+            "comment": "Tu as bien relié les exemples concrets de ton aide à ton oncle et de ton stage au SeMo à ton intérît pour le métier.",
+            "evidence": "L'année passée, j'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tu as montré un intærît généreux à travers tes exemples concrets, comme l'aide à ton oncle et le stage au SeMo.",
+            "evidence": "j'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo. Et au stage du SeMo, une semaine, j'ai posé des conduites avec un monteur"
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": 3,
+            "comment": "Tu as réflìhi sur tes retards et sur l'importance de la ponctualité, ce qui montre une bonne capacité d'analyse.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 3,
+            "comment": "Tu as répondu de manière claire à mes questions, en donnant des exemples concrets de ta vie quotidienne et professionnelle.",
+            "evidence": "J'ai dix-sept ans, j'habite à Neuchâtel. Je joue au foot, en junior A, et je fais du fitness"
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 2,
+            "comment": "Tu as donné des exemples concrets de tes expériences, comme l'aide à ton oncle et le stage au SeMo, ce qui renforce ta motivation.",
+            "evidence": "L'année passée, j'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 3,
+            "comment": "Tu as montré de la politesse et de la confiance, notamment quand tu as expliqué comment tu as changé ton comportement concernant les retards.",
+            "evidence": "Merci de m'avoir laissé expliquer pour l'apprentissage. Au début j'ai mal réagi. Je sais que je dois prouver que je suis fiable, et je suis prêt"
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": 3,
+            "comment": "Tu as montré une clarté sur ton choix de carrière et sur tes objectifs professionnels, comme le brevet de chef de projet en technique du bâtiment.",
+            "evidence": "Plus tard, j'aimerais faire le brevet de chef de projet en technique du bâtiment. Mais d'abord le CFC. C'est ma deuxième chance, je veux le finir"
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Tu as donné un exemple concret de ton évolution concernant les retards, expliquant comment tu as changé ton comportement et maintenant tu n'as plus de retard depuis mars.",
+          "Tu as bien expliqué les étapes de la pose du lavabo avec ton oncle, en mentionnant la difficulté rencontrée avec le joint et ce que tu en as appris sur l'importance de la précision."
+        ],
+        "improvements": [
+          {
+            "tip": "Donne plus de détails sur ton parcours scolaire et sur ce qui t'intéresse vraiment dans le métier de SanitÃ rinstallateur/in EFZ, par exemple en expliquant ce que tu as appris lors de ton stage au SeMo ou ce qui t'a plu dans l'aide à ton oncle.",
+            "example_answer": "Ich habe beim SeMo gelernt, wie man Installationspläne liest und wie man mit den Werkzeugen umgeht. Ich habe auch gemerkt, dass es wichtig ist, genau zu arbeiten, sonst muss man alles wieder auseinandernehmen."
+          },
+          {
+            "tip": "Mentionne un exemple concret où tu as déjà fait attention à la sécurité, par exemple lors d'un montage ou d'une réparation.",
+            "example_answer": "Ich habe beim Montieren der Wasserleitung immer zuerst den Hauptventil abgeschaltet, damit kein Wasser floss, und danach habe ich die Schláife kontrolliert."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Ce fut une bonne pratique, et tu es sur la bonne voie pour réussir ton apprentissage.",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 3,
+          "accuracy": 3,
+          "actionable": 3,
+          "tone": 2,
+          "language": 3
+        },
+        "violations": [
+          "T1",
+          "T2",
+          "B1",
+          "B2",
+          "E1",
+          "L1",
+          "L2"
+        ],
+        "comment": "The feedback references real moments but misses key criteria: it uses vague labels, generic tips, and a tone that is not encouraging enough for a 14-16 year old while breaking several FHGR rules."
+      }
+    },
+    {
+      "transcript_id": "T-12",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 4,
+        "self_reflection": 3,
+        "communication": 2,
+        "concrete_examples": 4,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": 3,
+        "difficult_questions": 3,
+        "initiative": 3
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "overall_score": 2.8,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 8,
+      "both_seen": 8,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 1.0,
+        "observed_criteria": 8
+      },
+      "report": {
+        "session_id": "T-12",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.8,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as été clair sur ton parcours et tes améliorations, même si la structure a pu être plus détaillée.",
+            "evidence": "J'ai encore été en retard deux fois. Depuis mars, je mets deux réveils, je prends le bus d'avant et je prépare mes affaires le soir"
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 3,
+            "comment": "Tu as bien répondu aux questions sur le métier et tes motivations, en lien avec l'apprentissage.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tu as montré un intérêt concret pour le métier grâce à tes expériences pratiques.",
+            "evidence": "L'année passée, j'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": 3,
+            "comment": "Tu as reconnu tes retards et comment tu les as corrigés, ce qui montre une réelle introspection.",
+            "evidence": "Au début, j'ai encore été en retard deux fois. Depuis mars, je mets deux réveils, je prends le bus d'avant et je prépare mes affaires le soir"
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 3,
+            "comment": "Tu as répondu de manière cohérente et avec un bon ton, même si des détails supplémentaires auraient pu aider.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 2,
+            "comment": "Tu as donné des exemples concrets de ton expérience, ce qui renforce ta motivation.",
+            "evidence": "L'année passée, j'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 3,
+            "comment": "Tu as été poli et assuré, montrant de la confiance dans ton discours.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": 3,
+            "comment": "Tu as montré une clarté sur tes objectifs de carrière, notamment le CFC et le brevet de chef de projet.",
+            "evidence": "C'est ma deuxième chance, je veux le finir"
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Tu as partagé honnêtement ton parcours et tes retards, en montrant une réelle volonté d’amélioration.",
+          "Tu as donné des exemples concrets de ton expérience avec ton oncle et au SeMo, expliquant comment ces situations t’ont motivé pour le métier.",
+          "Tu as clairement exprimé ta volonté de rester et tes objectifs de carrière, notamment le CFC et le brevet de chef de projet."
+        ],
+        "improvements": [
+          {
+            "tip": "Pour la question sur la sécurité, tu peux donner un exemple précis d’une situation où tu as déjà fait attention, par exemple : «Lors d’un montage, j’ai vérifié que toutes les vannes étaient bien fermées avant de sceller les conduites.»",
+            "example_answer": "Ich habe immer geprüft, dass alle Ventile richtig geschlossen waren, bevor ich die Rohre abdichtete."
+          },
+          {
+            "tip": "Lorsque tu parles de tes retards, tu peux ajouter ce que tu as appris de cette expérience, par exemple : «J’ai compris que la ponctualité est cruciale pour gagner la confiance de mon coach et de l’entreprise.»",
+            "example_answer": "Ich habe verstanden, dass Pünktlichkeit entscheidend ist, um das Vertrauen meines Trainers und des Unternehmens zu gewinnen."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Ce fut une excellente simulation, et tu es prêt pour le vrai entretien.",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 3,
+          "accuracy": 3,
+          "actionable": 4,
+          "tone": 3,
+          "language": 3
+        },
+        "violations": [
+          "T3 (exagérée praise: 'bonne force' et 'bon entraînement' sont trop positifs; 'défaut' est un mot fort pour un jeune de 15-17 ans",
+          "B2 (diagnostic implicite: 'histoire où tu as appris quelque chose' suggère un problème de fond)",
+          "E2 (utilise 'c'était un bon entraînement' au lieu de 'c'est une étape de progression')",
+          "L2 (création de peur implicite: 'au prochain entretien, elle deviendra un de tes points forts!' peut être perçu comme une pression)",
+          "R2 (trop de points listés: 11 critères avec commentaires détaillés, ce qui surcharge le jeune)"
+        ],
+        "comment": "Le feedback est globalement utile et actionnable, mais il manque de nuance et de prudence psychologique pour un adolescent; il contient des violations de règles de ton et de formulation."
+      }
+    }
+  ]
+}

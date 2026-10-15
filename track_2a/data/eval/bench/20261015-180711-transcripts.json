@@ -1,0 +1,409 @@
+{
+  "bench": "transcripts",
+  "judge_model": null,
+  "summary": {
+    "transcripts": 2,
+    "runs": 2,
+    "avg_calls_per_answer": 1.0,
+    "levels": {
+      "pairs": 14,
+      "mae": 1.43,
+      "exact": 0.14,
+      "within_1": 0.5,
+      "bias": -1.43,
+      "coverage": 0.82,
+      "extra": 0.22
+    },
+    "checks": {
+      "reports_with_empty_comments": 0.0,
+      "reports_with_formal_or_third_person": 0.0,
+      "reports_with_mojibake": 0.0,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.0
+    },
+    "overall_vs_quality_spearman": null,
+    "levels_by_lang": {
+      "de": {
+        "pairs": 14,
+        "mae": 1.43,
+        "exact": 0.14,
+        "within_1": 0.5,
+        "bias": -1.43,
+        "coverage": 0.82,
+        "extra": 0.22
+      }
+    },
+    "overall_std_across_repeats": null,
+    "reports_failed": 0,
+    "failed": []
+  },
+  "records": [
+    {
+      "transcript_id": "T-05",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "strong",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 4,
+        "relevance": 4,
+        "motivation": 4,
+        "self_reflection": 3,
+        "communication": 4,
+        "concrete_examples": 4,
+        "demeanor": 3,
+        "preparation": 4,
+        "goal_orientation": 4,
+        "difficult_questions": 3,
+        "initiative": 4
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 3,
+        "preparation": 3,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": 3
+      },
+      "overall_score": 2.7,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 9,
+      "both_seen": 9,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 9
+      },
+      "report": {
+        "session_id": "T-05",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.7,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Deine Antworten sind verständlich, wenn du etwas langsamer sprechen könntest, wären sie noch klarer.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "Deine Antworten passen gut zur Logistik-Lehre, aber zeige noch mehr Interesse an konkreten Abläufen im Betrieb.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Du zeigst echtes Interesse durch dein Schnuppererlebnis, erwähne aber noch, was dich besonders an der Logistik begeistert.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "Du sprichst ruhig und ordentlich, bleibe so und stelle ruhig Fragen, wenn etwas unklar ist.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "Du nutzt konkrete Beispiele aus deiner Schnupperlehre, versuche, diese noch stärker mit persönlichen Lernpunkten zu verknüpfen.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 3,
+            "comment": "Dein Auftreten ist freundlich und ordentlich, bleibe so und zeige Selbstvertrauen.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 3,
+            "comment": "Du hast dich gut auf die Firma vorbereitet, recherchiere noch über spezifische Projekte oder Werte der Firma.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 2,
+            "comment": "Deine Ziele sind klar, verbinde sie noch stärker mit konkreten Schritten und was dich motiviert, Teamleiterin zu werden.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 3,
+            "comment": "Du hast gute Fragen gestellt, stelle noch eine Frage zu Weiterbildungsmöglichkeiten oder Karrierewegen in der Logistik.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast den Weg klar beschrieben und deine Eigenschaften als ordentlich und ruhig dargestellt.",
+          "Du zeigst konkrete Beispiele aus deiner Schnupperlehre, wie das korrekte Heben von Lasten und das Finden von Fehlern beim Wareneingang."
+        ],
+        "improvements": [
+          {
+            "tip": "Ergänze, was dich an der Logistik besonders interessiert, z.B. “Ich mag es, Waren zu lagern und zu scannen, weil es strukturiert ist und ich Fehler vermeiden kann.",
+            "example_answer": "Ich mag es, Waren zu lagern und zu scannen, weil es strukturiert ist und ich Fehler vermeiden kann."
+          },
+          {
+            "tip": "Erläutere, wie deine Stärken im Logistikjob helfen könnten, z.B. “Ich kann Zahlen gut prüfen und Ladeaufträge schnell erfassen, und Geduld hilft mir, wenn Kunden Fragen haben oder Waren sortiert werden müssen.",
+            "example_answer": "Ich kann Zahlen gut prüfen und Ladeaufträge schnell erfassen, und Geduld hilft mir, wenn Kunden Fragen haben oder Waren sortiert werden müssen."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "goal_orientation"
+        ],
+        "closing": "Du hast heute viel geübt, das hilft dir fürs echte Gespräch.",
+        "support_note": null
+      }
+    },
+    {
+      "transcript_id": "T-14",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "strong",
+      "candidate_answers": 10,
+      "analysis_calls": 10,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "motivation": 4,
+        "preparation": 4,
+        "self_reflection": 3,
+        "concrete_examples": 4,
+        "difficult_questions": 4,
+        "initiative": 4
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 3,
+        "preparation": 1,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 2
+      },
+      "overall_score": 2.4,
+      "pairs": [
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 6,
+      "pred_seen": 9,
+      "both_seen": 5,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 9
+      },
+      "report": {
+        "session_id": "T-14",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.4,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten sind verständlich, aber manchmal etwas knapp, z.B. bei der Frage nach der Schwäche.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "Die Antworten passen gut zur Ausbildung, zeigen aber noch nicht alle Aspekte der Betreuung auf.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Du zeigst echte Motivation, aber sie könnte noch stärker durch konkrete persönliche Ziele untermauert werden.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "Du kannst deine Stärken und Schwächen gut benennen, aber die Beispiele könnten noch konkreter werden.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "Du bist freundlich und hörst zu, aber manchmal ist die Sprache noch etwas unpräzise.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "Konkrete Beispiele aus dem Hort fehlen teilweise, z.B. bei der Frage nach der Schwäche oder dem Konflikt.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 3,
+            "comment": "Du wirkst freundlich und zuversichtlich, aber manchmal etwas schüchtern in der Ausdrucksweise.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 1,
+            "comment": "Du hast wenig Wissen über den Betrieb, z.B. über die Gruppengrösse oder das Waldangebot, noch aufgebaut.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 2,
+            "comment": "Du stellst eine Frage, aber sie könnten noch spezifischer auf den Betrieb zugeschnitten sein.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du grüsst korrekt und zeigst Freundlichkeit und Nervosität. Sag noch kurz, was dich an der Betreuung besonders interessiert, z.B. \"Ich helfe gerne älteren Menschen beim Anziehen.\"",
+          "Du zeigst Interesse an der Naturpädagogik und am Sommerfest. Ergänze, was dich konkret an diesen Aktivitäten begeistert, z.B. \"Ich helfe gern beim Organisieren von Spielen für die Kinder.\""
+        ],
+        "improvements": [
+          {
+            "tip": "Erweitere deine konkreten Beispiele aus dem Hort, indem du beschreibst, was du konkret gelernt hast, z.B. \"Ich habe gelernt, dass klare Regeln helfen, Streitigkeiten zu lösen.\"",
+            "example_answer": "Ich habe gelernt, dass klare Regeln helfen, Streitigkeiten zu lösen."
+          },
+          {
+            "tip": "Erweitere deine Antwort auf die Frage nach einer Schwäche, indem du ein konkretes Beispiel hinzufügst, wie dir das bereits geholfen hat, z.B. \"Dadurch habe ich letzten Monat eine Aufgabe schneller erledigen können, weil ich vorher geprüft habe, ob ich Zeit hatte.\"",
+            "example_answer": "Dadurch habe ich letzten Monat eine Aufgabe schneller erledigen können, weil ich vorher geprüft habe, ob ich Zeit hatte."
+          }
+        ],
+        "next_practice": [
+          "preparation",
+          "concrete_examples"
+        ],
+        "closing": "Du hast heute viel geübt, und das hilft dir, für das echte Gespräch noch sicherer zu werden.",
+        "support_note": null
+      }
+    }
+  ]
+}

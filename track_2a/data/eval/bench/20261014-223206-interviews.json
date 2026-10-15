@@ -1,0 +1,2049 @@
+{
+  "bench": "interviews",
+  "judge_model": null,
+  "summary": {
+    "scenarios": 4,
+    "interviews": 7,
+    "llm_calls_avg": 1.83,
+    "llm_calls_max": 2,
+    "gate_ok": true,
+    "checks": {
+      "reports_with_empty_comments": 1.0,
+      "reports_with_formal_or_third_person": 0.0,
+      "reports_with_mojibake": 0.0,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.0
+    },
+    "overall_vs_persona_spearman": 0.68,
+    "overall_std_across_repeats": 0.12,
+    "overall_by_lang": {
+      "de": 2.46
+    }
+  },
+  "records": [
+    {
+      "scenario_id": "S-01",
+      "lang": "de",
+      "candidate_id": "C-01",
+      "posting_id": "P-01",
+      "persona_level": 4,
+      "success_criteria": [
+        "Der Coach folgt dem Ablauf Begrüssung → Vorstellung → Motivation → Kenntnisse → Stärken/Schwächen → Zukunft → Fragen → Abschluss.",
+        "Der Coach fragt mindestens einmal nach einem konkreten Beispiel, wenn eine Stärke nur behauptet wird.",
+        "Das Schlussfeedback nennt auch beim starken Kandidaten mindestens einen konkreten Entwicklungspunkt mit nächstem Schritt.",
+        "Das Feedback verzichtet auf Übertreibungen wie «perfekt» oder «genial» (T3).",
+        "Jede Rückmeldung verweist auf eine konkrete Aussage aus dem Gespräch (K1)."
+      ],
+      "summary": {
+        "answers": 14,
+        "llm_calls_total": 25,
+        "llm_calls_avg": 1.79,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 1,
+        "latency_avg_ms": 1607,
+        "duration_s": 36.6,
+        "overall_score": 2.9,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 5,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 7
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Luca, ich bin Reto Casutt von der Plessur Maschinenbau AG. Erzähle mir kurz, wer du bist, welche Schule du besuchst und welche Hobbys du hast.",
+          "answer": "Also, ich bin Luca, 15 Jahre alt, und besuche die Sekundarschule 3 in Chur. Als Hobbys baue ich gerne Lego Technic, spiele Handball im lokalen Verein und zeichne Skizzen von Maschinen und Fahrzeugen. Zudem repariere ich Velos.",
+          "llm_calls": 2,
+          "latency_ms": 2305,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Das klingt nach interessanten Aktivitäten. Welche Fächer gefallen dir am meisten in der Schule und worin fühlst du dich besonders sicher?",
+          "answer": "Ich glaube, die Fächer Technik und Mathematik gefallen mir am besten in der Schule. Darin fühle ich mich besonders sicher, weil ich beim Zeichnen und Planen von Modellen viel Freude habe und genau und geduldig arbeite. Im Technikunterricht konnte ich schon mit dem CAD-Programm arbeiten und eine einfache Halterung zeichnen, was ich faszinierend fand, als ich sah, wie das Teil dann gefräst wurde.",
+          "llm_calls": 2,
+          "latency_ms": 1802,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Wie kamst du auf die Idee, einen Lehrgang als Konstrukteur/in EFZ zu machen, und hast du schon mal eine Schnupperlehre in unserer Abteilung oder bei Plessur Maschinenbau AG gemacht?",
+          "answer": "Ich habe die Idee, Konstrukteur/in EFZ zu werden, schon im BIZ in Chur entwickelt, wo ich verschiedene technische Berufe anschauen durfte. Die Schnupperlehre bei Plessur Maschinenbau AG war der ausschlaggebende Moment – ich fand es spannend, dass man als Konstrukteur kreativ planen und trotzdem sehr genau arbeiten muss. Dabei durfte ich einem Konstrukteur über die Schulter schauen, im CAD zeichnen und später bei der Fräsung zuschauen, was ich faszinierend fand.",
+          "llm_calls": 2,
+          "latency_ms": 1864,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke für die Offenheit, Luca. Im Beruf als Konstrukteur/in EFZ arbeitest du viel mit CAD, technischen Zeichnungen und der Zusammenarbeit mit der Produktion. Kannst du eine konkrete Situation aus deiner Schnupperlehre beschreiben, in der du gesehen hast, wie eine Idee vom Entwurf bis zur fertigen Maschine weiterentwickelt wurde?",
+          "answer": "Ich glaube, ich erinnere mich gut an den Tag, als ich in der Schnupperlehre bei Plessur Maschinenbau AG mit einem Konstrukteur zusammenarbeiten durfte. Wir haben eine einfache Halterung entworfen, die ich im CAD-System zeichnen durfte. Danach haben wir die Pläne angeschaut und ich durfte ein Modell aus Karton nachbauen, um die Idee besser zu verstehen. Dann haben wir die Zeichnung an die Frässtation gesendet und gesehen, wie die Halterung Stück für Stück aus dem Metall herausgefräst wurde. Es war faszinierend, wie aus meiner Skizze ein echtes, funktionsfähiges Bauteil wurde, das wir dann direkt in die Produktion einbauen konnten.",
+          "llm_calls": 2,
+          "latency_ms": 2430,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke für die konkrete Schilderung, Luca. In der Lehre als Konstrukteur/in EFZ wirst du lernen, wie du Ideen in technische Zeichnungen umsetzt, diese an die Produktion weitergibst und dabei auf Normen und Sicherheitsaspekte achtest. Gibt es etwas an der Konstruktion oder der Zusammenarbeit mit der Produktion, das du besonders interessant findest und das du in deiner Lehre besonders gerne machen würdest?",
+          "answer": "Ich glaube, das Planen und Zeichnen von Bauteilen in CAD interssiert mich besonders, weil ich dabei kreativ sein kann und gleichzeitig sehr genau arbeiten muss. Es fasziniert mich, wie ich eine Idee auf dem Papier oder auf dem Computer habe und sie dann in ein echtes, funktionsfähiges Bauteil umsetze. Die Zusammenarbeit mit der Produktion gefällt mir auch, vor allem, wenn ich sehen kann, wie das, was ich entworfen habe, dann in der Werkstatt real wird. Dabei ist es wichtig, dass alles den Normen und Sicherheitsaspekten entspricht, und ich würde das sehr gerne lernen, weil es zeigt, wie Technik für den echten Alltag gemacht wird.",
+          "llm_calls": 2,
+          "latency_ms": 1937,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Die Lehre dauert vier Jahre und beginnt mit der Grundausbildung in Theorie und Praxis, bevor du dich auf den Schwerpunkt deiner Abteilung spezialisierst. Wenn du noch Fragen hast, melde dich gerne jederzeit bei uns, und wir informieren dich spätestens in zwei Wochen schriftlich oder telefonisch über den weiteren Verlauf.",
+          "answer": "Ich danke Ihnen, Reto Casutt, für das Gespräch. Ich würde gerne noch fragen, welche konkreten Projekte oder Aufgaben für Lernende in der Abteilung Plessur Maschinenbau AG typisch sind und wie sehr die Zusammenarbeit mit der Produktion im Lehrplan berücksichtigt wird. Ansonsten habe ich keine weiteren Fragen mehr und freue mich auf die schriftliche oder telefonische Rückmeldung spätestens in zwei Wochen.",
+          "llm_calls": 2,
+          "latency_ms": 2181,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke für deine Frage, Luca. In der Lehre arbeitest du an realen Projekten, beginnst mit einfachen Aufgaben wie dem Zeichnen von Bauteilen und entwickelst dich zu komplexeren Aufgaben wie der Planung kompletter Maschinenbauteile. Die Zusammenarbeit mit der Produktion ist fester Bestandteil des Lehrplans, und du lernst, wie deine Entwürfe effektiv an die Werkstatt übergeben und umgesetzt werden. Wir werden uns in zwei Wochen bei dir melden.",
+          "answer": "Okay, das klingt sehr spannend für mich. Ich freue mich schon darauf, an echten Projekten zu arbeiten und zu sehen, wie meine Zeichnungen und Entwürfe dann in der Produktion umgesetzt werden. Die Möglichkeit, direkt mit der Werkstatt zusammenzuarbeiten, finde ich besonders interessant, weil ich dann wirklich verstehe, wie Technik für den Alltag gemacht wird. Ich danke Ihnen für die Information und freue mich auf die Rückmeldung in zwei Wochen.",
+          "llm_calls": 2,
+          "latency_ms": 1602,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Wir freuen uns, dich in zwei Wochen mit einer Entscheidung zu kontaktieren, und wünschen dir alles Gute für die kommenden Wochen.",
+          "answer": "Danke für die Zeit und die Information, Reto Casutt. Ich wünsche mir auch alles Gute für die kommenden Wochen und freue mich schon darauf, mehr über die Lehre bei Plessur Maschinenbau AG zu erfahren. Bis zur Rückmeldung in zwei Wochen!",
+          "llm_calls": 2,
+          "latency_ms": 1824,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke, Luca. Bis zur Rückmeldung in zwei Wochen!",
+          "answer": "Danke, bis in zwei Wochen!",
+          "llm_calls": 2,
+          "latency_ms": 1476,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": true,
+          "question": "Bis in zwei Wochen!",
+          "answer": "Bis in zwei Wochen!",
+          "llm_calls": 2,
+          "latency_ms": 1190,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Bis in zwei Wochen!",
+          "answer": "Bis in zwei Wochen!",
+          "llm_calls": 2,
+          "latency_ms": 1245,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Bis in zwei Wochen!",
+          "answer": "Bis in zwei Wochen!",
+          "llm_calls": 1,
+          "latency_ms": 1036,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Ich glaube, ich habe keine weiteren Fragen mehr. Alles, was Sie gesagt haben, klang sehr interessant, und ich freue mich auf die Entscheidung in zwei Wochen. Vielen Dank für die Zeit und die Informationen!",
+          "llm_calls": 2,
+          "latency_ms": 1433,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q14",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Kein Problem, Luca. Bis in zwei Wochen!\n\nHast du noch weitere Fragen?",
+          "answer": "Nein, ich glaube, ich habe keine weiteren Fragen mehr. Ich danke Ihnen für das Gespräch und freue mich auf die Rückmeldung in zwei Wochen.",
+          "llm_calls": 0,
+          "latency_ms": 179,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "082e6555-c2b7-4988-ae8c-3d4396898291",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.9,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten waren gut strukturiert und verständlich, jedoch fehlte an einigen Stellen die Präzision bei der Beschreibung von Fähigkeiten.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "Die Motivation war gut erkennbar, jedoch könnte sie noch stärker durch konkrete Beispiele gestärkt werden, die deine persönlichen Erfahrungen verbinden.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast deine persönlichen Interessen gut eingebunden und zeigst echtes Interesse an technischen Zusammenhängen, zum Beispiel beim Bauen von Lego Technic und dem Zeichnen von Skizzen.",
+          "Du hast deine Motivation gut eingebunden und eine konkrete Situation aus deiner Schnupperlehre gut beschrieben, die den gesamten Prozess von der Idee bis zur fertigen Maschine zeigt."
+        ],
+        "improvements": [
+          {
+            "tip": "Erkläre genauer, welche konkreten Fähigkeiten du durch das CAD-Zeichnen und das Zuschauen der Fräsung bereits erwerben konntest, zum Beispiel im räumlichen Denken oder im Verstehen von technischen Zusammenhängen.",
+            "example_answer": "Ich habe beim CAD-Zeichnen gelernt, wie man genaue technische Zeichnungen erstellt, und beim Zuschauen der Fräsung verstanden, wie aus einer Zeichnung ein echtes Bauteil wird."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "clarity"
+        ],
+        "closing": "Herzlichen Dank, dass du heute dein Bestes gegeben hast. Das war nur eine Probe, und du wirst es beim richtigen Vorstellungsgespräch sicher noch besser machen.",
+        "support_note": null
+      }
+    },
+    {
+      "scenario_id": "S-02",
+      "lang": "de",
+      "candidate_id": "C-02",
+      "posting_id": "P-02",
+      "persona_level": 2,
+      "success_criteria": [
+        "Der Coach erklärt zu Beginn kurz den Ablauf und beginnt mit einer leichten Einstiegsfrage.",
+        "Der Coach bewertet Nervosität, Pausen und leise Stimme nicht negativ (M1).",
+        "Bei Einwortantworten stellt der Coach eine offene Anschlussfrage, statt sofort zur nächsten Frage zu springen.",
+        "Der Coach stellt keine Fragen zur Eignung als Frau und bewertet die Berufswahl nicht nach Geschlecht (L1).",
+        "Das Feedback nennt das Drehteil-Beispiel (oder ein anderes konkretes Beispiel) als Stärke und gibt einen kleinen, machbaren Tipp."
+      ],
+      "summary": {
+        "answers": 15,
+        "llm_calls_total": 27,
+        "llm_calls_avg": 1.8,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 2,
+        "latency_avg_ms": 1345,
+        "duration_s": 30.7,
+        "overall_score": 2.2,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 1,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 8
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Selin, freut mich, dich kennenzulernen. Erzähl mir kurz, wer du bist, welche Schule du besuchst und was dich in deiner Freizeit beschäftigt.",
+          "answer": "Ja, hallo. Ich bin Selin, 15 Jahre alt, aus Winterthur. Ich besuche die Sek A 3. In meiner Freizeit bin ich viel mit Speedcubing beschäftigt, mache Modellbausätze und spiele Volleyball in der Schule.",
+          "llm_calls": 2,
+          "latency_ms": 1737,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Okay. Was gefällt dir an Mathematik am meisten und in welcher Aufgabe hast du dich dieses Semester besonders gut geschlagen?",
+          "answer": "Ähm, Mathe mag ich, weil man dort immer ein klares Resultat sieht, wenn es stimmt. Dieses Semester war es die Geometrie, da lieg ich wirklich fest. Den letzten Hausaufgaben hatte ich die Aufgabe, Flächen und Volumen zu berechnen, und da war ich wirklich gut drin.",
+          "llm_calls": 2,
+          "latency_ms": 1399,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Und hast du in deiner Freizeit schon mal Handwerk ausprobiert, etwa beim Basteln von Modellbauwerken oder beim Reparieren von Sachen zu Hause?",
+          "answer": "Ja, genau das hab ich gmacht. In meiner Freizeit baue ich oft Modellbausätze zusammen und hab früher auch Regale eingeräumt. Und einmal hab ich regerlich gefeilt und gebohrt, als ich in der Lehrwerkstatt war. Aber als ich ein kleines Drehteil machen sollte, isch's am Anfang nicht stimmt gsi, drum musst ich's no mache. Im Zweite Mal war alles in Ordnung, drum war ich dann wirklich stolz drauf.",
+          "llm_calls": 2,
+          "latency_ms": 1532,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Und wie denkst du, was macht einen guten Polymechaniker aus? Was ist für dich wichtig, dass du dich in diesem Beruf wohlfühlst?",
+          "answer": "Ähm, für mich isch wichtig, dass ich direkt sehe, ob was stimmt, zum Beispiel mit dem Messschieber. Wenn ich genau arbeite kann ich auch gut arbeiten. Und ich mag es, dass man mit den Händen was fertigt und dann auch sofort sieht, ob's gut isch. Und ich find's gut, wenn ich in einer Gruppe arbeite und dann die Maschinen bedienen kann.",
+          "llm_calls": 2,
+          "latency_ms": 1490,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Und was fürchst du am meisten, wenn du an einer Maschine arbeitest, zum Beispiel beim Drehen oder Fräsen?",
+          "answer": "Ähm, das grösste Angst isch, dass ich was falsch mache, zum Beispiel beim Anpassen der Drehzahl oder beim Messen. Wenn ich dann was falsch mache, krieg ich kein gutes Resultat. Aber ich lerne aus Fehlern, wie beim Drehteil, wo ich es am Anfang noch mache muss. Wenn ich aber dann weiss, wie das richtig geht, dann mach ich das zweite Mal alles richtich.",
+          "llm_calls": 2,
+          "latency_ms": 1519,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Und hast du jemals eine Maschine in Betrieb genommen oder etwas repariert? Wie war das für dich?",
+          "answer": "Ähm, ja, ich hab in der Lehrwerkstatt gearbeitet, dort hab ich geübt, Maschinen zu bedienen. Es war ein bisschen angespannt am Anfang, aber dann war ich dabei und es hat mir gefallen. Es war ein bisschen schwierig, alle Knöpfe und Schalter zu verstehen, aber dann hab ich es verstanden. Es war eine gute Erfahrung.",
+          "llm_calls": 2,
+          "latency_ms": 1654,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Und wie gehst du mit Aufgaben um, die du nicht sofort verstehst? Machst du dir Notizen oder suchst du jemanden, der dir helfen kann?",
+          "answer": "Wenn ich was nicht versteh, versuch ich, es mir selber zu erklären, mache mir Notizen oder frage dann jemanden. Im Unterricht versuche ich, es nochmal zu fragen, wenn ich dann immer noch nicht verstehe. Und wenn ich in der Werkstatt arbeite, frage ich die Lehrmeister oder die anderen, wenn ich was nicht weiss.",
+          "llm_calls": 2,
+          "latency_ms": 2027,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Und wie gehst du mit Stress um, zum Beispiel wenn eine Aufgabe dringend ist oder wenn etwas nicht klappt?",
+          "answer": "Ähm, wenn es dringend isch oder was nicht klappt, mach ich mir erst Ruhe, und versuch es dann nochmol. Wenn es immer noch nich klappt, dann frage ich um Hilfe. Mir macht Stress, wenn ich zu langsam bin oder wenn ich was falsch mache. Aber wenn ich es dann schaff, es nochmal zu mache, dann kann ich weiter.",
+          "llm_calls": 2,
+          "latency_ms": 1530,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": true,
+          "question": "Okay. Vielen Dank für deine offenen Antworten, Selin. Jetzt weiss ich ein wenig mehr über dich. Bleib dran, wir reden nach ein paar Wochen nochmal weiter.",
+          "answer": "Ja, danke. Ich freu mich drauf, nachher nochmal zredne. Sorry, ich bin grad ein bisschen nervös...",
+          "llm_calls": 2,
+          "latency_ms": 1325,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Kein Problem, mach es dir ruhig. Wenn du Fragen hast, melde dich gerne. Okay.",
+          "answer": "Ja, danke. Ich melde mich, wenn ich was brauch. Bis dann.",
+          "llm_calls": 2,
+          "latency_ms": 1106,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": true,
+          "question": "Okay. Bis dann.",
+          "answer": "Bis dann! Sorry, ich muss jetzt los.",
+          "llm_calls": 2,
+          "latency_ms": 1156,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Pass gut auf dich auf!",
+          "answer": "Danke! Pass gut auf dich!",
+          "llm_calls": 2,
+          "latency_ms": 1044,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay.",
+          "answer": "Tschüüüs!",
+          "llm_calls": 1,
+          "latency_ms": 1015,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q14",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Ähm... ich denke, ich hab alles verstanden. Danke für alles. Ich hab keine Fragen mehr.",
+          "llm_calls": 2,
+          "latency_ms": 1545,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q15",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Okay. Tschüüüs!\n\nHast du noch weitere Fragen?",
+          "answer": "Nein, danke. Tschüüüs!",
+          "llm_calls": 0,
+          "latency_ms": 95,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "947361c5-4d4a-4b98-99bd-eef44317a61a",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.2,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten sind verständlich, aber manchmal etwas zögerlich formuliert.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Deine Motivation ist erkennbar, aber konkrete Beispiele aus der Freizeit könnten sie noch stärker unterstreichen.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 2,
+            "comment": "Du hast deine Stärken und Schwächen realistisch eingeschätzt, aber weniger Details zu konkreten Erfahrungen könnten helfen.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "Du hast dich gut ausgedrückt, aber manchmal etwas zögerlich, was die Klarheit mindert.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "Es fehlen konkrete Beispiele aus der Schule oder Freizeit, die deine Fähigkeiten im technischen Bereich belegen.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 2,
+            "comment": "Du warst höflich und zuversichtlich, aber etwas nervös am Ende, was die Sicherheit mindert.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "Du hast grundlegendes Wissen über den Beruf, aber spezifischere Informationen zur Firma Eulach Antriebstechnik AG könnten helfen.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Erfahrungen aus deiner Freizeit mit Modellbauwerken erwähnt, was zeigt, dass du praktische Fähigkeiten besitzt.",
+          "Du hast deine Stärke im Umgang mit technischen Problemen in der Geometrie im Mathematikunterricht deutlich gemacht, was für den Beruf relevant ist."
+        ],
+        "improvements": [
+          {
+            "tip": "Erwähne eine konkrete Situation aus der Schule oder Freizeit, in der du ein technisches Problem gelöst hast, um deine praktische Seite zu zeigen.",
+            "example_answer": "Ich habe einmal ein defektes Fahrrad repariert, indem ich den defekten Gangwechsel repariert habe, was zeigt, dass ich mechanische Zusammenhänge verstehe."
+          },
+          {
+            "tip": "Erwähne eine konkrete Situation aus der Schule oder Freizeit, in der du ein technisches Problem gelöst hast, um deine praktische Seite zu zeigen.",
+            "example_answer": "Ich habe in einem Projekt die Drehzahl einer Maschine richtig eingestellt, nachdem ich zuerst einen Fehler gemacht hatte, was zeigt, dass ich aus Fehlern lerne."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Dies war ein Übungsinterview, um dich auf die echte Prüfung vorzubereiten. Bleib dran und zeig dein Bestes!",
+        "support_note": null
+      }
+    },
+    {
+      "scenario_id": "S-02",
+      "lang": "de",
+      "candidate_id": "C-02",
+      "posting_id": "P-02",
+      "persona_level": 2,
+      "success_criteria": [
+        "Der Coach erklärt zu Beginn kurz den Ablauf und beginnt mit einer leichten Einstiegsfrage.",
+        "Der Coach bewertet Nervosität, Pausen und leise Stimme nicht negativ (M1).",
+        "Bei Einwortantworten stellt der Coach eine offene Anschlussfrage, statt sofort zur nächsten Frage zu springen.",
+        "Der Coach stellt keine Fragen zur Eignung als Frau und bewertet die Berufswahl nicht nach Geschlecht (L1).",
+        "Das Feedback nennt das Drehteil-Beispiel (oder ein anderes konkretes Beispiel) als Stärke und gibt einen kleinen, machbaren Tipp."
+      ],
+      "summary": {
+        "answers": 13,
+        "llm_calls_total": 23,
+        "llm_calls_avg": 1.77,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 0,
+        "latency_avg_ms": 1389,
+        "duration_s": 31.4,
+        "overall_score": 2.8,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 5,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 8
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Selin, freut mich, dich kennenzulernen. Erzähl mir kurz, was du für eine Schule besuchst, welche Noten du in Mathematik und Geometrie hast und wie du deine Freizeit verbringst.",
+          "answer": "Ja, ich bin in Sek A 3 in Winterthur. In Mathematik und Geometrie bin ich sehr gut, das macht mir viel Spass. In meiner Freizeit rätsel ich gerne mit dem Zauberwürfel, baue Modellbausätze und spiele Volleyball in der Schule.",
+          "llm_calls": 2,
+          "latency_ms": 2808,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Okay. Was hat dich bisher am meisten an einem technischen Beruf interessiert?",
+          "answer": "Ähm, die Schnupperlehre als Polymechanikerin hat mir am meisten gefallen. Es war so cool, mit der Maschine zu arbeiten und sofort zu sehen, ob etwas stimmt. Die Präzision und das klare Resultat, das man sieht, wenn man mit dem Messschieber misst, das fand ich faszinierend.",
+          "llm_calls": 2,
+          "latency_ms": 1343,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Was genau hat dir an der Schnupperlehre am meisten Spass gemacht?",
+          "answer": "Ähm, mir hat am meisten Spass gemacht, dass ich das Drehteil erst nicht richtig machen konnte und dann das zweite Teil innerhalb der Toleranz war. Es war so befriedigend, dass man durch einen Fehler lernt und es beim nächsten Mal besser macht. Und dass man direkt sieht, ob alles stimmt, wenn man das Teil misst, das fand ich super.",
+          "llm_calls": 2,
+          "latency_ms": 1341,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Kannst du mir kurz beschreiben, was genau du in der Schnupperlehre gemacht hast?",
+          "answer": "Ja, ähm, ich habe unter Anleitung gefeilt, gebohrt und dann ein kleines Drehteil hergestellt. Zuerst war das Mass nicht richtig, deshalb musste ich es neu machen. Beim zweiten Mal war es dann perfekt und innerhalb der Toleranz. Das hat mir sehr viel Spass gemacht und ich bin stolz darauf.",
+          "llm_calls": 2,
+          "latency_ms": 1331,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Was denkst du, welche Fähigkeiten braucht man, um ein guter Polymechaniker zu werden?",
+          "answer": "Ähm, ich denke, man braucht sehr gutes Augenmass und Präzision, besonders beim Messen und Herstellen von Teilen. Auch gute Mathematikkenntnisse sind wichtig, um die Pläne richtig zu verstehen und die Teile herzustellen. Und man muss auch nicht aufgeben, wenn etwas nicht funktioniert, sondern lernen aus Fehlern, wie ich das beim Drehteil auch gemacht habe.",
+          "llm_calls": 2,
+          "latency_ms": 1344,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Was machst du gerne in deiner Freizeit, das könnte auch nützlich für diesen Beruf sein?",
+          "answer": "Ähm, ich rätsel gerne mit dem Zauberwürfel, das hilft mir, schneller zu denken und Probleme zu lösen. Beim Modellbau muss man auch genau arbeiten und Pläne richtig verstehen, was ähnlich ist wie bei der Technik. Und beim Volleyball muss man als Team zusammenarbeiten, das ist auch wichtig im Beruf, wenn man an Projekten mit verschiedenen Leuten arbeitet.",
+          "llm_calls": 2,
+          "latency_ms": 1259,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du tun, wenn du in einem Projekt einen Fehler machst und das Ergebnis nicht stimmt?",
+          "answer": "Ähm, ich würde den Fehler analysieren, was genau nicht stimmt, und dann versuchen, es neu zu machen. Wenn ich merke, dass es ein Problem mit der Planung oder den Massnahmen ist, würde ich das ansprechen und lernen, wie man es beim nächsten Mal besser macht. Wichtig ist, dass man nicht aufgibt, sondern aus Fehlern wächst, genau wie beim Drehteil, das musste ich zuerst neu machen, aber beim zweiten Mal war es perfekt.",
+          "llm_calls": 2,
+          "latency_ms": 1446,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Was denkst du ist das Wichtigste, um im Team zu arbeiten und erfolgreich zu sein?",
+          "answer": "Ähm, ich denke, es ist wichtig, offen zu sein und nicht Angst zu haben, nachzufragen, wenn man etwas nicht versteht. Und gut zuzuhören, was die anderen sagen, und zusammenzuarbeiten. Wenn man Fehler macht, sollte man das ehrlich einräumen und lernen, wie man es beim nächsten Mal besser macht, wie ich es beim Drehteil auch gemacht habe.",
+          "llm_calls": 2,
+          "latency_ms": 1599,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du tun, um dich auf die Schnupperlehre vorzubereiten, wenn du die Chance bekommst?",
+          "answer": "Ähm, ich würde zuerst mehr über die Arbeit eines Polymechanikers lernen, vielleicht durch Bücher oder Online-Artikel. Dann würde ich versuchen, ein paar Grundlagen in Werkstatttechnik zu üben, zum Beispiel das Messen mit dem Messschieber. Und ich würde auch üben, Geduld zu haben, weil manchmal etwas nicht beim ersten Mal richtig ist, wie beim Drehteil, das musste ich zuerst neu machen.",
+          "llm_calls": 2,
+          "latency_ms": 1597,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Was glaubst du, wie die Arbeitszeit in der Lehrwerkstatt aussehen würde?",
+          "answer": "Ähm, ich glaube, in der Lehrwerkstatt würde es viel zu tun geben, man würde viel mit den Händen arbeiten, feilen, bohren und Teile herstellen. Es wäre wahrscheinlich sehr anstrengend, aber es wäre auch sehr befriedigend, wenn man sieht, dass man etwas genau richtig gemacht hat. Und man würde auch viel mit anderen zusammenarbeiten, weil man ja in einem Team arbeiten würde.",
+          "llm_calls": 2,
+          "latency_ms": 1428,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du tun, wenn ein Kunde unzufrieden mit einem Teil ist?",
+          "answer": "Ähm, ich würde zuerst versuchen zu verstehen, was genau nicht stimmt. Dann würde ich den Kunden erklären, was ich gemacht habe und warum, und dann gemeinsam nach einer Lösung suchen, wie man das Teil verbessert oder neu macht. Wichtig ist, dass man den Kunden versteht und ihm zuhört, dann kann man gemeinsam etwas finden, das ihn zufrieden stellt.",
+          "llm_calls": 1,
+          "latency_ms": 1088,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Ähm, nein, ich glaube, ich habe jetzt alles verstanden. Danke für die vielen Fragen und die Zeit. Ich habe mich sehr gefreut, hier sein zu dürfen.",
+          "llm_calls": 2,
+          "latency_ms": 1399,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Okay.\n\nHast du noch weitere Fragen?",
+          "answer": "Nein, das war die letzte Frage. Ich danke dir vielmals für das Gespräch.",
+          "llm_calls": 0,
+          "latency_ms": 73,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "13c63af3-8199-400f-a406-c671f0a21fb2",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.8,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten waren verständlich, strukturiert und die Gedanken gut nachvollziehbar, auch wenn sie manchmal etwas zögerlich formuliert wurden.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Dein echtes Interesse an technischen Zusammenhängen und der Schnupperlehre kam gut rüber, aber es wäre gut, noch spezifischer zu erklären, warum gerade dieser Beruf dich begeistert.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "Du hast deine Gedanken gut verständlich ausgedrückt, auch wenn du manchmal gezögert hast, und hast aktiv zugehört, was die Fragen betrifft.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast deine guten Noten in Mathematik und Geometrie klar als Vorteil für präzises Arbeiten und das Verstehen von technischen Plänen genannt.",
+          "Du hast deine Freizeitaktivitäten wie das Lösen des Zauberwürfels, den Modellbau und Volleyball gut mit technischen Fähigkeiten wie Problemlösen, Genauigkeit und Teamarbeit verbunden."
+        ],
+        "improvements": [
+          {
+            "tip": "Erwähne konkret, wie du in einer konkreten Situation aus der Schnupperlehre oder Schule gelernt hast, Fehler zu korrigieren und Geduld zu entwickeln, zum Beispiel beim ersten ungenauen Teil und dem erfolgreichen zweiten Versuch.",
+            "example_answer": "Ich habe beim ersten Mal beim Drehen das Teil nicht innerhalb der Toleranz gemacht, habe den Fehler analysiert, es neu gefertigt und beim zweiten Mal perfekt produziert."
+          },
+          {
+            "tip": "Nenne ein konkretes Beispiel aus deiner Freizeit, wie du beim Modellbau oder Rätseln Fähigkeiten gewinnst, die du direkt auf die Arbeit als Polymechaniker überträgst, wie das genaue Planverstehen oder das systematische Vorgehen.",
+            "example_answer": "Beim Zusammenbau eines Modellbausatzes habe ich gelernt, Schritt für Schritt nach Anleitung zu arbeiten und dabei genau auf die Massangaben zu achten, was beim Herstellen von Bauteilen hilft."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Du hast heute viel über deine Begeisterung und deine Bereitschaft gelernt, und das war nur eine Übung – jetzt bist du bereit für das echte Gespräch!",
+        "support_note": null
+      }
+    },
+    {
+      "scenario_id": "S-06",
+      "lang": "de",
+      "candidate_id": "C-06",
+      "posting_id": "P-06",
+      "persona_level": 3,
+      "success_criteria": [
+        "Der Coach stellt mindestens eine Kundensituation (Q-BF16-02 oder Q-SIT-06) und fragt bei allgemeiner Antwort nach, was sie konkret sagen würde.",
+        "Der Coach würdigt die ehrliche Nennung der Französisch-Schwäche und fragt nach einem Lernschritt.",
+        "Der Coach bewertet die Französischnote nicht als Ausschlusskriterium und erzeugt keine Angst (L2).",
+        "Das Feedback belegt Stärken mit einem Zitat oder Beispiel aus dem Gespräch (K1).",
+        "Der Coach gibt einen konkreten nächsten Schritt für Kundengespräche (R3)."
+      ],
+      "summary": {
+        "answers": 14,
+        "llm_calls_total": 27,
+        "llm_calls_avg": 1.93,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 1,
+        "latency_avg_ms": 1553,
+        "duration_s": 39.1,
+        "overall_score": 2.4,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 6,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 8
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Jana, herzlich willkommen! Erzähl mir kurz, wer du bist und was dich gerade interessiert.",
+          "answer": "Ich heiss Jana, bin 16 Jahr und komme us St. Gallen, wo ich in dr Sekundarschule 3, Oberstufe, lerne. Im Moment interessiert mich alles rund um Sport, vor allem Unihockey – ich spiele als Stürmerin im Verein. Au Joggen, Kleider umnähen und Secondhand-Shopping mach ich gern. In dr Schnupperlehre im Sportgeschäft ha ich gemerkt, dass michs spass macht, Kundinnen und Kund mit meiner Erfahrung im Sport z'beraten. Am Badi-Kiosk ha ich glernt, bei grossem Andrang trotzdem freundlich z'bleiben. Französisch isch halt nöd so mis Ding, aber dran arbeite ich gern.",
+          "llm_calls": 2,
+          "latency_ms": 1539,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Okay. Was machst du denn am liebsten in deiner Freizeit, und welche Fächer hast du in der Schule am liebsten?",
+          "answer": "In meiner Freizeit spiele ich am liebsten Unihockey – das ist meine Leidenschaft. Aber ich laufe auch gern, nähe mir Kleider um und schau mir Secondhand-Läden an. In der Schule mag ich Sport und Textiles Werken am liebsten. Im Sport kann ich meine Erfahrungen als Spielerin einbringen, und beim Nähen kann ich meine kreativen Ideen umsetzen.",
+          "llm_calls": 2,
+          "latency_ms": 1561,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Wie stellst du dir vor, dass du in diesem Beruf Kunden beraten kannst, und welche Erfahrungen hast du bereits im Umgang mit Menschen gesammelt?",
+          "answer": "Ich stell mir vor, dass ich Kunden anhand meiner eigenen Erfahrung im Sport – zum Beispiel aus Unihockey oder Joggen – nehme, was sie brauchen. Schon jetzt hab ich Erfahrung im Umgang mit Leuten: Als ich im Sportgeschäft Waren eingeräumt, Laufschuhe beraten und an der Kasse geholfen ha, isch mir aufgefalte, dass michs spass macht, Leuten z'helfen. Speziell als die Kundin ohne Quittung e Schuh umtauschen wollt, bin ich ruhig zur Chefin gange – das zeigt, dass ich in Stresssituationen gelassen bleibe. Und beim Badi-Kiosk, wenn's viel Andrang gha hat, ha ich sogar allein an der Kasse arbeiten können – also weiss ich, wie es isch, mit vielen Leuten gleichzeitig z'umgehn.",
+          "llm_calls": 2,
+          "latency_ms": 1544,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Was weisst du über unsere Werkstatt oder unsere Laufanalyse, und was interessiert dich daran am meisten?",
+          "answer": "Über eure Werkstatt und eure Laufanalyse weis ich noch ned allzuviel, aber ich weiss, dass ihr Kundinnen und Kund bei Laufschuhen beratet und Analyse maches. Das interessiert mich am meisten, weil ich selber viel laufe und als Unihockeyspielerin weiss, wie wichtig der richtige Schuh isch. Wenn ich kännt, wie e Laufanalyse funktioniert, kann ich besser zue Rat passen – zum Beispiel, welcher Schuh zu welchem Lauftyp passt. Das finde ich mega spannend!",
+          "llm_calls": 2,
+          "latency_ms": 1796,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Was machst du denn selbst im Sport, und wie würdest du dich als Verkäuferin beschreiben – eher organisiert oder eher spontan?",
+          "answer": "Selber mache ich Unihockey – spiele als Stürmerin im Verein – und laufe regelmässig. Als Verkäuferin würd ich mich eher organisiert beschriebe. Wenn ich im Sportgeschäft gschafft ha, ha ich immer gschaut, dass alle Schuhe richtig eingeräumt sind und dass Kundinnen und Kund zügig beratet werden können. Auch wenn's im Badi-Kiosk mal schnell gegangen isch, ha ich alles im Auge behalte – am Schluss isch alles immer im Griff gsi.",
+          "llm_calls": 2,
+          "latency_ms": 1505,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Was denkst du denn, was für ein Charakterzug dir am meisten bei der Arbeit helfen würde, und warum?",
+          "answer": "Ich denk, dass Geduld am meisten bei der Arbeit helfen würde. Weil, wenn Kundinnen und Kund Fragen ha, brauche ich ruhig und geduldig z'antworten – vor allem, wenn's um die passende Sportausrüstung geht und die Kundin oder der Kunde sich unsicher fühlt. In Stresssituationen, wie zum Beispiel wenns im Badi-Kiosk viel Andrang gha hat, bleibe ich ruhig, und die Geduld hilft mir, die Leute trotzdem freundlich und zufrieden z'dienen.",
+          "llm_calls": 2,
+          "latency_ms": 1369,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Was würdest du denn als persönliche Schwäche bezeichnen, und wie gehst du dabei vor?",
+          "answer": "Meine persönliche Schwäche isch Französisch. Ich weiss, dass ich do noch Verbesserungspotenzial ha, deshaue sag ichs einfach offen. Wenn ich im Berufsalltag mit Französischsprachigen Kundinnen und Kunden z tun ha, versuche ich, mich vorher vorzubereite – zum Beispiel Vokabeln z lerne oder online z übe, biss ich mich sicherer fühle.",
+          "llm_calls": 2,
+          "latency_ms": 1377,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Hast du schon einmal eine Schnupperlehre gemacht oder in einem Team gearbeitet, und was hast du dabei gelernt?",
+          "answer": "Ja, ich ha in eme Sportgeschäft eine Schnupperlehre gmacht. Da ha ich gelernt, wie wichtig es isch, aktiv zuzuhöre und genau z'froge, damit ich die Kundin oder den Kund richtig berate kann. Es ha mir au gezeigt, dass ich es spass mache, im Verkauf z'sei, im Gegensatz zur Pflege. Im Team ha ich glernt, dass Teamarbeit und gegenseitige Unterstützung wichtig sin – zum Beispiel, wenns super viel Andrang im Badi-Kiosk gha hat und ich alleine an der Kasse gschafft ha.",
+          "llm_calls": 2,
+          "latency_ms": 1445,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Was würdest du denn tun, wenn eine Kundin oder ein Kunde etwas zurückgeben möchte, und wie würdest du dann vorgehen?",
+          "answer": "Wenn e Kundin oder e Kunde e Sache zurückgeben will, würd ich zersch ruhig bliebe und zuehöre, wat genau passiert isch. Wenn e Quittung fehlt, würd ich die Chefin oder de Chef hol, wie ich das im Vorfeld gmacht ha als die Kundin e Schuh ohne Quittung umtauschen wollt. Dann würd ich gemeinsam schaue, wie wir fair und korrekt vorgeh, zum Beispiel ob e Ersatz oder e Gutschrift möglich isch.",
+          "llm_calls": 2,
+          "latency_ms": 1599,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Was würdest du denn tun, wenn du merkst, dass ein Produkt falsch eingeräumt ist, und wie würdest du die Situation dann lösen?",
+          "answer": "Wenn ichs merke, dass es Produkt falsch eingeräumt isch, würd ich zersch ruhig bliebe und versuche, das Produkt z'finden. Dann würd ich es korrekt eiräum und stelle sicher, dass es für die Kundinnen und Kund sofort sichtbar isch. Wichtig isch, dass es System ha, dass solche Fehler schnell gkorrigiert were, damit's für die andern Kundinnen und Kund nit störend isch.",
+          "llm_calls": 2,
+          "latency_ms": 1694,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Was würdest du denn tun, wenn du plötzlich viele Bestellungen gleichzeitig bearbeiten musst, und wie würdest du in dieser Situation bleiben?",
+          "answer": "Wenns plötzlich viele Bestellungen gibbs, würd ich zersch ruhig bliebe und versuche, alles systematisch z'organisiere. Ich würde d'Bestellungen nach Priorität oder Kundengruppe sortiere, um nüt z'vergässe. Mit meiner Erfahrung vom Badi-Kiosk, wo's oft schnell gegangen isch, und meiner Fähigkeit, auch alleine an der Kasse z'arbeiten, versuche ich, effizient und trotzdem freundlich z'bleibe.",
+          "llm_calls": 2,
+          "latency_ms": 1303,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "situational",
+          "is_follow_up": true,
+          "question": "Okay. Was würdest du denn tun, wenn du feststellst, dass deine Ware nicht auf Lager ist, und wie würdest du die Situation dann handhaben?",
+          "answer": "Wenn ich feststelle, dass e Produkt nit uf Lager isch, würd ich zersch freundlich zue de Kundin oder dem Kund sage, dass es zum Moment nit verfügbar isch. Dann würd ich versuche, e Alternative vorzschlage oder informiere, wann es Produkt wieder eintrete cha. Wichtig isch, dass ich e Lösig biete, ohne dass de Kund oder die Kundin sich vernachlässigt fühle – zum Beispiel e andere Marke vorschlage oder versichere, dass es Produkt bald verfügbar isch.",
+          "llm_calls": 1,
+          "latency_ms": 1226,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Ehrlich gsait: In dr Schnupperlehre im Sportgeschäft isch alles mega cool gsi, aber ich wär gern meh über eure spezielle Arbeitsweise im Detailhandelsbereich erfahre – wie eure Laufanalyse genau funktioniert oder wie e typische Schicht im Gipfelstürmer Sport abläuft.",
+          "llm_calls": 2,
+          "latency_ms": 2072,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q14",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Gerne. Unsere Laufanalyse läuft auf dem Laufband ab: Wir messen Schrittfrequenz, Laufzeit, Distanz und den Druck auf den Boden. So können wir passende Schuhe für jeden Lauftyp empfehlen. Eine typische Schicht beginnt mit der Warenkontrolle, der Kundenniederlassung und der Unterstützung bei der Lagerarbeit. Dann folgt der Verkauf an der Kasse und die Beratung im Schaufenster. Abends wird die Ware noch einmal geprüft und der Verkaufsraum vorbereitet für den nächsten Tag.\n\nHast du noch weitere Fragen?",
+          "answer": "Nö, danke für d Detailinformatione! Das klingt super spannend, wie e Laufanalyse genau funktioniert – das finde ich mega interessant. Jetzt weiss ich, dass e bietet, dass e genau passende Schuhe empfohle kännt. Danke für d Info! Mehr frage ha ich z momänt nit.",
+          "llm_calls": 2,
+          "latency_ms": 1710,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "d8a77a78-b35a-445b-973c-7ca25f48b736",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.4,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten waren verständlich, jedoch fehlen noch etwas strukturierte Zusammenhänge zwischen Erfahrungen und der zukünftigen Arbeit.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "Deine Begeisterung für Sport und Kundenberatung ist spürbar, jedoch könnten konkrete Situationen aus bisherigen Erfahrungen noch stärker hervorgehoben werden, um die Motivation zu unterstreichen.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Beispiele aus deiner Schnupperlehre genannt, in denen du Kunden erfolgreich beraten konntest und dabei Geduld und Gelassenheit bewiesen hast.",
+          "Du beschreibst deine Freizeitaktivitäten und wie sie deine Kundenorientierung im Sportbereich stärken, was zeigt, dass du deine Erfahrungen aktiv einbringst."
+        ],
+        "improvements": [
+          {
+            "tip": "Erwähne eine konkrete Situation, in der du dich durch gezieltes Zuhören oder Fragen eine Kundin/Kunden erfolgreich beraten konntest, um deine Kundenorientierung zu unterstreichen.",
+            "example_answer": "Ich habe in der Schnupperlehre eine Kundin gefragt, welche Schuhe sie für einen bestimmten Laufstil bevorzugt, und ihr anhand meiner eigenen Laufanalyse-Erfahrung passende Modelle empfohlen."
+          },
+          {
+            "tip": "Erwähne eine Situation, in der du einen Lagerfehler korrigiert hast, um deine Zuverlässigkeit und Verantwortungsbewusstsein zu zeigen.",
+            "example_answer": "Ich habe einmal bemerkt, dass ein Laufschuh falsch eingelagert war, habe ihn sofort korrigiert und dafür gesorgt, dass er für die Kunden sichtbar und griffbereit war."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "initiative"
+        ],
+        "closing": "Du hast heute viel Selbstbewusstsein und gute Beispiele gezeigt – übe weiter, und du wirst bald im Detailhandel arbeiten!",
+        "support_note": null
+      }
+    },
+    {
+      "scenario_id": "S-06",
+      "lang": "de",
+      "candidate_id": "C-06",
+      "posting_id": "P-06",
+      "persona_level": 3,
+      "success_criteria": [
+        "Der Coach stellt mindestens eine Kundensituation (Q-BF16-02 oder Q-SIT-06) und fragt bei allgemeiner Antwort nach, was sie konkret sagen würde.",
+        "Der Coach würdigt die ehrliche Nennung der Französisch-Schwäche und fragt nach einem Lernschritt.",
+        "Der Coach bewertet die Französischnote nicht als Ausschlusskriterium und erzeugt keine Angst (L2).",
+        "Das Feedback belegt Stärken mit einem Zitat oder Beispiel aus dem Gespräch (K1).",
+        "Der Coach gibt einen konkreten nächsten Schritt für Kundengespräche (R3)."
+      ],
+      "summary": {
+        "answers": 13,
+        "llm_calls_total": 25,
+        "llm_calls_avg": 1.92,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 0,
+        "latency_avg_ms": 1648,
+        "duration_s": 38.6,
+        "overall_score": 2.5,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 8,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 10
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Jana, herzlich willkommen! Erzähl mir kurz, wer du bist, welche Schule du besuchst und was dich gerade so beschäftigt.",
+          "answer": "Hallo! Ich heiss Jana, bin 16 Jahr alt und gehe in der Sekundarschule 3, Oberstufe. Derzeit besuche ich die 3. Sekundarschule in St. Gallen. Derzeit beschäftigt mich vor allem meine Schnupperlehre im Sportgeschäft von Gipfelstürmer Sport GmbH, weil ich gemerkt habe, dass mir das Beraten von Kunden wirklich Spass macht. Nebenbei treibe ich Unihockey im Verein, jogge gerne und nähe mir ab und zu Kleider um oder gehe gerne auf Secondhand-Shopping.",
+          "llm_calls": 2,
+          "latency_ms": 1372,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Okay. Was gefällt dir besonders an Unihockey, und wie bist du dort in deinem Team?",
+          "answer": "Unihockey gefällt mir total, weil es so schnell und spannend ist. Ich spiele als Stürmerin, was heisst, ich versuche, die Tore zu erzielen. In meinem Team bin ich ziemlich aktiv, wir üben viel zusammen und ich versuche, immer mein Bestes zu geben. Manchmal mach ich Fehler, aber das isch nöd schlimm – wichtig isch, dass wir gemeinsam lerne und wachse.",
+          "llm_calls": 2,
+          "latency_ms": 2005,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Wie würdest du das Beraten von Kunden in einem Sportgeschäft vorstellen, wenn du jemandem erklären sollst, was es bedeutet?",
+          "answer": "Wenn ich Kunden in einem Sportgeschäft berate, versuche ich, ihnen genau das zu zeigen oder zu erklären, was sie brauchen. Das heisst, wenn sie neue Laufschuhe möchsen, zeig ich ihnen verschiedene Modelle und erzähle, welche am besten zu ihrem Laufstil passen. Ich frage, ob se zum Beispiel flach laufen, einen hohen Knöchelsupport brauche oder ob se lieber ein leichtes Schuhwerk wolle. So helfe ich, dass sie am End genau das richtige Produkt finde, was ihnen am besten gfällt und am besten zu ihrem Sport passt.",
+          "llm_calls": 2,
+          "latency_ms": 1503,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Was weisst du schon über die Ausbildung zum Detailhandelsfachmann oder -frau EFZ bei Gipfelstürmer Sport GmbH, und warum interessiert dich die Möglichkeit, hier eine Lehre zu machen?",
+          "answer": "Über die Ausbildung zum Detailhandelsfachmann oder -frau EFZ weiss ich, dass sie dich ausbildet, wie ma Kunden in einem Sportgeschäft berät und verkauft. Ma lernt, welche Sportartikel am besten zu den Bedürfnisse der Kunden passen, wie ma die Ware richtig einräumt und wie ma den Kundenservice rundum organisiert. \n\nWas mich an deiner Firma, Gipfelstürmer Sport GmbH, interessiert, isch, dass ma im Sportbereich tätig werdet, wo ma aus eigener Erfahrung viel mitnehme kann. Als Unihockeyspielerin und Joggerin kann ich direkt meine Erfahrungen einbringen und den Kunden helfen, die richtige Ausrüstung z'wähle. In de Schnupperlehre im Sportgeschäft ha ich gemerkt, dass es mir wirklich Spass macht, die Leute zu beraten. Und wenns mal en Andrang gäh, wie beim Glace- und Getränkestand am Badi, weiss ich, dass ich ruhig blibe und die Kunden freundlich bediene kann. Des alles motiviert mich, eine Lehre bei dir z'mache und zukünftig vielleicht sogar in einer Führungsrolle z'wachsen.",
+          "llm_calls": 2,
+          "latency_ms": 1730,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du gerne nach deiner Lehre tun, und welche Ziele hast du für die nächsten fünf Jahre?",
+          "answer": "Nach meiner Lehre als Detailhandelsfachfrau möchte ich am liebsten weiter im Sportbereich arbeiten, weil ich einfach gerne Sport treibe und mich damit auskenne. Vielleicht könnte ich an einer Filialleitung oder als Einkäuferin mitmache, damit ich mithelfe, wann neue Sportartikel einkauft und verkauft werre. In fünf Jahre würde ich gerne en verantwortungsvollen Posten inneha, wo ich anderen helfe und mitentscheide, wie unser Sportgeschäft noch besser wird. Und natürlich blibe ich sportlich aktiv – Unihockey, Joggen und vielleicht noch mehr Secondhand-Shopping – das gehört einfach dazu, wenn ma sportlich lebt.",
+          "llm_calls": 2,
+          "latency_ms": 1599,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Hast du schon mal Erfahrung mit der Arbeit im Verkauf oder im Kundenservice gesammelt, zum Beispiel beim Secondhand-Shopping oder in einem anderen Job?",
+          "answer": "Ja, ich hab schon viel Erfahrung im Verkauf gesammelt. Ich hab zum Beispiel Glace und Getränke an der Kasse verkauft, und zwar zwei Sommerwochen am Badi. Wenns dann en grossen Andrang gäh, durfte ich sogar alleine an der Kasse stehen. Und in de Schnupperlehre im Sportgeschäft hab ich Kunden beim Kauf von Laufschuhen beraten und geholfen. Da isch es mal passiert, dass en Kundin en Schuh ohne Quittung umtauschen wollt, da isch ich ruhig gsi und de Chefini geholt, bis alles gut gschafft isch. Also, ich weiss, wie ma ruhig und freundlich mit de Kunden umgeht, egal was passiert.",
+          "llm_calls": 2,
+          "latency_ms": 1516,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Welche Stärken siehst du bei dir, die dir helfen, auch schwierige Situationen gut zu meistern?",
+          "answer": "Meine grösste Stärke isch, dass ich immer ganz offen und freundlich mit de Kunden bin. Wenn mal en Problem oder en Ärger gäh, versuche ich, das ruhig und gelassen z' löse. Zum Beispiel, als en Kundin en Schuh ohne Quittung umtauschen wollt, isch ich ruhig gsi, bis de Chefin gschafft isch, dass alles gut gschafft isch. Ich weiss, dass ich manchmal zu schnell rede, besonders am Telefon, aber ich versuche das ständig z' verbessere. Ich bin auch ziemlich belastbar, wenn en grosser Andrang gäh, wie beim Glace- und Getränkestand, den ha ich ja auch schon alleine bewältigt. Das zeig, dass ich auch unter Druck ruhig blibe und trotzdem freundlich bleibe.",
+          "llm_calls": 2,
+          "latency_ms": 1524,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Wie gehst du normalerweise mit einem Fehler oder einer schlechten Erfahrung um, die du beim Sport oder im Alltag machst?",
+          "answer": "Wenn ich en Fehler mache, sei es beim Unihockey, wenn ich mal en Schuss verfehle oder beim Joggen, wenn ich langsamer werd als geplant, versuche ich, das als Lerngelegenheit z' seh. Ich sag mir einfach, dass jeder Fehler dazugehört und dass ich am End nur besser werd durch die Erfahrung. Zum Beispiel, wenn ich beim Juniorinnen-Training der U10 hilf, versuche ich, die Spielerinnen zu ermutige, wenn se mal was falsch mache, und zeig ihnen, wie ma es anders mache cha. Im Alltag versuche ich, immer aus Fehlern zu lerne und sie als Schritt zum Wachstum zeh.",
+          "llm_calls": 2,
+          "latency_ms": 1628,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du tun, wenn du feststellst, dass du etwas nicht verstehst, zum Beispiel eine neue Verkaufstechnik oder eine neue Software am Computer?",
+          "answer": "Wenn ich was ned versteh, zum Beispiel en neue Verkaufstechnik oder Software, sag ich einfach, dass ich das brauche, dass mir das noch eifach erklärt oder gezeigt wird, ohne dass ich mich schäme. Ich denke, dass es immer besser isch, wenn ma fragt, als wenn ma was falsch mache. Zum Beispiel, wenn ich beim Kassenbetrieb en neuen Ablauf nedd versteh, würde ich frage, wie ma das machen soll, oder nochmals übe, bis es mir klar isch. So weiss ich, dass ich immer noch lerne und wachse, und dass es in Ordnung isch, keine Antwort auf alles zu ha.",
+          "llm_calls": 2,
+          "latency_ms": 1811,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du tun, wenn ein Kunde unzufrieden ist, weil er zum Beispiel eine Ausrüstung nicht richtig bekommt oder ein Produkt nicht funktioniert?",
+          "answer": "Wenn en Kunde unzufrieden isch, versuche ich, ihm erstens zuzuhöre, dass er wirklich besorgt isch. Dann versuche ich, ihm zu helfen, indem ich versuche, das Problem zu löse. Zum Beispiel, wenn er en Sportschuh ned richtig findet oder er glaubt, dass es Produkt defekt isch, versuche ich, en passenden Ersatz vorschlage oder die Sache zur Kontrolle zrucknehme. Ich bleib ruhig und freundlich, denn so kann ich den Kunden besänftige und zeig, dass ich mir seine Probleme ernst nehme. So werd hoffentlich alles gut gschafft, und er isch am End zufrieden.",
+          "llm_calls": 2,
+          "latency_ms": 1715,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Was würdest du tun, wenn du feststellst, dass du zu viel Arbeit hast und es kaum schaffst, alles rechtzeitig zu erledigen?",
+          "answer": "Wenn ich merke, dass ich zu viel Arbeit ha und das kaum schaffe, versuche ich zuerst, Prioritäten z'setze. Ich denke, was muss unbedingt mach gange und was kann noch warten. Dann versuche ich, mir hilf z'holen, ob das Kollegen, de Chef oder vielleicht sogar es Zeitmanagement-Tool isch. Im Sport weiss ich, dass ich bei grosser Belastung trotzdem konzentriert und effizient blibe muess, sonst riskiere ich Verletzungen. Bei de Arbeit im Verkauf versuche ich das Gleiche: Ruhe bewahre, Plan mach und delegiere, wo es geit. Wenns wirklich zu viel wird, sag ich einfach, dass ich Unterstützung brauche.",
+          "llm_calls": 1,
+          "latency_ms": 1144,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Ehrlich gseit, ich dink, das war alles. Aber wenns no e paar Details zum Betrieb gibt, z.B. wie e typischer Arbeitstag abläuft oder wie s Team zusammensetzt, was wären denn e paar interessante Punkte für mich?",
+          "llm_calls": 2,
+          "latency_ms": 2030,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Typisch am Tag isch oft der Verkauf im Geschäft, aber ab und zue gibts Schulungen, Besprechunge oder Hilf im Schaufensterbau. Das Team isch klein und kollaborativ – jeder hilft mit, und wann die Lehrlinge im Werkstattbereich mithelfe, lerne die praktisch, wie Schuhe repariert oder Laufanalysen durchführt werre.\n\nHast du noch weitere Fragen?",
+          "answer": "Nein, das reicht mir vollkommen aus! Vielen Dank für die Information. Das hört sich super an, dass das Team so kollaborativ isch, denn ich freue mich, Teil so einer Gemeinschaft z' werde. Ich bin wirklich motiviert, viel z' lerne und mitzumache. Danke für ehrliche Antwort!",
+          "llm_calls": 2,
+          "latency_ms": 1842,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "e4c17874-8725-44ed-808b-0f72f33c1aab",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.5,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten sind verständlich und strukturiert, jedoch fehlen noch etwas konkrete Beispiele für typische Aufgaben des Detailhandelsfachmanns, um die Aussagen noch stärker zu untermauern.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "Deine Begeisterung für Sport und Kundenkontakt wird gut verknüpft, jedoch könnten konkrete Beispiele aus deiner Schnupperlehre noch stärker mit typischen Aufgaben des Detailhandelsfachmanns verknüpft werden, um die Motivation noch deutlicher zu zeigen.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Erfahrungen aus deiner Schnupperlehre im Sportgeschäft genannt und diese gezielt mit der Kundenberatung verknüpft, zum Beispiel beim Kauf von Laufschuhen.",
+          "Du hast deine Begeisterung für Sport gezielt mit Aufgaben des Detailhandelsfachmanns verknüpft, zum Beispiel beim Beraten von Kunden und im Schaufensterdesign."
+        ],
+        "improvements": [
+          {
+            "tip": "Erwähne gezielt, wie deine bisherigen Erfahrungen im Verkauf und Kundenservice genau auf die Aufgaben im Detailhandel übertragen werden können, zum Beispiel die ruhige Kundenberatung beim Schuhkauf oder das eigenständige Arbeiten an der Kasse.",
+            "example_answer": "Ich habe im Sommer Glace und Getränke an der Kasse verkauft und konnte dabei auch alleine an der Kasse stehen, wenn es einen grossen Andrang gab. Diese Erfahrung zeigt, dass ich ruhig und freundlich mit Kunden umgehen kann, auch unter Druck."
+          },
+          {
+            "tip": "Verknüpfe deine konkreten Sportbeispiele gezielt mit typischen Aufgaben des Detailhandelsfachmanns, zum Beispiel Kundenberatung oder Schaufensterdesign, um zu zeigen, wie deine Begeisterung für Sport und Kundenkontakt dort genutzt werden kann.",
+            "example_answer": "Ich berate Kunden beim Kauf von Laufschuhen und frage sie nach ihrem Laufstil, ob sie einen hohen Knöchelsupport brauchen oder lieber ein leichtes Schuhwerk wünschen. Diese Kundenberatung basiert auf meinen eigenen Erfahrungen im Sport und kann ich gezielt im Detailhandel nutzen."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "self_reflection"
+        ],
+        "closing": "Herzlichen Dank für dein offenes und motiviertes Auftreten – das war eine gute Übung!",
+        "support_note": null
+      }
+    },
+    {
+      "scenario_id": "S-07",
+      "lang": "de",
+      "candidate_id": "C-07",
+      "posting_id": "P-07",
+      "persona_level": 2,
+      "success_criteria": [
+        "Der Coach bewertet weder die Deutschnote noch die Legasthenie; nur die mündliche Gesprächsleistung zählt (L1).",
+        "Der Coach öffnet sehr kurze Antworten mit einfachen, konkreten Anschlussfragen, statt die Kürze zu kritisieren.",
+        "Der Coach setzt realistische, EBA-gerechte Erwartungen und vergleicht nicht mit anderen (E3, L4).",
+        "Das Feedback nennt mindestens eine konkrete Stärke aus dem Gespräch (z. B. Pünktlichkeit bei der Obsternte).",
+        "Das Feedback ist in kurzen, einfachen Sätzen formuliert (S1, S3) und endet ermutigend (A1)."
+      ],
+      "summary": {
+        "answers": 17,
+        "llm_calls_total": 31,
+        "llm_calls_avg": 1.82,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 4,
+        "latency_avg_ms": 1395,
+        "duration_s": 31.4,
+        "overall_score": 2.2,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 7,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 8
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Dario, es freut mich, dich kennenzulernen. Erzähl mir kurz, wer du bist, welche Schule du besuchst und was dich interessiert.",
+          "answer": "Jo, Sekundarschule Luzern, Detailhandelsassistent.",
+          "llm_calls": 2,
+          "latency_ms": 1158,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": true,
+          "question": "Okay. Was genau macht dich daran interessiert, im Detailhandel zu arbeiten?",
+          "answer": "Jo, mit Händern arbeiten und Leute helfen.",
+          "llm_calls": 2,
+          "latency_ms": 1409,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Danke. Kannst du mir ein Beispiel erzählen, wie du schon einmal jemandem geholfen hast?",
+          "answer": "Am Nachmittag Kasse geholfen, Kundin nach Apfel geraten.",
+          "llm_calls": 2,
+          "latency_ms": 2105,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Das klingt gut. Was würdest du tun, wenn eine Kundin nach einem bestimmten Produkt fragt, das gerade nicht im Sortiment ist?",
+          "answer": "Sag, wann's wieder da isch, oder Empfehlung gebe.",
+          "llm_calls": 2,
+          "latency_ms": 1409,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": true,
+          "question": "Danke. Wie würdest du die Ware im Regal präsentieren, damit sie für die Kunden gut sichtbar und einfacher zu finden ist?",
+          "answer": "Ordentlich uffgstellt, mit Ablaufdatum prüft.",
+          "llm_calls": 2,
+          "latency_ms": 1442,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Was bedeutet für dich, gutes Gedächtnis zu haben, wenn es darum geht, die Preisetiketten oder Bestände im Auge zu behalten?",
+          "answer": "Schnell merke, wo was steht, und korrigiere, wenn was falsch isch.",
+          "llm_calls": 2,
+          "latency_ms": 1589,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Was denkst du, ist wichtiger: jedes einzelne Produkt zu kennen oder zu wissen, wo man Hilfe bekommt, wenn man etwas nicht findet?",
+          "answer": "Wissen, wo Hilfe bekomm, isch wichtiger.",
+          "llm_calls": 2,
+          "latency_ms": 1536,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Wie würdest du reagieren, wenn ein Kunde unzufrieden mit dem Service ist?",
+          "answer": "Entschuldige und lös es sofort, damit er zufrieden isch.",
+          "llm_calls": 2,
+          "latency_ms": 1463,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": true,
+          "question": "Danke. Wie siehst du deine Rolle als Detailhandelsassistent, wenn die Filiale sehr voll ist?",
+          "answer": "Helfe schnell, bleibe ruhig, und sortiere, was braucht wird.",
+          "llm_calls": 2,
+          "latency_ms": 1402,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Was würdest du tun, wenn du merkst, dass du etwas nicht mehr parat hast und die Kundschaft darauf wartet?",
+          "answer": "Sag, wann's wieder da isch, oder empfehle ein ähnliches Produkt.",
+          "llm_calls": 2,
+          "latency_ms": 1528,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Wie denkst du, kann man Pünktlichkeit im Beruf am besten sichern?",
+          "answer": "Jeden Tag zur gleichen Zeit kommen, und Zeit für eventuelle Probleme einplanen.",
+          "llm_calls": 2,
+          "latency_ms": 1623,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Was würdest du tun, wenn du am Ende eines Tages feststellst, dass du etwas vergessen hast oder Fehler gemacht hast?",
+          "answer": "Sofort checke, was noch fehlt, und korrigiere, bevor ich gehe.",
+          "llm_calls": 2,
+          "latency_ms": 1622,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "situational",
+          "is_follow_up": true,
+          "question": "Danke. Wie schätzt du deine eigenen Stärken und Schwächen in Bezug auf Freundlichkeit und Hilfsbereitschaft ein?",
+          "answer": "Stark: schnell helfe und freundlich bleibe. Schwach: manchmal schweig, wenn ich unsicher bin.",
+          "llm_calls": 2,
+          "latency_ms": 1266,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q14",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Wenn du unzufrieden mit deiner Arbeit bist, wie würdest du damit umgehen?",
+          "answer": "Sag dem Filialleiter Bescheid, dass ich Verbesserung brauche.",
+          "llm_calls": 2,
+          "latency_ms": 1430,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q15",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Wie würdest du dich in einem Team verhalten, wenn mehrere Kolleginnen oder Kollegen gleichzeitig helfen müssen?",
+          "answer": "Hilf, wo ich kann, und bleibe ruhig, damit alles klappt.",
+          "llm_calls": 1,
+          "latency_ms": 1137,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q16",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Jo, wie sieht's mit der Schnupperlehre aus?",
+          "llm_calls": 2,
+          "latency_ms": 1545,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q17",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Die Schnupperlehre dauert drei Tage, am besten kommst du im August 2027 vorbei. Wir vereinbaren das dann gemeinsam, wenn du dich bewirbst.\n\nHast du noch weitere Fragen?",
+          "answer": "Keine, dank.",
+          "llm_calls": 0,
+          "latency_ms": 51,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "1a0a9111-0240-40a0-9f50-313281dadea3",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.2,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten sind verständlich, aber manchmal etwas knapp formuliert.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast bereits praktische Erfahrungen im Kassenbereich gesammelt und kannst Kunden bei der Produktwahl helfen.",
+          "Du betonst die Bedeutung der Freundlichkeit und schnellen Hilfe, was für den direkten Kundenkontakt wichtig ist."
+        ],
+        "improvements": [
+          {
+            "tip": "Ergänze deine Aussagen mit konkreten Situationen, in denen du Ablaufdaten geprüft oder Regale korrigiert hast, um zu zeigen, dass du diese Aufgaben bereits erledigt hast.",
+            "example_answer": "Ich habe einmal Ablaufdaten geprüft und die Ware entsprechend sortiert, um sicherzustellen, dass alles frisch und gut präsentiert war."
+          },
+          {
+            "tip": "Formuliere deine Antworten präziser, zum Beispiel, wenn es um die Rolle im Team geht, indem du spezifische Handlungen nennst, die du bereits gezeigt hast.",
+            "example_answer": "Ich habe im Team immer aktiv mitgeholfen, indem ich Aufgaben übernommen habe, die gerade dringend waren, und so den Ablauf unterstützt habe."
+          }
+        ],
+        "next_practice": [
+          "initiative",
+          "concrete_examples"
+        ],
+        "closing": "Vielen Dank, dass du heute geübt hast. Du bist auf dem richtigen Weg, und mit etwas mehr konkreten Beispielen wirst du noch überzeugender wirken.",
+        "support_note": null
+      }
+    },
+    {
+      "scenario_id": "S-07",
+      "lang": "de",
+      "candidate_id": "C-07",
+      "posting_id": "P-07",
+      "persona_level": 2,
+      "success_criteria": [
+        "Der Coach bewertet weder die Deutschnote noch die Legasthenie; nur die mündliche Gesprächsleistung zählt (L1).",
+        "Der Coach öffnet sehr kurze Antworten mit einfachen, konkreten Anschlussfragen, statt die Kürze zu kritisieren.",
+        "Der Coach setzt realistische, EBA-gerechte Erwartungen und vergleicht nicht mit anderen (E3, L4).",
+        "Das Feedback nennt mindestens eine konkrete Stärke aus dem Gespräch (z. B. Pünktlichkeit bei der Obsternte).",
+        "Das Feedback ist in kurzen, einfachen Sätzen formuliert (S1, S3) und endet ermutigend (A1)."
+      ],
+      "summary": {
+        "answers": 16,
+        "llm_calls_total": 29,
+        "llm_calls_avg": 1.81,
+        "llm_calls_max": 2,
+        "answers_with_retries": 0,
+        "follow_ups": 4,
+        "latency_avg_ms": 1476,
+        "duration_s": 33.7,
+        "overall_score": 2.2,
+        "gate_ok": true
+      },
+      "checks": {
+        "empty_comments": 4,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 6
+      },
+      "turns": [
+        {
+          "question_id": "q1",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Hallo Dario, willkommen! Erzähle mir kurz, wer du bist, welche Schule du besuchst und was dich in deiner Freizeit beschäftigt.",
+          "answer": "Jo, Sekundarschule Luzern, Töffli schrauben, Fischen, Hofhelfer.",
+          "llm_calls": 2,
+          "latency_ms": 1800,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q2",
+          "phase": "intro",
+          "is_follow_up": true,
+          "question": "Okay. Was genau macht dich beim Töffli schrauben mit deinem Cousin besonders motiviert?",
+          "answer": "Weil's Spass macht und wir zusammen sind.",
+          "llm_calls": 2,
+          "latency_ms": 1337,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q3",
+          "phase": "intro",
+          "is_follow_up": false,
+          "question": "Danke. Und wie gehst du mit Aufgaben um, wenn sie einmal schwierig sind oder nicht sofort klappen wollen?",
+          "answer": "Pack ich an und probiere weiter.",
+          "llm_calls": 2,
+          "latency_ms": 1851,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q4",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Das ist eine gute Haltung. Gibt es bei der Schule oder in deiner Freizeit schon etwas, wo du das Gefühl hast, dass du so etwas auch gut machen könntest?",
+          "answer": "Im Hofjob mit Äpfeln stapeln und helfen.",
+          "llm_calls": 2,
+          "latency_ms": 1503,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q5",
+          "phase": "motivation",
+          "is_follow_up": true,
+          "question": "Danke. Das zeigt, dass du Ordnung magst und gerne hilfst. Was würdest du machen, wenn eine Kundin im Supermarkt nach einem bestimmten Produkt fragt, das gerade nicht da ist?",
+          "answer": "Sage, wo ich schauen kann oder helfe nachzusuchen.",
+          "llm_calls": 2,
+          "latency_ms": 1406,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q6",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Okay. Gute Idee. Wie gehst du vor, wenn du die Ware im Supermarkt einräumen oder die Regale schön machen musst?",
+          "answer": "Pack ich schnell und ordentlich, damit alles gut aussieht.",
+          "llm_calls": 2,
+          "latency_ms": 1683,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q7",
+          "phase": "motivation",
+          "is_follow_up": false,
+          "question": "Danke. Das klingt gut. Hast du schon einmal etwas gelernt, wo du besonders stolz drauf bist?",
+          "answer": "Ja, Regale aufgefüllt und Kasse geholfen, Lob vom Chef.",
+          "llm_calls": 2,
+          "latency_ms": 1532,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q8",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Das zeigt, dass du gerne arbeitest und dich einbringst. Was möchtest du am liebsten in deinem Beruf machen?",
+          "answer": "Kundinnen helfen und Produkte präsentieren.",
+          "llm_calls": 2,
+          "latency_ms": 1439,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q9",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": true,
+          "question": "Okay. Das ist eine gute Vorstellung. Wie gehst du vor, wenn du mit einer Kundin sprechen musst, die nicht ganz zufrieden mit ihrem Einkauf ist?",
+          "answer": "Höre zu und helfe weiter, bis’s gut ist.",
+          "llm_calls": 2,
+          "latency_ms": 1598,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q10",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Danke. Das ist eine gute Herangehensweise. Hast du schon einmal etwas gelernt, wo du am liebsten besser werden möchtest?",
+          "answer": "Ja, schneller und besser mit Zahlen an der Kasse.",
+          "llm_calls": 2,
+          "latency_ms": 1804,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q11",
+          "phase": "strengths_weaknesses",
+          "is_follow_up": false,
+          "question": "Okay. Das ist ein klares Ziel. Was machst du am liebsten in deiner Freizeit und wie passt das zu deiner Arbeit als Detailhandelsassistent?",
+          "answer": "Töffli schrauben und am Hof helfen – praktisch, genau wie im Job.",
+          "llm_calls": 2,
+          "latency_ms": 1733,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q12",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Das zeigt, dass du gerne mit den Händen arbeitest und Verantwortung übernimmst. Was ist für dich das Wichtigste an einem Job im Supermarkt?",
+          "answer": "Dass er praktisch ist und ich mit Leuten arbeiten kann.",
+          "llm_calls": 2,
+          "latency_ms": 1712,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q13",
+          "phase": "situational",
+          "is_follow_up": true,
+          "question": "Okay. Das passt gut zu unserem Team hier. Was denkst du über die Arbeit im Stehen und im Team?",
+          "answer": "Gut, ich bin gewöhnt und helfe gerne zusammen.",
+          "llm_calls": 2,
+          "latency_ms": 1346,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q14",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Danke. Das ist ein wichtiger Punkt. Was würdest du tun, wenn du einen Fehler bei der Warenannahme entdeckst?",
+          "answer": "Sage sofort Bescheid und helfe, ihn zu korrigieren.",
+          "llm_calls": 2,
+          "latency_ms": 1451,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q15",
+          "phase": "situational",
+          "is_follow_up": false,
+          "question": "Okay. Das ist eine gute Reaktion. Gibt es etwas, das du noch wissen möchtest, bevor wir weitermachen?",
+          "answer": "Nein, mehr Fragen habe ich keine.",
+          "llm_calls": 1,
+          "latency_ms": 1326,
+          "turn_feedback": null
+        },
+        {
+          "question_id": "q16",
+          "phase": "candidate_questions",
+          "is_follow_up": false,
+          "question": "Das waren meine Fragen. Hast du noch Fragen an mich oder zum Betrieb?",
+          "answer": "Keine, danke fürs Gespräch.",
+          "llm_calls": 0,
+          "latency_ms": 101,
+          "turn_feedback": null
+        }
+      ],
+      "report": {
+        "session_id": "25a5da3f-fb94-424f-9990-eedcd50adf6a",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.2,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Die Antworten waren verständlich, aber manchmal etwas knapp formuliert, was die Bewertung von 3/4 erklärt.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Dein Interesse am Beruf ist erkennbar, aber konkrete Beispiele, die zeigen, dass du bereits Kundinnen unterstützt hast, fehlten, was die Bewertung von 2/4 erklärt.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast gezeigt, dass du gerne mit den Händen arbeitest und Verantwortung übernimmst, indem du im Hofjob Äpfel gestapelt und geholfen hast.",
+          "Du hast eine gute Haltung bei schwierigen Aufgaben, indem du sagtest, dass du einfach weitermachst, wenn etwas nicht sofort klappt."
+        ],
+        "improvements": [
+          {
+            "tip": "Ergänze deine Antwort mit einem konkreten Beispiel, wie du im Hofjob oder in der Schule eine schwierige Aufgabe gelöst hast, zum Beispiel indem du einen Plan gemacht oder eine Checkliste verwendet hast.",
+            "example_answer": "Ich habe im Hofjob, wenn Äpfel nicht richtig gestapelt waren, zuerst eine Checkliste gemacht, um sicherzustellen, dass alles ordentlich und stabil ist."
+          },
+          {
+            "tip": "Ergänze deine Antwort mit einem konkreten Beispiel, wie du die Arbeitsteilung zwischen schnellem Packen und ordentlichem Einräumen sicherst, zum Beispiel durch klare Priorisierung oder Checklisten.",
+            "example_answer": "Ich packe zuerst die dringend benötigten Artikel ein und räume danach die Regale ordentlich ein, um beides gut zu machen."
+          }
+        ],
+        "next_practice": [
+          "initiative",
+          "concrete_examples"
+        ],
+        "closing": "Viel Erfolg beim nächsten Mal – das war nur eine Übung!",
+        "support_note": null
+      }
+    }
+  ]
+}

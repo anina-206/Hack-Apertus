@@ -1,0 +1,1345 @@
+{
+  "bench": "transcripts",
+  "judge_model": "swiss-ai/Apertus-v1.5-70B",
+  "summary": {
+    "transcripts": 3,
+    "runs": 6,
+    "avg_calls_per_answer": 1.0,
+    "levels": {
+      "pairs": 44,
+      "mae": 0.75,
+      "exact": 0.48,
+      "within_1": 0.8,
+      "bias": -0.48,
+      "coverage": 0.79,
+      "extra": 0.15
+    },
+    "checks": {
+      "reports_with_empty_comments": 0.0,
+      "reports_with_formal_or_third_person": 0.0,
+      "reports_with_mojibake": 0.0,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.33
+    },
+    "overall_vs_quality_spearman": null,
+    "levels_by_lang": {
+      "fr": {
+        "pairs": 44,
+        "mae": 0.75,
+        "exact": 0.48,
+        "within_1": 0.8,
+        "bias": -0.48,
+        "coverage": 0.79,
+        "extra": 0.15
+      }
+    },
+    "overall_std_across_repeats": 0.07,
+    "judge": {
+      "grounding": 2.33,
+      "accuracy": 2.5,
+      "actionable": 3,
+      "tone": 2.67,
+      "language": 2.83,
+      "violations": {
+        "T3: Uses exaggerated praise ('excellente question')": 1,
+        "B1: Uses a character label ('trop perfectionniste')": 1,
+        "K1: Does not quote or reference specific moments in the conversation for every point": 1,
+        "R2: Lists too many points per criterion (multiple criteria have several points)": 1,
+        "S1: Uses unexplained jargon ('vidéo conférence')": 1,
+        "S2: Too much passive voice ('tes réponses étaient plus figées')": 1,
+        "L1: Implicitly judges appearance ('regard allait souvent vers ta feuille et moins vers la caméra')": 1,
+        "A1: Ends with vague encouragement rather than a concrete practice step": 1,
+        "K1: Plusieurs commentaires ne sont pas ancrés dans une citation ou un moment précis du transcript (ex. «Tes réponses étaient plus générales et moins claires au début» – aucune référence à une phrase exacte).": 1,
+        "K2: Les conseils sont parfois vagues («ajoute un lien direct avec le travail d'employée de commerce», «donne un exemple plus court d'une situation où cela a fonctionné») et ne proposent pas d'action concrète et mesurable.": 1,
+        "B1: Violation de B1 («Tu as expliqué comment tu t'es préparé… Nächstes Mal peux-tu ajouter un lien direct avec le travail d'employée de commerce…») – critique de la préparation, pas du comportement observé.": 1,
+        "L1: Violation de L1 («Continue ainsi!» peut être perçu comme une évaluation globale de la personne, pas du comportement).": 1,
+        "S1: Utilisation de jargon non expliqué («CFC», «maturité professionnelle») sans clarification.": 1,
+        "S2: Passif fréquent («tes réponses étaient plus générales», «tes exemples ont été donnés quand on a demandé par exemple») au lieu d'actif.": 1,
+        "S3: Phrases parfois trop longues et complexes («Nächstes Mal peux-tu ajouter un lien direct avec le travail d'employée de commerce, par exemple : «Ces habitudes m'ont appris à organiser des plannings et à communiquer clairement avec les clients.»» – phrase très longue).": 1,
+        "T1: Tonalité parfois légèrement condescendante («Nächstes Mal peux-tu…», «Continue ainsi!») et manque d'encouragement authentique.": 1,
+        "T2: Pas d'adaptation au niveau d'un jeune de 15 ans – le ton ressemble à un feedback scolaire traditionnel plutôt qu'à un coaching de développement.": 1,
+        "T3: Utilisation de «Nächstes Mal» qui peut sonner comme une note de travail plutôt qu'un encouragement.": 1,
+        "E1: Pas de mise en avant du «not yet» ou du potentiel de croissance – plutôt des corrections.": 1,
+        "E2: Pas d'usage de «pas encore» pour encourager l'amélioration.": 1,
+        "M1: Critique implicite de la nervosité («regard allait souvent vers ta feuille et moins vers la caméra») sans soutien empathique.": 1,
+        "A1: Absence d'une phrase finale clairement encourageante et centrée sur la pratique («C'était un très bon entraînement…») plutôt que sur l'évaluation.": 1,
+        "T1: The feedback uses exaggerated praise ('bonne force', 'très concret') and dramatising ('mal réagi' is used but not framed constructively)": 1,
+        "B1: Uses a character label ('mal réagi') instead of describing the observed behaviour ('a répondu de façon défensive au début')": 1,
+        "R2: Lists too many points (10 criteria) instead of focusing on 1–2 key takeaways": 1,
+        "S1: Uses unexplained jargon ('structure faits – ma part – ce que j'ai appris – ce qui a changé')": 1,
+        "S2: Passive voice used ('tes réponses étaient très courtes')": 1,
+        "S3: Long sentences ('Ta plus grande force, ce sont tes exemples concrets…')": 1,
+        "L2: Implicitly creates fear ('C'était un bon entraînement: ton parcours n'est pas un défaut…')": 1,
+        "A1: Closing sentence is somewhat encouraging but could be more explicitly positive and practice-focused": 1,
+        "T3: Uses exaggerated language ('bonne leçon', 'un de nos anciens apprentis est aujourd'hui chef de chantier chez nous, donc c'est possible' implies certainty rather than encouragement; 'C'était un bon entraînement' is slightly generic": 1,
+        "B2: Uses a character label 'mal réagi' instead of describing the observed behaviour": 1,
+        "K1: Many points lack direct quotes or specific references to the transcript (e.g., “Nechtest pas encore toujours donner des exemples complets” is vague and not tied to a specific moment).": 1,
+        "K3: Several statements invent content not present in the transcript (e.g., “Nechtest pas encore toujours reformuler ou donner des exemples concrets pour toutes les questions” – the transcript shows concrete examples were given, so this is false).": 1,
+        "B1: Uses vague personality judgments like “Nechtest pas encore toujours…” which imply character flaws rather than behavior.": 1,
+        "L1: Implicitly judges the candidate’s preparation (“Nechtest pas encore toujours connaissance de l’entreprise”) without evidence.": 1,
+        "R2: Lists too many points per criterion (multiple issues per criterion without prioritization).": 1,
+        "R3: No clear, concrete next step is given; only vague tips like “Donne un détail plus précis” without context.": 1,
+        "S1: Uses jargon (“quantités”, “EFZ”) without explanation.": 1,
+        "S2: Passive voice used (“tes réponses pourraient être plus claires” instead of “Tu peux rendre tes réponses plus claires”).": 1,
+        "T1: Tone is critical and discouraging (“Nechtest pas encore toujours…”) rather than encouraging.": 1,
+        "T2: Not at eye level – sounds like a teacher grading rather than a supportive coach.": 1,
+        "T3: Dramatizes weaknesses (“assez basse”, “pas bon en maths”) without supportive framing.": 1,
+        "T1: Appreciative and encouraging, never condescending or ironic": 1,
+        "T2: Speak at eye level – like a supportive coach, not a teacher handing out grades": 1,
+        "S1: Clear, simple sentences; no unexplained HR/psychology jargon": 1,
+        "S2: Active rather than passive voice": 1,
+        "S3: Short sentences": 1,
+        "S4: Language of the interview": 1,
+        "B1: Feedback always refers to the observed behaviour/answer, never to the person as a whole": 1,
+        "L1: No judgement of appearance, voice (except re nervousness), family background or personality traits": 1,
+        "L2: Never create fear": 1,
+        "A1: Always end with an encouraging sentence that stresses the practice character": 1
+      }
+    },
+    "reports_failed": 0,
+    "failed": []
+  },
+  "records": [
+    {
+      "transcript_id": "T-08",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": 3,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": 2,
+        "initiative": 4
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 2,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 4,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "overall_score": 2.9,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 10,
+      "both_seen": 10,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.1,
+        "observed_criteria": 10
+      },
+      "report": {
+        "session_id": "T-08",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.9,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as répondu clairement et structurément aux questions, en expliquant tes exemples concrîtement.",
+            "evidence": "un petit planning: d'abord les devoirs du grand pendant que la petite dessine, après on inverse"
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 3,
+            "comment": "Tes réponses correspondent bien aux t\\u'ches demandées pour le métier d'employée de commerce.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tu as montré un int\\u'gress sinc\\u�r pour le contact humain et les langues.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": 2,
+            "comment": "Tu as identifié un point faible concret (le perfectionnisme) et expliquié comment tu tues y prendre.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 3,
+            "comment": "Tu as parlé poliment et avec un ton clair pendant tout l'entretien.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 2,
+            "comment": "Tu as donnu des exemples concrets de situations personnelles (babysitting, stage) qui illustrent tes qualités.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 4,
+            "comment": "Tu es resté polie et calme tout au long de l'entretien.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": 3,
+            "comment": "Tu as testé la vid\\u�o conf\\u�renc e en avance et emportu des notes sur l'agence.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": 3,
+            "comment": "Tu as des id\\u�es claires sur ton CFC et sur tes projets futurs dans le tourisme.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": 4,
+            "comment": "\"Oui\" tu as posé des questions pr\\u�actiques sur le voyage d'⅍'tude et les contactes possibles.\"",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du as testé Teams hier avec ta cousine, ce qui montre une bonne préparation technique.",
+          "Tu as donné des exemples concrets de ton organisation, comme ton planning de babysitting et ton carnet de voyage, ce qui relie bien tes qualités au métier."
+        ],
+        "improvements": [
+          {
+            "tip": "Pour la motivation, essaie d'ajouter un exemple concret d'une situation où tu as apprécié le contact humain ou la gestion des langues, par exemple : “Lors d'un stage, j'ai adoré accueillir les clients et gérer les commandes.”",
+            "example_answer": "Ich habe im letzten Sommer bei einer Reiseagentur gearbeitet und ich habe Kunden bei der Reservierung von Flügen geholfen. Das hat mir gezeigt, dass ich gerne mit Menschen arbeite und verschiedene Sprachen spreche."
+          },
+          {
+            "tip": "Pour l'auto-réflexion, quand tu parles d'un point faible comme le perfectionnisme, donne un exemple concrît de ce que tu fais pour y remédier, par exemple : “Je me fixe une limite de temps pour finir mes slides et je m'entraíne juste avant la prœsentation.”",
+            "example_answer": "Ich setze mir eine klare Frist für die Fertigstellung meiner Präsentationen, zum Beispiel: Ich habe meine Slides bis Mittwoch fertig und übe nur noch am Donnerstag."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "self_reflection"
+        ],
+        "closing": "Ce fut une bonne pratique pour ton prochain entretien, continue ainsi !",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 3,
+          "accuracy": 3,
+          "actionable": 3,
+          "tone": 3,
+          "language": 3
+        },
+        "violations": [
+          "T3: Uses exaggerated praise ('excellente question')",
+          "B1: Uses a character label ('trop perfectionniste')",
+          "K1: Does not quote or reference specific moments in the conversation for every point",
+          "R2: Lists too many points per criterion (multiple criteria have several points)",
+          "S1: Uses unexplained jargon ('vidéo conférence')",
+          "S2: Too much passive voice ('tes réponses étaient plus figées')",
+          "L1: Implicitly judges appearance ('regard allait souvent vers ta feuille et moins vers la caméra')",
+          "A1: Ends with vague encouragement rather than a concrete practice step"
+        ],
+        "comment": "The feedback is moderately grounded and accurate but lacks concrete evidence for each point, uses vague or inappropriate labels, and fails to follow several FHGR rules on tone, language, and actionability."
+      }
+    },
+    {
+      "transcript_id": "T-08",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": 3,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": 2,
+        "initiative": 4
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 2,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 4,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "overall_score": 2.9,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 10,
+      "both_seen": 10,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.1,
+        "observed_criteria": 10
+      },
+      "report": {
+        "session_id": "T-08",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.9,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as expliqué comment tu t'es préparé également les notes et la mise en silence du téléphone. Náchtest Mal peux-tu ajouter un lien direct avec le travail d'employée de commerce, par exemple : «Ces habitudes m'ont appris  organiser des plannings et  communiquer clairement avec les clients.»",
+            "evidence": "J'ai testé Teams hier avec ma cousine, pour voir si le son marchait. Je me suis installée dans ma chambre, j'ai fermé la porte et j'ai mis mon téléphone en silencieux"
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 3,
+            "comment": "Tu as donné des exemples concrets tirés de ta vie quotidienne (babysitting, voyages familiaux) qui correspondent bien au travail d'employée de commerce. Náchtest Mal peux-tu lier chaque exemple § directement au travail ⟯ la correspondance et les commandes.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tes raisons sont claires (contact humain, langues) et tu as donné un exemple concret du client suisse allemand. Náchtest Mal peux-tu ajouter ce que tu as appris de cette situation concr\\u�te.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": 2,
+            "comment": "Tu as identifié ton point faible (perfectionnisme) et donné une strat\\u�gie concr\\u�te (limite pour les slides). Náchtest Mal peux-tu donner un exemple plus court d'une situation o└ cela a fonctionn\\u�eb.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 3,
+            "comment": "Ta formulation est claire et polie. N├chtest Mal peux-tu ajouter un petit lien avec le travail demand\\u�eb comme dans notre entreprise : «Ces habitudes m'ont appris ⟯ communiquer clairement avec les clients et ⟯ organiser des documents.»",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 2,
+            "comment": "Tu donnes des exemples concrets (babysitting, carnet de voyage), mais n'a pas encore lii tous ces exemples directement au travail d'employée de commerce. N├chtest Mal peux-tu faire ce lien explicite.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 4,
+            "comment": "Tu es polie et calme pendant l'entretien. Continue ainsi!",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": 3,
+            "comment": "Tu as testé Teams et pr\\u�ebarais tes notes. Continues ainsi pour les questions sur le travail demand\\u�eb.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": 3,
+            "comment": "Tes objectifs sont clairs (CFC, maturi� professionnelle, voyage linguistique). Ajoute un exemple concret d'une activit� lii au tourisme que tu as observ� ou pratiqu�.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": 4,
+            "comment": "\"Oui\" quand on te demande si on peut te contacter – bonne attitude proactive. Tu pourrais aussi proposer une question plus personnelle sur nos valeurs ou nos projets futurs.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du as testé Teams hier avec ta cousine et tu as préparé une feuille avec des notes sur notre agence et sur toi.",
+          "Du donnes des exemples concrets comme le babysitting et l'organisation des voyages de la famille, ce qui montre que tu sais planifier et gérer des t'ches."
+        ],
+        "improvements": [
+          {
+            "tip": "Pour la question sur ton point faible, explique comment tu vas continuer à travailler sur le perfectionnisme, par exemple en fixant une heure limite pour tes slides.",
+            "example_answer": "Ich setze mir eine feste Zeitgrenze, zum Beispiel: die Slides fertig bis Mittwoch, und erst am Donnerstag übe ich sie."
+          },
+          {
+            "tip": "Quand tu parles de tes objectifs professionnels, donne un exemple concret d'une activité que tu as dá ja fait ou observé, comme un voyage scolaire ou un séjour linguistique que tu as vu sur notre site.",
+            "example_answer": "Ich habe letztes Jahr einen Tagesausflug mit meiner Klasse nach Vevey gemacht, und das hat mir gezeigt, wie viel Spass es macht, neue Orte zu entdecken."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Ce fut un excellent exercice de simulation, continue ainsi pour le vrai entretien!",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 2,
+          "accuracy": 2,
+          "actionable": 3,
+          "tone": 3,
+          "language": 3
+        },
+        "violations": [
+          "K1: Plusieurs commentaires ne sont pas ancrés dans une citation ou un moment précis du transcript (ex. «Tes réponses étaient plus générales et moins claires au début» – aucune référence à une phrase exacte).",
+          "K2: Les conseils sont parfois vagues («ajoute un lien direct avec le travail d'employée de commerce», «donne un exemple plus court d'une situation où cela a fonctionné») et ne proposent pas d'action concrète et mesurable.",
+          "B1: Violation de B1 («Tu as expliqué comment tu t'es préparé… Nächstes Mal peux-tu ajouter un lien direct avec le travail d'employée de commerce…») – critique de la préparation, pas du comportement observé.",
+          "L1: Violation de L1 («Continue ainsi!» peut être perçu comme une évaluation globale de la personne, pas du comportement).",
+          "S1: Utilisation de jargon non expliqué («CFC», «maturité professionnelle») sans clarification.",
+          "S2: Passif fréquent («tes réponses étaient plus générales», «tes exemples ont été donnés quand on a demandé par exemple») au lieu d'actif.",
+          "S3: Phrases parfois trop longues et complexes («Nächstes Mal peux-tu ajouter un lien direct avec le travail d'employée de commerce, par exemple : «Ces habitudes m'ont appris à organiser des plannings et à communiquer clairement avec les clients.»» – phrase très longue).",
+          "T1: Tonalité parfois légèrement condescendante («Nächstes Mal peux-tu…», «Continue ainsi!») et manque d'encouragement authentique.",
+          "T2: Pas d'adaptation au niveau d'un jeune de 15 ans – le ton ressemble à un feedback scolaire traditionnel plutôt qu'à un coaching de développement.",
+          "T3: Utilisation de «Nächstes Mal» qui peut sonner comme une note de travail plutôt qu'un encouragement.",
+          "E1: Pas de mise en avant du «not yet» ou du potentiel de croissance – plutôt des corrections.",
+          "E2: Pas d'usage de «pas encore» pour encourager l'amélioration.",
+          "M1: Critique implicite de la nervosité («regard allait souvent vers ta feuille et moins vers la caméra») sans soutien empathique.",
+          "A1: Absence d'une phrase finale clairement encourageante et centrée sur la pratique («C'était un très bon entraînement…») plutôt que sur l'évaluation."
+        ],
+        "comment": "Le feedback manque d'ancrage dans le transcript, contient des conseils vagues et parfois des jugements implicites sur la personne plutôt que sur le comportement, et ne respecte pas pleinement les règles de ton et de langage attendues pour un jeune de 14-16 ans."
+      }
+    },
+    {
+      "transcript_id": "T-12",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 4,
+        "self_reflection": 3,
+        "communication": 2,
+        "concrete_examples": 4,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": 3,
+        "difficult_questions": 3,
+        "initiative": 3
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "overall_score": 2.6,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 8,
+      "both_seen": 8,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 1.0,
+        "observed_criteria": 8
+      },
+      "report": {
+        "session_id": "T-12",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.6,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as donné des réponses compréhensibles et structurées, notamment en expliquant tes changements d'organisation.",
+            "evidence": "depuis mars, je mets deux réveils, je prends le bus d'avant et je prépare mes affaires le soir"
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 3,
+            "comment": "Tes réponses correspondent bien aux questions sur ton parcours et le métier d'installateur sanitaire.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tu as montré un intérêt réel pour le métier grâce à tes expériences concrètes et ta volonté de réussir ton apprentissage.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": 3,
+            "comment": "Tu as pu identifier une faiblesse (tes retards) et expliquer comment tu t'es amélioré concrètement.",
+            "evidence": "j'ai encore été en retard deux fois. Depuis mars"
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 3,
+            "comment": "Tu as été poli et clair dans tes réponses, notamment en expliquant tes difficultés passées et ta motivation actuelle.",
+            "evidence": "Merci de m'avoir laissé expliquer pour l'apprentissage. Au début j'ai mal réagi"
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 1,
+            "comment": "Tu as utilisé des exemples précis comme l'aide à la salle de bain ou le stage au SeMo pour illustrer ton intérêt pour le métier.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo"
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 3,
+            "comment": "Tu es resté poli et ouvert durant l'entretien, même quand il s'agissait de parler de difficultés passées.",
+            "evidence": "Merci de m'avoir laissé expliquer pour l'apprentissage. Au début j'ai mal réagi"
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": 3,
+            "comment": "Tu as des idées claires sur ta carrière future avec le CFC puis le brevet de chef de projet en technique du bâtiment.",
+            "evidence": "C'est ma deuxième chance, je veux le finir"
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Tu as montré une réelle volonté de changement en expliquant comment tu as réduit tes retards grâce à une meilleure organisation personnelle.",
+          "Tu as donné des exemples concrets de ton expérience pratique, comme l'aide à la salle de bain chez ton oncle et le stage au SeMo, ce qui démontre ton intérêt pour le métier.",
+          "Tu as su expliquer une difficulté rencontrée (le joint qui a fui) et ce que tu en as appris sur l'importance de la précision."
+        ],
+        "improvements": [
+          {
+            "tip": "Donne plus de détails sur ce que tu as ressenti lors des t'ches concrètes, par exemple : “Quand j”",
+            "example_answer": "Ich habe beim montage des lavabos beim Onkel das Gefühl gehabt, dass es wichtig ist, genau zu arbeiten, sonst muss man alles wieder auseinandernehmen."
+          },
+          {
+            "tip": "Explique plus précisément comment tu t'es adapté au rythme du chantier avec un exemple concret.",
+            "example_answer": "Ich habe gelernt, dass man am Morgen früh anfangen muss und immer pünktlich sein sollte, um den Tag gut zu beginnen."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "C'est très bien que tu aies pratiqué aujourd'hui, et chaque entretien te rendra plus à l'aise.",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 3,
+          "accuracy": 3,
+          "actionable": 3,
+          "tone": 3,
+          "language": 3
+        },
+        "violations": [
+          "T1: The feedback uses exaggerated praise ('bonne force', 'très concret') and dramatising ('mal réagi' is used but not framed constructively)",
+          "B1: Uses a character label ('mal réagi') instead of describing the observed behaviour ('a répondu de façon défensive au début')",
+          "R2: Lists too many points (10 criteria) instead of focusing on 1–2 key takeaways",
+          "S1: Uses unexplained jargon ('structure faits – ma part – ce que j'ai appris – ce qui a changé')",
+          "S2: Passive voice used ('tes réponses étaient très courtes')",
+          "S3: Long sentences ('Ta plus grande force, ce sont tes exemples concrets…')",
+          "L2: Implicitly creates fear ('C'était un bon entraînement: ton parcours n'est pas un défaut…')",
+          "A1: Closing sentence is somewhat encouraging but could be more explicitly positive and practice-focused"
+        ],
+        "comment": "The AI feedback is moderately helpful but violates several FHGR rules, particularly around tone, language simplicity, and focus. It invents some content ('bonne force') and uses vague or passive language, while the expert feedback is far more actionable and aligned with the rules."
+      }
+    },
+    {
+      "transcript_id": "T-12",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 2,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 4,
+        "self_reflection": 3,
+        "communication": 2,
+        "concrete_examples": 4,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": 3,
+        "difficult_questions": 3,
+        "initiative": 3
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 3,
+        "preparation": 2,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": 1
+      },
+      "overall_score": 2.5,
+      "pairs": [
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 10,
+      "both_seen": 10,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.2,
+        "observed_criteria": 10
+      },
+      "report": {
+        "session_id": "T-12",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.5,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as expliqué tes étapes de travail avec ton oncle et ta gestion des retards de manière logique et compréhensible.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo. Et au stage du SeMo, une semaine, j'ai posé des conduites avec un monteur et on a monté une salle de bain dans un immeuble"
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 3,
+            "comment": "Tu as bien lié tes expériences concrètes comme l'aide à ton oncle et le stage au SeMo au métier d'installateur sanitaire.",
+            "evidence": "J'ai aidé mon oncle à refaire sa salle de bain: on a tout démonté, on a posé le carrelage et un lavabo. Et au stage du SeMo, une semaine, j'ai posé des conduites avec un monteur et on a monté une salle de bain dans un immeuble"
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tu as montré un intérêt authentique pour le métier grâce à tes expériences pratiques chez ton oncle et au stage au SeMo.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": 3,
+            "comment": "Tu as pu identifier tes erreurs passées concernant les retards et décrire comment tu as changé ton comportement.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 3,
+            "comment": "Tu as répondu aux questions posées avec des exemples concrets tirés de ta vie quotidienne ou professionnelle.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 2,
+            "comment": "Tu as fourni des exemples concrets de tes actions comme l'aide à ton oncle ou le stage au SeMo pour illustrer ton intérêt.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 3,
+            "comment": "Tu es resté poli et ouvert durant l'entretien malgré la nervosité initiale.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": 2,
+            "comment": "Tu n'as pas montré une connaissance très détaillée de l'entreprise Jaquet & Robert Sanitaire ni des exigences précises du métier d'installateur sanitaire EFZ.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": 3,
+            "comment": "Tu as exprimé clairement tes objectifs professionnels à long terme comme obtenir le brevet de chef de projet en technique du bâtiment après avoir terminé ton CFC.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": 1,
+            "comment": "[candidate_questions] Tu n'as pas posé de question précise sur la formation ou l'entreprise durant l'entretien final.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Tu as expliqué clairement les étapes concrètes de ton travail avec ton oncle, comme le démontage et le raccordement du lavabo, ce qui montre ton intérêt pratique pour le métier.",
+          "Tu as montré une réelle évolution personnelle en expliquant comment tu as changé ton comportement concernant les retards, en mettant deux réveils et en préparant tes affaires la veille."
+        ],
+        "improvements": [
+          {
+            "tip": "Donne un exemple précis d'une compétence technique que tu as apprise lors de ton stage au SeMo, comme la lecture des plans ou le calcul des quantités, pour renforcer ta pertinence.",
+            "example_answer": "Ich habe gelernt, einfache Installationspläne zu studieren und die Masse für die benötigten Teile zu berechnen."
+          },
+          {
+            "tip": "Pose une question plus précise sur le contenu de la formation, par exemple sur les compétences spécifiques enseignées lors des dépannages, pour montrer ton engagement et ta curiosité.",
+            "example_answer": "Ich möchte wissen, welche spezifischen technischen Fähigkeiten werden während der Reparaturen gelehrt?"
+          }
+        ],
+        "next_practice": [
+          "initiative",
+          "concrete_examples"
+        ],
+        "closing": "Merci d'avoir pratiqué cet entretien aujourd'hui, c'était très constructif pour préparer ton prochain entretien réel.",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 3,
+          "accuracy": 3,
+          "actionable": 4,
+          "tone": 3,
+          "language": 3
+        },
+        "violations": [
+          "T3: Uses exaggerated language ('bonne leçon', 'un de nos anciens apprentis est aujourd'hui chef de chantier chez nous, donc c'est possible' implies certainty rather than encouragement; 'C'était un bon entraînement' is slightly generic",
+          "B2: Uses a character label 'mal réagi' instead of describing the observed behaviour"
+        ],
+        "comment": "The feedback is moderately grounded and actionable but lacks precision in tone and language, and mislabels behaviour as character traits."
+      }
+    },
+    {
+      "transcript_id": "T-19",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 10,
+      "analysis_calls": 10,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "concrete_examples": 3,
+        "motivation": 3,
+        "difficult_questions": 2,
+        "self_reflection": 3,
+        "initiative": 3,
+        "preparation": 2
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 2,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 1
+      },
+      "overall_score": 2,
+      "pairs": [
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "gold_seen": 6,
+      "pred_seen": 7,
+      "both_seen": 3,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.43,
+        "observed_criteria": 7
+      },
+      "report": {
+        "session_id": "T-19",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as bien structuré tes r\\u�¿ponses, mais elles pourraient être plus claires sur des points spŬifiques comme le calcul des quantit\\u21es. N\\xc3\\xa8chtest pas encore toujours donner des exemples complets. N\\xc3\\xa8chtest pas encore toujours donner des exemples complets.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 2,
+            "comment": "Tu as donné des raisons personnelles pour la logistique, comme “J'aime bouger,\" mais tu pourrais lier plus directement ces motivations aux t\\xc3\\xa2ches concr\\u�¿tes du logistiker EFZ. N\\xc3\\xa8chtest pas encore toujours lier directement aux t\\xc3\\xa2ches concr\\u�¿tes du logistiker EFZ.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tu as montré un int\\u�¿r\\xc3\\xaet pour la logistique en citant ton expŬrience au dépôt, mais tu pourrais souligner plus clairement ce que ce travail apporte concr\\xeetement. N\\xc3\\xa8chtest pas encore toujours souligner plus clairement ce que ce travail apporte concr\\xeetement.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 2,
+            "comment": "Ta communication est claire quand tu donnes des exemples concrets comme ⟬ Je suis ponctuel et je travaille dur.\"\", \"N\\xc3\\xa8chtest pas encore toujours reformuler ou donner des exemples concrets pour toutes les questions.\"",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 1,
+            "comment": "Tu donnes des exemples concrets de ton expŬrience au dépôt de la Migros, comme ⟬ J'ai travaillé cet ⟬ avec mon cousin,\" mais ils pourraient ⟬ tre plus explicites sur les t\\xc3\\xa2ches effectuŮes. N\\xc3\\xa8chtest pas encore toujours explicites sur les t\\xc3\\xa2ches effectuᛮs.",
+            "evidence": "j'ai travaillé au dépôt de la Migros avec mon cousin, on préparait les palettes"
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 3,
+            "comment": "Tu as montr'é une attitude polie et confi'ante avec des phrases comme \"Merci beaucoup,\" et tu es rest'é attentif pendant l'entretien. Continue ainsi !\"",
+            "evidence": "Bonjour. Oui, j'ai pris le bus"
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": 1,
+            "comment": "Tu n'as pos'é qu'une seule question concr'ete sur le permis de chariot élévateur. Essaie de poser une question plus large sur le contenu ou les conditions d'entrée pour montrer ton int'éressement profond.",
+            "evidence": "Quand est-ce qu'on passe le permis de chariot élévateur ?"
+          }
+        ],
+        "strengths": [
+          "Du as présenté ton nom, ton âge et tes centres d'intérêt avec clarté, comme “Je m'appelle Kevin, j'ai 15 ans, je suis à Delémont. J'aime le foot et la mécanique.\",",
+          "Tu as donné un exemple concret de ton expérience au dépôt de la Migros, comme “J'ai travaillé cet été avec mon cousin, on préparait les palettes.\"",
+          "Tu as montré de la ponctualité et du travail acharné avec un exemple concret, comme “Je commen쳭ila à six heures et j'étais jamais en retard.\""
+        ],
+        "improvements": [
+          {
+            "tip": "Donne un détail plus pr\\u�cis de ce que tu as fait au dépôt",
+            "example_answer": "Ich habe die Kartons pro Palette gezählt und die Strichcodes mit dem Scanner eingegeben."
+          },
+          {
+            "tip": "Explique comment tu gagnes confiance si tu es moins bon en maths pour ce métier",
+            "example_answer": "Ich kann die Artikel zählen und die Mengen auf den Lieferzetteln eintragen."
+          }
+        ],
+        "next_practice": [
+          "initiative",
+          "concrete_examples"
+        ],
+        "closing": "Ce fut une bonne pratique pour préparer ton entretien. Continue ainsi !",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 1,
+          "accuracy": 2,
+          "actionable": 2,
+          "tone": 2,
+          "language": 3
+        },
+        "violations": [
+          "K1: Many points lack direct quotes or specific references to the transcript (e.g., “Nechtest pas encore toujours donner des exemples complets” is vague and not tied to a specific moment).",
+          "K3: Several statements invent content not present in the transcript (e.g., “Nechtest pas encore toujours reformuler ou donner des exemples concrets pour toutes les questions” – the transcript shows concrete examples were given, so this is false).",
+          "B1: Uses vague personality judgments like “Nechtest pas encore toujours…” which imply character flaws rather than behavior.",
+          "L1: Implicitly judges the candidate’s preparation (“Nechtest pas encore toujours connaissance de l’entreprise”) without evidence.",
+          "R2: Lists too many points per criterion (multiple issues per criterion without prioritization).",
+          "R3: No clear, concrete next step is given; only vague tips like “Donne un détail plus précis” without context.",
+          "S1: Uses jargon (“quantités”, “EFZ”) without explanation.",
+          "S2: Passive voice used (“tes réponses pourraient être plus claires” instead of “Tu peux rendre tes réponses plus claires”).",
+          "T1: Tone is critical and discouraging (“Nechtest pas encore toujours…”) rather than encouraging.",
+          "T2: Not at eye level – sounds like a teacher grading rather than a supportive coach.",
+          "T3: Dramatizes weaknesses (“assez basse”, “pas bon en maths”) without supportive framing."
+        ],
+        "comment": "The AI feedback fails to meet most FHGR rules: it invents content, lacks grounding, uses vague and discouraging language, and provides no clear actionable steps."
+      }
+    },
+    {
+      "transcript_id": "T-19",
+      "lang": "fr",
+      "dialect": null,
+      "overall_quality": "mixed",
+      "candidate_answers": 10,
+      "analysis_calls": 10,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "concrete_examples": 3,
+        "motivation": 3,
+        "difficult_questions": 2,
+        "self_reflection": 3,
+        "initiative": 3,
+        "preparation": 2
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 3,
+        "concrete_examples": 1,
+        "demeanor": 3,
+        "preparation": null,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": 1
+      },
+      "overall_score": 2.3,
+      "pairs": [
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "gold_seen": 6,
+      "pred_seen": 7,
+      "both_seen": 3,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.14,
+        "observed_criteria": 7
+      },
+      "report": {
+        "session_id": "T-19",
+        "language": "fr",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 2.3,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Clarté",
+            "score": 3,
+            "comment": "Tu as répondu directement aux questions mais parfois tes réponses manquent de structure claire. Nächstes Mal kannst du ... structurer tes réponses en commençant par un point principal.",
+            "evidence": "Euh… je sais pas"
+          },
+          {
+            "id": "relevance",
+            "label": "Pertinence",
+            "score": 3,
+            "comment": "Tes réponses restent globalement pertinentes mais manquent parfois d'exemples précis liés au métier.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "Tu as montré un intérêt pour le métier et l'entreprise, notamment grâce à ton expérience au dépôt de la Migros.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Réflexion sur soi",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Communication",
+            "score": 3,
+            "comment": "Tu as été poli et compréhensible, même si parfois ta confiance a fluctué.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Exemples concrets",
+            "score": 1,
+            "comment": "Tu as donné un exemple concret (compter les cartons par palette) mais n'as pas toujours expliqué ce que cela montre comme compétence.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Attitude & impression",
+            "score": 3,
+            "comment": "Tu étais poli et respectueux tout au long de l'entretien.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Préparation / connaissance de l'entreprise",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Orientation vers les objectifs",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Gestion des questions difficiles",
+            "score": null,
+            "comment": "L'entretien n'a pas donné d'indication à ce sujet.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Initiative",
+            "score": 1,
+            "comment": "Tu n'as posé qu'une seule question concrète à la fin, alors que tu aurais pu approfondir davantage sur l'entreprise ou le métier.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du as donné une information personnelle concrète (que tu as pris le bus) et tu as bien présenté ton identité et tes centres d'intérêt.",
+          "Tu as donné un exemple concret de ce que tu as déjà fait avec la mécanique (aider ton père à réparer le vélo de ta sœur)."
+        ],
+        "improvements": [
+          {
+            "tip": "Explique comment tu peux compenser tes difficultés en maths, par exemple en utilisant des outils ou en demandant de l'aide.",
+            "example_answer": "Ich benutze einen Taschenrechner oder frage meine Kollegen, wenn ich unsicher bin."
+          },
+          {
+            "tip": "Pose une question concrète sur le métier de logistiker/in ou sur l'entreprise FHGR, par exemple : \"Quelles compétences pratiques sont les plus importantes pour réussir en tant que logistiker/in ?\"",
+            "example_answer": "Ich würde gerne wissen, welche praktischen Fähigkeiten am wichtigsten sind, um effizient im Lager zu arbeiten."
+          }
+        ],
+        "next_practice": [
+          "initiative",
+          "concrete_examples"
+        ],
+        "closing": "Ce fut une bonne pratique et tu es prêt pour le prochain entretien.",
+        "support_note": null
+      },
+      "judge": {
+        "scores": {
+          "grounding": 2,
+          "accuracy": 2,
+          "actionable": 3,
+          "tone": 2,
+          "language": 2
+        },
+        "violations": [
+          "T1: Appreciative and encouraging, never condescending or ironic",
+          "T2: Speak at eye level – like a supportive coach, not a teacher handing out grades",
+          "S1: Clear, simple sentences; no unexplained HR/psychology jargon",
+          "S2: Active rather than passive voice",
+          "S3: Short sentences",
+          "S4: Language of the interview",
+          "B1: Feedback always refers to the observed behaviour/answer, never to the person as a whole",
+          "L1: No judgement of appearance, voice (except re nervousness), family background or personality traits",
+          "L2: Never create fear",
+          "A1: Always end with an encouraging sentence that stresses the practice character"
+        ],
+        "comment": "The feedback lacks grounding (many comments have no evidence), uses inappropriate German mixed with French, and fails to follow the age-appropriate, encouraging tone required for a 15-year-old."
+      }
+    }
+  ]
+}

@@ -1,0 +1,426 @@
+{
+  "bench": "transcripts",
+  "judge_model": null,
+  "summary": {
+    "transcripts": 2,
+    "runs": 2,
+    "avg_calls_per_answer": 1.0,
+    "levels": {
+      "pairs": 17,
+      "mae": 0.76,
+      "exact": 0.35,
+      "within_1": 0.88,
+      "bias": -0.76,
+      "coverage": 0.81,
+      "extra": 0.0
+    },
+    "checks": {
+      "reports_with_empty_comments": 0.5,
+      "reports_with_formal_or_third_person": 0.5,
+      "reports_with_mojibake": 0.0,
+      "reports_with_wrong_language": 0.0,
+      "evidence_share_avg": 0.0
+    },
+    "overall_vs_quality_spearman": null,
+    "levels_by_lang": {
+      "de": {
+        "pairs": 17,
+        "mae": 0.76,
+        "exact": 0.35,
+        "within_1": 0.88,
+        "bias": -0.76,
+        "coverage": 0.81,
+        "extra": 0.0
+      }
+    },
+    "overall_std_across_repeats": null,
+    "reports_failed": 0,
+    "failed": []
+  },
+  "records": [
+    {
+      "transcript_id": "T-01",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "strong",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 4,
+        "relevance": 4,
+        "motivation": 4,
+        "self_reflection": 4,
+        "communication": 3,
+        "concrete_examples": 4,
+        "demeanor": 4,
+        "preparation": 4,
+        "goal_orientation": 4,
+        "difficult_questions": 3,
+        "initiative": 4
+      },
+      "scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 3,
+        "self_reflection": 3,
+        "communication": 3,
+        "concrete_examples": 2,
+        "demeanor": 4,
+        "preparation": 3,
+        "goal_orientation": 3,
+        "difficult_questions": null,
+        "initiative": 4
+      },
+      "overall_score": 3.1,
+      "pairs": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "gold_seen": 11,
+      "pred_seen": 10,
+      "both_seen": 10,
+      "checks": {
+        "empty_comments": 0,
+        "formal_or_third_person": 1,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 10
+      },
+      "report": {
+        "session_id": "T-01",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 3.1,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 3,
+            "comment": "Deine Antworten sind verständlich, zeigen aber noch Raum zur Strukturierung, z.B. beim Erklären von Projekterfahrungen.",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 3,
+            "comment": "Deine Antworten passen gut zum Beruf, zeigen aber noch weniger Bezug zu spezifischen Aufgaben der Plessur Maschinenbau.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 3,
+            "comment": "Du zeigst echtes Interesse an CAD und Maschinenbau, aber verbinde deine Schnuppererfahrungen noch stärker mit deinen Wünschen.",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": 3,
+            "comment": "Du erkennst deine Schwäche beim gleichzeitigen Arbeiten und suchst nach Lösungen, was realistisch ist.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 3,
+            "comment": "Du bist höflich und aktiv zuhörend, deine Antworten sind aber noch etwas unspezifisch in Details.",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 2,
+            "comment": "Du gibst konkrete Beispiele wie das Kran-Modell, aber sie könnten noch stärker mit den spezifischen Anforderungen des Berufs verknüpft werden.",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 4,
+            "comment": "Du wirkst selbstbewusst und freundlich, deine Körpersprache war positiv.",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 3,
+            "comment": "Du hast dich gut über die Firma informiert, aber noch weniger über spezifische Projekte oder Teamstrukturen.",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": 3,
+            "comment": "Deine langfristigen Ziele sind klar, sie könnten aber noch stärker mit deinen konkreten Interessen im Beruf verknüpft werden.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": 4,
+            "comment": "Du hast zwei gezielte Fragen vorbereitet, die zeigen, dass du dich gut vorbereitet hast.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast deine Hobbys wie Lego Technic und Veloreparaturen erwähnt, die deine technischen Interessen und praktischen Fähigkeiten zeigen.",
+          "Du verbindest deine Schnupperlehre mit konkreten Erlebnissen, wie dem Zeichnen in CAD und dem Fräsen, und erklärst, was du daraus gelernt hast."
+        ],
+        "improvements": [
+          {
+            "tip": "Ergänze deine Hobbys mit einem konkreten Beispiel, wie sie dich auf die Konstruktion vorbereiten, z.B. \"Beim Bauen von Lego-Modellen habe ich gelernt, wie Teile zusammenpassen.\"",
+            "example_answer": "Ich habe beim Bauen von Lego-Technic-Modellen gelernt, wie Teile zusammenpassen und welche Spannungen beim Zusammenbau entstehen."
+          },
+          {
+            "tip": "Formuliere eine konkrete Frage zur Arbeitsweise, z.B. \"Können Sie erklären, wie die Toleranzen hier definiert sind?\"",
+            "example_answer": "Ich würde fragen, wie genau die Toleranzen bei den technischen Zeichnungen definiert und kontrolliert werden."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Du hast heute viel ge�bt und kannst aus diesem Gespräch noch viel lernen – viel Erfolg beim nächsten Mal!",
+        "support_note": null
+      }
+    },
+    {
+      "transcript_id": "T-06",
+      "lang": "de",
+      "dialect": null,
+      "overall_quality": "weak",
+      "candidate_answers": 14,
+      "analysis_calls": 14,
+      "report_calls": 1,
+      "parse_failed": 0,
+      "reference_scores": {
+        "clarity": 3,
+        "relevance": 3,
+        "motivation": 2,
+        "self_reflection": 2,
+        "communication": 3,
+        "concrete_examples": 3,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": 2,
+        "difficult_questions": null,
+        "initiative": 3
+      },
+      "scores": {
+        "clarity": 2,
+        "relevance": 2,
+        "motivation": 2,
+        "self_reflection": null,
+        "communication": 2,
+        "concrete_examples": 1,
+        "demeanor": 2,
+        "preparation": 2,
+        "goal_orientation": null,
+        "difficult_questions": null,
+        "initiative": null
+      },
+      "overall_score": 1.9,
+      "pairs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "gold_seen": 10,
+      "pred_seen": 7,
+      "both_seen": 7,
+      "checks": {
+        "empty_comments": 5,
+        "formal_or_third_person": 0,
+        "mojibake": 0,
+        "wrong_language": 0,
+        "evidence_share": 0.0,
+        "observed_criteria": 7
+      },
+      "report": {
+        "session_id": "T-06",
+        "language": "de",
+        "scale": {
+          "min": 1,
+          "max": 4
+        },
+        "overall_score": 1.9,
+        "criteria": [
+          {
+            "id": "clarity",
+            "label": "Klarheit",
+            "score": 2,
+            "comment": "Die Antworten waren oft unstrukturiert und schwer verfolgbar, z.B. beim ersten Satz \"Geht so.\"",
+            "evidence": ""
+          },
+          {
+            "id": "relevance",
+            "label": "Relevanz",
+            "score": 2,
+            "comment": "Einige Antworten waren nicht direkt auf die Frage bezogen, z.B. die allgemeine Aussage \"Ich habe mich dort einfach wohl gef\\u00fhlten\" ohne Bezug zur Arbeit mit Menschen mit Beeintr\\u00e4chtigung.",
+            "evidence": ""
+          },
+          {
+            "id": "motivation",
+            "label": "Motivation",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "self_reflection",
+            "label": "Selbstreflexion",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "communication",
+            "label": "Kommunikationsfähigkeit",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "concrete_examples",
+            "label": "Konkrete Beispiele",
+            "score": 1,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "demeanor",
+            "label": "Auftreten & Wirkung",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "preparation",
+            "label": "Vorbereitung / Betriebskenntnis",
+            "score": 2,
+            "comment": "",
+            "evidence": ""
+          },
+          {
+            "id": "goal_orientation",
+            "label": "Zielorientierung",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "difficult_questions",
+            "label": "Umgang mit schwierigen Fragen",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          },
+          {
+            "id": "initiative",
+            "label": "Eigeninitiative",
+            "score": null,
+            "comment": "Dazu gab es im Gespräch keine Aussage.",
+            "evidence": ""
+          }
+        ],
+        "strengths": [
+          "Du hast konkrete Erlebnisse aus der Schnupperlehre beschrieben, z.B. beim Spaziergang mit dem Bewohner und dem Uno-Spielen.",
+          "Du hast ein konkretes Beispiel genannt, wie du Geduld mit Legosteinen beim Erkl\\u00e4ren von Rechnungen anwendest."
+        ],
+        "improvements": [
+          {
+            "tip": "Erkl\\u00e4re konkreter, warum dich die Arbeit mit Menschen mit Beeintr\\u00e4chtigung interessiert, z.B. mit einem Satz wie: \"Ich mag es, wenn ich jemanden beim Anziehen helfe und sehe, dass es ihm besser geht.\"",
+            "example_answer": "Ich helfe gerne beim Anziehen und sehe, wie es dem Bewohner erleichtert, wenn ich ruhig und geduldig bleibe."
+          },
+          {
+            "tip": "Nenne eine Eigenschaft, die du im Alltag nutzt, z.B. Geduld, und erkl\\u00e4re, wie du sie in der Lehre anwenden kannst, z.B. mit einem Satz wie: \"Ich bleibe ruhig, wenn ich jemandem beim Waschen helfe, und erkl\\u00e4re es nochmals, wenn es nicht klappt.\"",
+            "example_answer": "Ich bleibe ruhig, wenn ich jemandem beim Waschen helfe, und erkl\\u00e4re es nochmals, wenn es nicht klappt."
+          }
+        ],
+        "next_practice": [
+          "concrete_examples",
+          "motivation"
+        ],
+        "closing": "Das war nur eine Probe, jetzt kannst du mit mehr Selbstvertrauen in dein n\\u00e4chstes Vorstellungsgespr\\u00e4ch gehen.",
+        "support_note": "Wenn dich etwas belastet: Sprich mit einer Person, der du vertraust, zum Beispiel deiner Lehrperson, deinen Eltern oder der Berufsberatung. Pro Juventute erreichst du rund um die Uhr unter 147 (Telefon, Chat, SMS)."
+      }
+    }
+  ]
+}
