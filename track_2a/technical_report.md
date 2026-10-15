@@ -6,7 +6,7 @@ Italian and Swiss German, and gives them constructive, criteria-based feedback.
 - **Track:** Track 2A — FHGR: AI-Powered Job Interview Coach
 - **Event:** Online
 - **Team:** Anina and Iago
-- **Demo:** video to be added before submission; the app itself starts locally with `make run`
+- **Demo:** screenshots of the feedback screen in [README.md#screenshots](README.md#screenshots); the app itself starts locally with `make run`
 
 ## 1. Summary
 

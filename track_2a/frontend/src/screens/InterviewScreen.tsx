@@ -69,7 +69,8 @@ export default function InterviewScreen({ entry, onRestart, onFinished, guest = 
     draft,
     setDraft,
     onSend: (answer) => send(answer),
-    onRepeat: () => voice.say(lastInterviewerIndex, messages[lastInterviewerIndex].text, true),
+    // Only hands-free listens again after reading; in text mode the candidate taps the microphone
+    onRepeat: () => voice.say(lastInterviewerIndex, messages[lastInterviewerIndex].text, voice.handsFree),
   });
 
   // Always scroll to the newest message
