@@ -145,7 +145,10 @@ class ReportDraft(BaseModel):
         if not isinstance(raw, dict):
             return {}
         notes = {}
-        for key, value in raw.items():
+        items = list(raw.items())
+        for key, value in items:
+            if isinstance(value, dict):  # a criterion nested in the one before it, after a missing "}"
+                items += [(k, v) for k, v in value.items() if _CRITERION_ALIASES.get(_norm_key(k))]
             criterion = _CRITERION_ALIASES.get(_norm_key(key))
             if criterion is None:
                 continue
@@ -234,6 +237,16 @@ def _escape_inner_quotes(text: str) -> str:
     return "".join(out)
 
 
+_JSON_STRING = r'"((?:[^"\\]|\\.)*)"'
+# '"clarity": "comment", "evidence": "..."}': the model often leaves out the "{" of a criterion
+# (bench_transcripts: the criteria after the first one or two were lost).
+_FLAT_CRITERION = re.compile(r'"(' + "|".join(CRITERIA) + r')"\s*:\s*' + _JSON_STRING + r'\s*,\s*"evidence"\s*:')
+
+
+def _nest_flat_criteria(text: str) -> str:
+    return _FLAT_CRITERION.sub(lambda m: f'"{m[1]}": {{"comment": "{m[2]}", "evidence":', text)
+
+
 # The last error of _loads, with the text around it, for the log (see complete_json)
 _last_syntax_error = ""
 # The raw text of the last complete_json call, for the log when a parsed result looks incomplete (see report.py)
@@ -242,6 +255,10 @@ last_raw = ""
 
 def _loads(candidate: str):
     global _last_syntax_error
+    try:
+        return json.loads(candidate, strict=False)
+    except json.JSONDecodeError:
+        candidate = _nest_flat_criteria(candidate)
     fixed = re.sub(r",\s*([}\]])", r"\1", candidate)  # trailing commas
     # strict=False: line breaks inside strings, which the model often writes in longer texts
     for text in (candidate, fixed, _escape_inner_quotes(fixed)):

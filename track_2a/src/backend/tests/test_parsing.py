@@ -141,3 +141,18 @@ def test_criteria_closed_one_brace_too_early_are_kept():
 def test_nested_lists_in_strengths_do_not_fail_the_report():
     draft = ReportDraft.model_validate({"strengths": ["Du a", ["Du b", 3], None, ""]})
     assert draft.strengths == ["Du a", "Du b"]
+
+
+def test_criteria_without_their_opening_brace_are_kept():
+    # Real 8B output (shortened, bench_transcripts T-06): every criterion lacks its "{", and
+    # "preparation" ends up inside "demeanor". Before the fix only clarity and relevance had a comment.
+    raw = (r'{"strengths": ["Du hast Erlebnisse beschrieben."], "closing": "Das war nur eine Probe.", '
+           r'"criteria": {"clarity": "Oft unstrukturiert, z.B. \"Geht so.\"", "evidence": "Geht so."}, '
+           r'"relevance": "Nicht immer bezogen.", "evidence": "Ich habe mich wohl gefühlt."}, '
+           r'"motivation": "Unsicher, z.B. \"Keine Ahnung\".", "evidence": "Keine Ahnung."}, '
+           r'"demeanor": "Verunsichert.", "evidence": "seufzt", "preparation": "Es fehlte Wissen."}}')
+    draft = parse_json(raw, ReportDraft)
+    assert set(draft.criteria) == {"clarity", "relevance", "motivation", "demeanor", "preparation"}
+    assert all(note.comment for note in draft.criteria.values())
+    assert draft.criteria["clarity"].evidence == "Geht so."
+    assert draft.closing == "Das war nur eine Probe."
