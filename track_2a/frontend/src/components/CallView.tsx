@@ -11,7 +11,7 @@ import { meter } from "../audio";
 import type { UiTexts } from "../i18n";
 import Alert from "./Alert";
 import Face, { type FaceParts } from "./Face";
-import { ChatBubble, Mic, Pause, Play } from "./icons";
+import { ArrowRight, ChatBubble, Mic, Pause, Play } from "./icons";
 
 export type CallStatus = "speaking" | "thinking" | "listening" | "transcribing" | "countdown" | "paused" | "idle";
 
@@ -34,6 +34,8 @@ type Props = {
   onHold: () => void;
   onResume: () => void;
   onShowChat: () => void;
+  /** Send the answer now, without waiting for a pause or the countdown */
+  onSend: () => void;
   /** A microphone problem to show (permission, nothing understood, …) */
   error?: string | null;
 };
@@ -44,6 +46,9 @@ export default function CallView(props: Props) {
   const { text, interviewer, status, question, tip, answer, countdown } = props;
   const speaking = status === "speaking";
   const listening = status === "listening";
+  // While speaking (and after it, if paused with an answer) the answer can be sent at any time
+  const canSend =
+    listening || status === "transcribing" || status === "countdown" || ((status === "paused" || status === "idle") && !!answer.trim());
 
   return (
     // Phones held sideways have little height: the interviewer goes left, question and buttons right
@@ -97,12 +102,17 @@ export default function CallView(props: Props) {
             <Mic />
           </RoundButton>
         ) : status === "paused" || status === "idle" ? (
-          <RoundButton onClick={props.onResume} label={text.resume} primary>
+          <RoundButton onClick={props.onResume} label={text.resume} primary={!canSend}>
             <Play />
           </RoundButton>
         ) : (
-          <RoundButton onClick={props.onHold} label={status === "countdown" ? text.wait : text.pause} primary>
+          <RoundButton onClick={props.onHold} label={status === "countdown" ? text.wait : text.pause} primary={!canSend}>
             <Pause />
+          </RoundButton>
+        )}
+        {canSend && (
+          <RoundButton onClick={props.onSend} label={text.send} primary>
+            <ArrowRight />
           </RoundButton>
         )}
       </div>

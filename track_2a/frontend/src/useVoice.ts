@@ -85,6 +85,8 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
   const quietRestarts = useRef(0);
   const lastWordAt = useRef(0);
   const timer = useRef<number | null>(null);
+  /** "Senden" was tapped while the recording was still being transcribed: send as soon as the text is there */
+  const sendWhenWritten = useRef(false);
   // Counters for readings and recordings. Stopping also triggers their "finished" callbacks,
   // so a callback only acts if its reading / recording is still the current one.
   const reading = useRef(0);
@@ -116,13 +118,35 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
   function finishAnswer() {
     const answer = latest.current.draft.trim();
     stopMic();
-    if (!answer) return;
+    deliver(answer);
+  }
+
+  function deliver(answer: string) {
+    if (!answer) {
+      // "Senden" before anything was said: hands-free waits for a tap instead of standing still
+      if (latest.current.handsFree) setPaused(true);
+      return;
+    }
     if (isRepeatRequest(answer)) {
       setDraft("");
       latest.current.onRepeat();
     } else {
       latest.current.onSend(answer);
     }
+  }
+
+  /**
+   * "Senden": send the spoken answer now instead of waiting for a pause or the countdown.
+   * A running recording is stopped and transcribed first, then sent right away.
+   */
+  function sendNow() {
+    unlockAudio();
+    if (recording.current || transcribing) {
+      sendWhenWritten.current = true;
+      if (recording.current) finishRecording();
+      return;
+    }
+    finishAnswer();
   }
 
   // ---------- microphone ----------
@@ -164,6 +188,7 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
     setListening(false);
     const audio = await rec.stop();
     if (!audio) {
+      sendWhenWritten.current = false;
       setMicError("nothing");
       if (latest.current.handsFree) setPaused(true);
       return;
@@ -174,13 +199,21 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
       if (round !== listenRound.current) return; // stopped in the meantime
       const base = latest.current.draft.trim();
       if (!text.trim()) {
+        sendWhenWritten.current = false;
         setMicError("nothing");
         if (latest.current.handsFree) setPaused(true);
         return;
       }
-      setDraft(base ? `${base} ${text.trim()}` : text.trim());
-      if (latest.current.handsFree) restartCountdown(CONFIRM_MS);
+      const answer = base ? `${base} ${text.trim()}` : text.trim();
+      setDraft(answer);
+      if (sendWhenWritten.current) {
+        sendWhenWritten.current = false;
+        deliver(answer);
+      } else if (latest.current.handsFree) {
+        restartCountdown(CONFIRM_MS);
+      }
     } catch {
+      sendWhenWritten.current = false;
       setMicError("other");
       // Whisper is not available: use the browser's recognition from now on
       setServer((s) => ({ ...s, stt: false }));
@@ -229,6 +262,7 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
 
   function stopMic() {
     stoppedByUs.current = true;
+    sendWhenWritten.current = false;
     listenRound.current++;
     stopCountdown();
     stopRecognition.current?.();
@@ -367,6 +401,7 @@ export function useVoice({ language, sessionId, voice, draft, setDraft, onSend, 
     listening,
     transcribing,
     toggleMic,
+    sendNow,
     startMic,
     stopMic,
     hold,
