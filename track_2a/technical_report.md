@@ -157,25 +157,79 @@ JSON in `data/eval/bench/`.
 | Bench | Task | Metric | Baseline |
 |---|---|---|---|
 | `bench_answers` | Score single answers (analysis call) against the experts' annotations; sample spread over language × answer class | MAE, exact and ±1 agreement, bias, coverage of the experts' criteria, follow-up precision/recall, problem-flag detection | Same model with a naive prompt (`--variant baseline`) |
-| `bench_transcripts` | The 13 gold interviews through analysis + report, compared with the reference feedback | Spearman and MAE of the final scores; deterministic checks (du/Sie, wrong language, empty texts, mojibake, quotes); LLM judge on grounding, accuracy, actionable next step, tone, language | Reference feedback |
+| `bench_transcripts` | The 21 gold interviews with reference feedback through analysis + report, compared with the reference feedback | Spearman and MAE of the final scores; deterministic checks (du/Sie, wrong language, empty texts, mojibake, quotes); LLM judge on grounding, accuracy, actionable next step, tone, language | Reference feedback |
 | `bench_interviews` | FHGR scenarios as full interviews; Apertus plays the candidate from the profile's simulation persona | LLM calls per answer (gate), checks, score spread over repeats (consistency), score vs. the persona's quality level, the scenario's success criteria (judge) | — |
 | `bench_dialect` | Does the interviewer write dialect in Mundart mode? | Share of interviewer texts that look like dialect | — |
 
-**Results.**
+**Results** (Apertus v1.5 8B on CSCS, judge Apertus v1.5 70B, 14-15 October 2026; raw JSON in
+`data/eval/bench/`).
 
-| Setup | Metric | Result |
+*Scoring single answers* (`bench_answers --sample 120`, scores 1-4 against the FHGR experts):
+
+| Metric | Naive prompt (baseline) | Ours |
 |---|---|---|
-| Baseline prompt (`bench_answers --variant baseline`) | MAE / ±1 agreement vs. experts | *pending* |
-| Ours (`bench_answers`) | MAE / ±1 agreement vs. experts | *pending* |
-| Ours (`bench_transcripts`) | Spearman vs. reference feedback; checks passed | *pending* |
-| Ours (`bench_interviews`) | Average LLM calls per answer; score spread over repeats | *pending* |
+| MAE / exact / ±1 agreement | 0.46 / 0.58 / 0.96 | 0.53 / 0.52 / 0.95 |
+| Bias (negative = stricter than the experts) | -0.10 | -0.15 |
+| Criteria scored that the experts left out ("extra") | 0.67 | 0.51 |
+| Holistic Spearman (answer class vs. mean score) | 0.86 | 0.74 |
+| Follow-up needed: precision / recall | 0.76 / 0.97 | 0.80 / 0.72 |
+| Problem flags (distress, off-topic, manipulation …): precision / recall | – / 0.00 | 0.90 / 0.47 |
 
-*The runs against Apertus on CSCS are scheduled before the submission; this table will be filled with the
-numbers from `data/eval/bench/`.*
+The naive prompt scores every criterion on every answer and is slightly closer to the experts on the
+criteria they did score. It never detects a problem, though, so it cannot drive the guardrails or the
+supportive mode. Ours leaves out more criteria the answer gave no evidence for. We kept our prompt for the
+flags. Making its scores as close as the baseline's is open work (section 8).
+
+*Full feedback on the gold interviews* (`bench_transcripts --repeat 2`, 21 transcripts × 2 runs). The table
+shows how the measurements drove the fixes of the last day:
+
+| Metric | First run | After the fixes |
+|---|---|---|
+| Reports that failed (unusable JSON) | 6 / 42 | 0 / 42 |
+| Reports with an empty criterion comment | 100 % | 14 % (0 % in the re-run of the worst cases) |
+| Comments backed by a real quote from the candidate | 0 % | 42 % |
+| Judge: grounding / accuracy (1-4) | 1.69 / 2.00 | 2.12 / 2.24 |
+| Judge: actionable / tone / language (1-4) | 3.06 / 2.64 / 3.83 | 3.07 / 2.60 / 3.69 |
+| Final scores vs. reference: MAE / ±1 | 0.89 / – | 0.84 / 0.77 |
+| Overall score vs. the transcript's quality level (Spearman) | – | 0.71 |
+| Spread of the overall score over repeats (std) | – | 0.04 |
+| Wrong language / mojibake / "Sie" or third person | – | 0 % / 0 % / 5 % |
+
+By language (after the fixes), MAE of the final scores: de 0.81, fr 0.69, it 0.68, Swiss German 1.26. The
+model is stricter than the reference (bias -0.71) and weakest on dialect.
+
+What the logs showed and what we changed: Apertus wrote the report JSON with predictable mistakes. It
+dropped the `{` of every criterion, closed a quote with `\"`, or used invalid escapes. The parser now repairs
+these (`json-repair` plus three patterns we found in the raw output) and reads criterion comments straight
+from the raw text when the structure is lost. The example in the prompt listed only two criteria, so the model
+commented only those two; it now lists every observed one. Quotes count when most of their words appear
+together in one answer, and the report then shows the candidate's exact words.
+
+*Full interviews with a simulated candidate* (`bench_interviews`, FHGR scenarios S-01 to S-05, before the
+report fixes):
+
+| Metric | Result |
+|---|---|
+| LLM calls per answer: average / max (gate < 5) | 1.81-1.83 / 2 |
+| Overall score vs. the persona's quality level (Spearman) | 0.68-0.94 |
+| Spread of the overall score over repeats (std) | 0.10-0.12 |
+| Judge: scenario success criteria met | 93 % |
+| Judge: grounding / accuracy / actionable / tone / language | 2.67 / 3.0 / 3.33 / 3.33 / 3.67 |
+
+The first runs also found an interviewer that said goodbye in the middle of the interview and then repeated
+the goodbye until the end. A question turn without a question is now asked again, and a question from the
+FHGR question bank stands in if the second try also fails.
+
+**From a real test run** (dictated answers, informatics apprenticeship): dictation sometimes carried the
+previous answer into the next one, the interviewer asked two questions twice, and one question from the
+candidate got only "Danke." as an answer. All three are fixed (results of a stopped dictation are ignored;
+a repeated question is asked once more as a different one; an empty answer is retried, then a fixed line
+answers). The report was found too critical: its comments now start with what worked in one concrete
+answer and give one small next step.
 
 **What is already verified without Apertus:**
 
-- 199 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails,
+- 260 backend tests with a fake LLM (no network): the phase flow, the call budget per answer, the guardrails,
   JSON repair, the report, the Agent Protocol graph, accounts, the application letter, Mundart, and the voice
   endpoints.
 - The call budget follows from the code (section 3) and is logged per answer in every real run.
@@ -186,8 +240,10 @@ numbers from `data/eval/bench/`.*
 
 ## 6. Limitations
 
-- **Benchmarks:** the results above are still pending, and they are measured on the FHGR development data, which
-  is synthetic and not yet reviewed by experts; the hidden judge benchmark may differ.
+- **Benchmarks** are measured on the FHGR development data, which is synthetic and not yet reviewed by experts;
+  the hidden judge benchmark may differ. Our judge is Apertus 70B with our own prompt, not the official one.
+- **Scores** are stricter than the experts' (bias -0.7 on full interviews) and least reliable in Swiss German.
+  The naive baseline prompt matches the experts' single scores slightly better than ours (MAE 0.46 vs. 0.53).
 - **Mundart** is a beta: dialect spelling is not standardised, the 8B model can mix in Standard German, and the
   dialect texts were not reviewed by native speakers. Mundart is read aloud with a Standard German voice, because
   neither Piper nor Azure has a dialect voice.
@@ -227,6 +283,8 @@ numbers from `data/eval/bench/`.*
 
 ## 8. Next steps
 
+- Close the gap to the baseline on single scores while keeping the problem flags (e.g. a separate flag
+  check, or the baseline's scoring wording), and reduce the strictness on dialect answers.
 - Validate the scoring and the feedback with teachers and career counsellors (Profolio), and calibrate the
   analysis on reviewed data.
 - Mundart with native speakers: review the dialect examples, test speech-to-text with real Swiss German
