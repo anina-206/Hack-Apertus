@@ -192,6 +192,28 @@ def test_last_candidate_question_is_answered_with_closing(fake, api):
     assert turn["closing_message"].startswith("Frage")  # the interviewer's LLM answer, not the fixed line
 
 
+def test_a_candidate_question_answered_only_with_thanks_is_answered_again(fake, api):
+    # Real test run: "Danke. Haben Sie noch Fragen?" lost its question and only "Danke." was left.
+    client = fake()
+    session = start(api)
+    turn = run_until(api, session, "candidate_questions")
+    client.interviewer_outputs = ["Danke. Hast du noch Fragen?", "Feedback bekommst du jede Woche im Gespräch."]
+    turn = send(api, session["session_id"], turn["question"]["id"], "Wann bekomme ich Feedback?").json()
+    assert turn["question"]["text"].startswith("Feedback bekommst du jede Woche im Gespräch.")
+    assert "IMPORTANT: Answer the candidate's last question" in client.last_interviewer_system
+
+
+def test_a_fixed_line_answers_when_the_model_keeps_only_thanking(fake, api):
+    from backend.interview.prompts import ANSWER_FALLBACK
+    client = fake()
+    session = start(api)
+    turn = run_until(api, session, "candidate_questions")
+    client.interviewer_outputs = ["Danke.", "Danke! Noch Fragen?"]
+    turn = send(api, session["session_id"], turn["question"]["id"], "Wann bekomme ich Feedback?").json()
+    assert turn["question"]["text"].startswith(ANSWER_FALLBACK[("de", False)])
+    assert turn["meta"]["llm_calls"] == 3
+
+
 # --- Report ------------------------------------------------------------------------------------------
 
 def finish(api, session):
@@ -863,6 +885,15 @@ def test_a_fixed_question_from_the_fhgr_bank_stands_in_when_the_model_keeps_sayi
     body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
     from backend.interview.examples import _bank_questions
     assert body["question"]["text"] in _bank_questions("intro", "de")
+
+
+def test_a_question_asked_before_is_replaced_by_a_new_one(fake, api):
+    client = fake(interviewer_outputs=["Wie arbeitest du im Team?", "Danke. Wie arbeitest du im Team?",
+                                       "Was machst du in deiner Freizeit?"])
+    session = start(api)
+    body = send(api, session["session_id"], "q1", "Ich bin Lara und baue gerne PCs zusammen.").json()
+    assert body["question"]["text"] == "Was machst du in deiner Freizeit?"
+    assert 'You already asked "wie arbeitest du im team?"' in client.last_interviewer_system
 
 
 def test_an_imperative_question_needs_no_second_call(fake, api):

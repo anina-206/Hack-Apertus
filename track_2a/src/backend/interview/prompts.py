@@ -88,6 +88,16 @@ FOLLOW_UP_FALLBACK = {
     ("it", True): "Può farmi un esempio concreto?",
 }
 
+# The interviewer did not answer the candidate's question even on the second try (rare)
+ANSWER_FALLBACK = {
+    ("de", False): "Gute Frage! Das schauen wir gerne zusammen an, sobald du bei uns anfängst.",
+    ("de", True): "Gute Frage! Das schauen wir gerne zusammen an, sobald Sie bei uns anfangen.",
+    ("fr", False): "Bonne question ! On en parlera volontiers ensemble quand tu commenceras chez nous.",
+    ("fr", True): "Bonne question ! Nous en parlerons volontiers quand vous commencerez chez nous.",
+    ("it", False): "Bella domanda! Ne parliamo volentieri insieme quando inizierai da noi.",
+    ("it", True): "Bella domanda! Ne parliamo volentieri quando inizierà da noi.",
+}
+
 FURTHER = {
     ("de", False): "Hast du noch weitere Fragen?",
     ("de", True): "Haben Sie noch weitere Fragen?",
@@ -412,7 +422,8 @@ def _report_example(criteria: list[str]) -> dict:
         "improvements": [{"tip": "A concrete tip, addressed to the candidate.",
                           "example_answer": "Ich ... (what the candidate could say, in the first person)"}],
         "closing": "One encouraging sentence.",
-        "criteria": {key: {"comment": "One sentence that explains the score.", "evidence": "<words the candidate said>"}
+        "criteria": {key: {"comment": "Du ... (what worked). Nächstes Mal kannst du ... (one small step).",
+                           "evidence": "<words the candidate said>"}
                      for key in criteria or ("clarity", "motivation")},
     }
 
@@ -425,7 +436,9 @@ _FEEDBACK_RULES = (
     "instead of 'not'. No exaggerated praise ('perfect') and no drama. Never create fear about finding an "
     "apprenticeship and never compare with other young people. Do not judge dialect, spelling or nervousness, and "
     "never criticise single words: spoken answers are transcribed automatically and may contain wrong words. "
-    "Short, simple, active sentences."
+    "Spoken answers are naturally long and less ordered than written ones; that is no reason to criticise. "
+    "Most of the feedback is about what went well; the candidate is 14-16 and practising. "
+    "Short, simple, active sentences, without criterion names like 'Relevanz' or 'Selbstreflexion'."
 )
 
 
@@ -441,9 +454,11 @@ def report_messages(occupation: dict, language: str, scores: dict[str, int], ana
         f"{_setting(occupation, posting)}\n"
         f"Write all texts in {LANGUAGES[language]}. {ADDRESS[language]} Be positive and "
         "encouraging, suitable for a teenager, but honest about what to improve.\n"
-        "- criteria: one entry for each criterion listed under 'Scores' below, with exactly that key. For each "
-        "one sentence of comment that explains the score, and as evidence an EXACT quote (a few words) from the CANDIDATE's answers that "
-        "supports it, or an empty string if there is none.\n"
+        "- criteria: one entry for each criterion listed under 'Scores' below, with exactly that key. The comment "
+        "speaks to the candidate ('Du ...'): first what already worked in one concrete answer, then, if the score is "
+        "below 4, one small next step ('Nächstes Mal kannst du ...'). Describe what the candidate said or did, never "
+        "what kind of person they are, and never write 'Die Antworten waren ...'. As evidence an EXACT quote (a few "
+        "words) from the CANDIDATE's answers, or an empty string if there is none.\n"
         "- strengths: 2-3 strengths, each referring to something the candidate actually said.\n"
         "- improvements: 2-3 concrete tips, each referring to one of the candidate's answers, with a short "
         "example of a better answer. The example answer is what the candidate could say, in the first person "
